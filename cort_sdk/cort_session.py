@@ -1,6 +1,8 @@
 from typing import List, Optional
 
 from cort_sdk.llm import LLMClient
+from cort_sdk.prompting import TemplateManager
+from cort_sdk.config import CoRTConfig, create_config
 
 
 class CoRTSession:
@@ -16,6 +18,8 @@ class CoRTSession:
         llm_client: LLMClient,
         alternatives: int = 3,
         rounds: int = 2,
+        template_manager: Optional[TemplateManager] = None,
+        config: Optional[CoRTConfig] = None,
     ):
         """
         Initialize a CoRT session.
@@ -24,10 +28,16 @@ class CoRTSession:
             llm_client: LLM client to use for generating and evaluating answers
             alternatives: Number of alternative answers to generate per round
             rounds: Number of refinement rounds to perform
+            template_manager: Optional template manager for prompt templates
+            config: Optional configuration object
         """
         self.llm_client = llm_client
         self.alternatives = alternatives
         self.rounds = rounds
+        
+        # Initialize template manager if not provided
+        self.config = config or create_config()
+        self.template_manager = template_manager or TemplateManager(self.config.prompt_dir)
     
     def run(self, question: str) -> str:
         """
@@ -47,7 +57,9 @@ class CoRTSession:
         Returns:
             The final best answer after all refinement rounds
         """
-        initial_prompt = f"Answer the following question thoughtfully and accurately:\n\nQuestion: {question}\n\nAnswer:"
+        initial_prompt = self.template_manager.render_template(
+            "initial_prompt.j2", {"question": question}
+        )
         current_answer = self.llm_client.generate(initial_prompt, temperature=0.7)
         
         for round_num in range(1, self.rounds + 1):
@@ -75,12 +87,12 @@ class CoRTSession:
         alternatives = []
         
         for i in range(self.alternatives):
-            prompt = (
-                f"Question: {question}\n\n"
-                f"Current answer: {current_answer}\n\n"
-                f"Generate a different possible answer to the question that explores "
-                f"a different approach or perspective than the current answer. "
-                f"Your answer should be thoughtful, accurate, and distinct from the current answer."
+            prompt = self.template_manager.render_template(
+                "alternative_prompt.j2",
+                {
+                    "question": question,
+                    "current_answer": current_answer
+                }
             )
             
             alternative = self.llm_client.generate(prompt, temperature=0.9)
@@ -103,14 +115,13 @@ class CoRTSession:
             f"Answer {i+1}:\n{answer}" for i, answer in enumerate(answers)
         ])
         
-        prompt = (
-            f"Question: {question}\n\n"
-            f"{formatted_answers}\n\n"
-            f"Evaluate each of the above answers to the question. "
-            f"Consider accuracy, completeness, clarity, and depth of reasoning. "
-            f"Which answer is the best? Provide your analysis and then clearly indicate "
-            f"the best answer by stating 'The best answer is Answer X' where X is the number "
-            f"of the best answer (1 to {len(answers)})."
+        prompt = self.template_manager.render_template(
+            "evaluation_prompt.j2",
+            {
+                "question": question,
+                "formatted_answers": formatted_answers,
+                "num_answers": len(answers)
+            }
         )
         
         evaluation = self.llm_client.generate(prompt, temperature=0.2)

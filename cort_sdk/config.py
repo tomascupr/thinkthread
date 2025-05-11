@@ -24,6 +24,8 @@ class CoRTConfig(BaseModel):
     alternatives: int = 3
     rounds: int = 2
     
+    prompt_dir: Optional[str] = None
+    
     _env_vars: ClassVar[Dict[str, str]] = {
         "openai_api_key": "OPENAI_API_KEY",
         "anthropic_api_key": "ANTHROPIC_API_KEY",
@@ -34,6 +36,7 @@ class CoRTConfig(BaseModel):
         "hf_model": "HF_MODEL",
         "alternatives": "ALTERNATIVES",
         "rounds": "ROUNDS",
+        "prompt_dir": "PROMPT_DIR",
     }
     
     @field_validator("alternatives", "rounds", mode="before")
