@@ -17,6 +17,9 @@ requests = "^2.31.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 
+[tool.poetry.scripts]
+cort = "cort_sdk.cli:app"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
