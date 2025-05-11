@@ -3,6 +3,7 @@ from typing import List, Optional
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
 from cort_sdk.config import CoRTConfig, create_config
+from cort_sdk.evaluation import EvaluationStrategy, DefaultEvaluationStrategy
 
 
 class CoRTSession:
@@ -18,7 +19,9 @@ class CoRTSession:
         llm_client: LLMClient,
         alternatives: int = 3,
         rounds: int = 2,
+        max_rounds: Optional[int] = None,
         template_manager: Optional[TemplateManager] = None,
+        evaluation_strategy: Optional[EvaluationStrategy] = None,
         config: Optional[CoRTConfig] = None,
     ):
         """
@@ -27,17 +30,24 @@ class CoRTSession:
         Args:
             llm_client: LLM client to use for generating and evaluating answers
             alternatives: Number of alternative answers to generate per round
-            rounds: Number of refinement rounds to perform
+            rounds: Number of refinement rounds to perform (for backward compatibility)
+            max_rounds: Maximum number of refinement rounds (overrides rounds if set)
             template_manager: Optional template manager for prompt templates
+            evaluation_strategy: Optional strategy for evaluating answers
             config: Optional configuration object
         """
         self.llm_client = llm_client
         self.alternatives = alternatives
         self.rounds = rounds
         
-        # Initialize template manager if not provided
+        # Initialize configuration and template manager
         self.config = config or create_config()
         self.template_manager = template_manager or TemplateManager(self.config.prompt_dir)
+        
+        self.max_rounds = max_rounds if max_rounds is not None else self.rounds
+        
+        # Initialize evaluation strategy
+        self.evaluation_strategy = evaluation_strategy or DefaultEvaluationStrategy()
     
     def run(self, question: str) -> str:
         """
@@ -62,12 +72,18 @@ class CoRTSession:
         )
         current_answer = self.llm_client.generate(initial_prompt, temperature=0.7)
         
-        for round_num in range(1, self.rounds + 1):
+        if self.max_rounds <= 0:
+            return current_answer
+        
+        for round_num in range(1, self.max_rounds + 1):
             alternatives = self._generate_alternatives(question, current_answer)
             
             all_answers = [current_answer] + alternatives
             
-            best_index = self._evaluate_answers(question, all_answers)
+            # Use the evaluation strategy to select the best answer
+            best_index = self.evaluation_strategy.evaluate(
+                question, all_answers, self.llm_client, self.template_manager
+            )
             
             current_answer = all_answers[best_index]
         
@@ -100,60 +116,4 @@ class CoRTSession:
         
         return alternatives
     
-    def _evaluate_answers(self, question: str, answers: List[str]) -> int:
-        """
-        Evaluate multiple answers and select the best one.
-        
-        Args:
-            question: The original question
-            answers: List of answers to evaluate
-            
-        Returns:
-            Index of the best answer in the answers list
-        """
-        formatted_answers = "\n\n".join([
-            f"Answer {i+1}:\n{answer}" for i, answer in enumerate(answers)
-        ])
-        
-        prompt = self.template_manager.render_template(
-            "evaluation_prompt.j2",
-            {
-                "question": question,
-                "formatted_answers": formatted_answers,
-                "num_answers": len(answers)
-            }
-        )
-        
-        evaluation = self.llm_client.generate(prompt, temperature=0.2)
-        
-        best_index = self._parse_evaluation(evaluation, len(answers))
-        
-        return best_index
-    
-    def _parse_evaluation(self, evaluation: str, num_answers: int) -> int:
-        """
-        Parse the evaluation text to determine which answer was selected as best.
-        
-        Args:
-            evaluation: The evaluation text from the LLM
-            num_answers: The number of answers that were evaluated
-            
-        Returns:
-            Index of the best answer (0 to num_answers-1)
-        """
-        for i in range(1, num_answers + 1):
-            if f"best answer is Answer {i}" in evaluation or f"Best answer is Answer {i}" in evaluation:
-                return i - 1  # Convert to 0-based index
-        
-        for i in range(1, num_answers + 1):
-            indicators = [
-                f"Answer {i} is the best",
-                f"select Answer {i}",
-                f"choose Answer {i}",
-                f"prefer Answer {i}",
-            ]
-            for indicator in indicators:
-                if indicator in evaluation:
-                    return i - 1
-        
-        return 0
+    # They are now implemented in DefaultEvaluationStrategy

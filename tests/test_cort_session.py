@@ -38,26 +38,35 @@ def test_cort_session_init(mock_template_manager, mock_config):
     assert session.llm_client == client
     assert session.alternatives == 3
     assert session.rounds == 2
+    assert session.max_rounds == 2  # max_rounds defaults to rounds
     assert session.template_manager == mock_template_manager
 
 
 def test_cort_session_custom_params(mock_template_manager, mock_config):
     """Test that CoRTSession initializes with custom parameter values."""
     client = DummyLLMClient()
-    session = CoRTSession(llm_client=client, alternatives=5, rounds=3, template_manager=mock_template_manager, config=mock_config)
+    session = CoRTSession(
+        llm_client=client, 
+        alternatives=5, 
+        rounds=3, 
+        max_rounds=4,
+        template_manager=mock_template_manager, 
+        config=mock_config
+    )
     
     assert session.llm_client == client
     assert session.alternatives == 5
     assert session.rounds == 3
+    assert session.max_rounds == 4  # max_rounds is set explicitly
     assert session.template_manager == mock_template_manager
 
 
 def test_cort_session_zero_rounds(mock_template_manager, mock_config):
-    """Test that when rounds=0, the session returns the initial answer unchanged."""
+    """Test that when max_rounds=0, the session returns the initial answer unchanged."""
     initial_answer = "This is the initial answer."
     client = DummyLLMClient(responses=[initial_answer])
     
-    session = CoRTSession(llm_client=client, rounds=0, template_manager=mock_template_manager, config=mock_config)
+    session = CoRTSession(llm_client=client, max_rounds=0, template_manager=mock_template_manager, config=mock_config)
     
     result = session.run("What is the meaning of life?")
     
@@ -123,18 +132,83 @@ def test_cort_session_same_answer_selected(mock_template_manager, mock_config):
     assert mock_template_manager.render_template.call_count == 9  # 1 initial + 2*3 alternatives + 2 evals
 
 
-def test_cort_session_parse_evaluation(mock_template_manager, mock_config):
-    """Test the _parse_evaluation method with different evaluation texts."""
-    client = DummyLLMClient()
-    session = CoRTSession(llm_client=client, template_manager=mock_template_manager, config=mock_config)
+def test_evaluation_strategy_parse_evaluation(mock_template_manager, mock_config):
+    """Test the _parse_evaluation method of DefaultEvaluationStrategy with different evaluation texts."""
+    from cort_sdk.evaluation import DefaultEvaluationStrategy
     
-    assert session._parse_evaluation("After careful consideration, the best answer is Answer 2.", 3) == 1
-    assert session._parse_evaluation("I think the Best answer is Answer 3.", 3) == 2
+    strategy = DefaultEvaluationStrategy()
     
-    assert session._parse_evaluation("Answer 1 is the best because it's more comprehensive.", 3) == 0
-    assert session._parse_evaluation("I would select Answer 3 as it provides more detail.", 3) == 2
+    assert strategy._parse_evaluation("After careful consideration, the best answer is Answer 2.", 3) == 1
+    assert strategy._parse_evaluation("I think the Best answer is Answer 3.", 3) == 2
     
-    assert session._parse_evaluation("All answers have merit.", 3) == 0
+    assert strategy._parse_evaluation("Answer 1 is the best because it's more comprehensive.", 3) == 0
+    assert strategy._parse_evaluation("I would select Answer 3 as it provides more detail.", 3) == 2
+    
+    assert strategy._parse_evaluation("All answers have merit.", 3) == 0
+
+
+def test_cort_session_max_rounds(mock_template_manager, mock_config):
+    """Test that max_rounds parameter works correctly."""
+    initial_answer = "Initial answer"
+    alt1_round1 = "Alternative 1 (round 1)"
+    alt2_round1 = "Alternative 2 (round 1)"
+    alt3_round1 = "Alternative 3 (round 1)"
+    
+    responses = [
+        initial_answer,  # Initial answer
+        alt1_round1, alt2_round1, alt3_round1,  # Round 1 alternatives
+        "The best answer is Answer 2",  # Evaluation selects alt1_round1 (index 1 in the list)
+    ]
+    
+    client = DummyLLMClient(responses=responses)
+    
+    # Set max_rounds=1 explicitly
+    session = CoRTSession(
+        llm_client=client, 
+        template_manager=mock_template_manager, 
+        max_rounds=1,
+        config=mock_config
+    )
+    
+    result = session.run("What is the meaning of life?")
+    
+    assert result == alt1_round1
+    assert client.call_count == 5  # Initial + 3 alternatives + 1 evaluation
+    assert mock_template_manager.render_template.call_count == 5
+
+
+def test_cort_session_custom_evaluation_strategy(mock_template_manager, mock_config):
+    """Test that a custom evaluation strategy works correctly."""
+    from tests.test_strategies import SimpleEvaluationStrategy
+    
+    initial_answer = "Initial answer"
+    alt1 = "Alternative 1"
+    alt2 = "Alternative 2"
+    alt3 = "Alternative 3"
+    
+    responses = [
+        initial_answer,  # Initial answer
+        alt1, alt2, alt3,  # Alternatives
+    ]
+    
+    client = DummyLLMClient(responses=responses)
+    
+    custom_strategy = SimpleEvaluationStrategy(index_to_select=2)
+    
+    session = CoRTSession(
+        llm_client=client, 
+        template_manager=mock_template_manager,
+        max_rounds=1,
+        evaluation_strategy=custom_strategy,
+        config=mock_config
+    )
+    
+    result = session.run("What is the meaning of life?")
+    
+    assert result == alt2
+    
+    assert client.call_count == 4  # Initial + 3 alternatives
+    assert mock_template_manager.render_template.call_count == 4  # Initial + 3 alternatives
 
 
 def test_cort_session_exception_handling(mock_template_manager, mock_config):
