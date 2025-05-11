@@ -23,6 +23,7 @@ class CoRTConfig(BaseModel):
     
     alternatives: int = 3
     rounds: int = 2
+    max_rounds: int = 3
     
     prompt_dir: Optional[str] = None
     
@@ -36,6 +37,7 @@ class CoRTConfig(BaseModel):
         "hf_model": "HF_MODEL",
         "alternatives": "ALTERNATIVES",
         "rounds": "ROUNDS",
+        "max_rounds": "MAX_ROUNDS",
         "prompt_dir": "PROMPT_DIR",
     }
     
