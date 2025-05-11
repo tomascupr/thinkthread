@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, call
 
 from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm.dummy.client import DummyLLMClient
+from cort_sdk.llm.dummy import DummyLLMClient
 
 
 def test_cort_session_init():
@@ -28,7 +28,7 @@ def test_cort_session_custom_params():
 def test_cort_session_zero_rounds():
     """Test that when rounds=0, the session returns the initial answer unchanged."""
     initial_answer = "This is the initial answer."
-    client = DummyLLMClient(sequence=[initial_answer])
+    client = DummyLLMClient(responses=[initial_answer])
     
     session = CoRTSession(llm_client=client, rounds=0)
     
@@ -56,7 +56,7 @@ def test_cort_session_normal_case():
         "The best answer is Answer 4"   # Evaluation selects alt3_round2 (index 3 in the list)
     ]
     
-    client = DummyLLMClient(sequence=responses)
+    client = DummyLLMClient(responses=responses)
     
     session = CoRTSession(llm_client=client)
     
@@ -64,7 +64,7 @@ def test_cort_session_normal_case():
     
     assert result == alt3_round2
     
-    assert client.sequence_index == 9
+    assert client.call_count == 9
 
 
 def test_cort_session_same_answer_selected():
@@ -82,7 +82,7 @@ def test_cort_session_same_answer_selected():
         "The best answer is Answer 1"   # Evaluation selects initial_answer again (index 0 in the list)
     ]
     
-    client = DummyLLMClient(sequence=responses)
+    client = DummyLLMClient(responses=responses)
     
     session = CoRTSession(llm_client=client)
     
@@ -90,7 +90,7 @@ def test_cort_session_same_answer_selected():
     
     assert result == initial_answer
     
-    assert client.sequence_index == 9
+    assert client.call_count == 9
 
 
 def test_cort_session_parse_evaluation():
@@ -111,11 +111,11 @@ def test_cort_session_exception_handling():
     """Test that no exceptions are raised during normal operation."""
     class ExceptionClient(DummyLLMClient):
         def generate(self, prompt: str, **kwargs) -> str:
-            if self.sequence_index == 4:  # 0-based index, so this is the 5th call
+            if self._call_count == 4:  # 0-based index, so this is the 5th call
                 raise ValueError("Test exception")
             return super().generate(prompt, **kwargs)
     
-    client = ExceptionClient(sequence=["Answer"] * 10)
+    client = ExceptionClient(responses=["Answer"] * 10)
     session = CoRTSession(llm_client=client)
     
     with pytest.raises(ValueError):
