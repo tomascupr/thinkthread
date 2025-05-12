@@ -202,3 +202,37 @@ def test_self_evaluation():
     assert (
         client.call_count == 3
     )  # Initial + 2 alternatives (no separate evaluation calls)
+
+
+def test_very_short_question():
+    """Test that the system handles very short questions properly."""
+    client = DummyLLMClient(responses=["Short response for a short question"])
+    config = CoRTConfig(use_pairwise_evaluation=False)
+
+    session = CoRTSession(
+        llm_client=client, max_rounds=1, alternatives=1, config=config
+    )
+
+    result = session.run("Why?")
+
+    assert "Short response for a short question" in result
+    assert client.call_count == 3  # Initial + 1 alternative + 1 evaluation
+
+
+def test_long_answer_handling():
+    """Test that the system handles potentially long answers properly."""
+    long_response = "This is a long response. " * 500
+
+    client = DummyLLMClient(
+        responses=[long_response, "Short alternative", "The best answer is Answer 1"]
+    )
+    config = CoRTConfig(use_pairwise_evaluation=False)
+
+    session = CoRTSession(
+        llm_client=client, max_rounds=1, alternatives=1, config=config
+    )
+
+    result = session.run("Generate a very long explanation")
+
+    assert result == long_response
+    assert client.call_count == 3  # Initial + 1 alternative + 1 evaluation

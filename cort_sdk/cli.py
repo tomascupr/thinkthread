@@ -16,6 +16,7 @@ from cort_sdk.llm import (
     DummyLLMClient,
     AnthropicClient,
     HuggingFaceClient,
+    LLMClient,
 )
 
 app = typer.Typer()
@@ -71,6 +72,7 @@ def ask(
 
     """
     config = create_config()
+    client: LLMClient
 
     if provider == "openai":
         client = OpenAIClient(
@@ -80,12 +82,12 @@ def ask(
     elif provider == "anthropic":
         client = AnthropicClient(
             api_key=str(config.anthropic_api_key or ""),
-            model_name=model or config.anthropic_model,
+            model=model or config.anthropic_model,
         )
     elif provider == "hf":
         client = HuggingFaceClient(
             api_token=str(config.hf_api_token or ""),
-            model_name=model or config.hf_model,
+            model=model or config.hf_model,
         )
     elif provider == "dummy":
         client = DummyLLMClient(model_name=model or "dummy-model")
@@ -154,7 +156,7 @@ async def run_session(
         if verbose:
             logging.debug("Streaming final answer")
 
-        async for token in await session.llm_client.astream(prompt):
+        async for token in session.llm_client.astream(prompt):
             print(token, end="", flush=True)
         print()
     else:
@@ -234,6 +236,7 @@ def run(
         logging.debug(f"Rounds: {rounds}")
 
     config = create_config()
+    client: LLMClient
 
     if self_evaluation:
         config.use_self_evaluation = True
@@ -248,12 +251,12 @@ def run(
     elif provider == "anthropic":
         client = AnthropicClient(
             api_key=str(config.anthropic_api_key or ""),
-            model_name=model or config.anthropic_model,
+            model=model or config.anthropic_model,
         )
     elif provider == "hf":
         client = HuggingFaceClient(
             api_token=str(config.hf_api_token or ""),
-            model_name=model or config.hf_model,
+            model=model or config.hf_model,
         )
     elif provider == "dummy":
         client = DummyLLMClient(model_name=model or "dummy-model")

@@ -1,15 +1,16 @@
 import os
+import pytest
 from cort_sdk.llm.anthropic_client import AnthropicClient
 
-api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-
-if not api_key:
-    print("Error: ANTHROPIC_API_KEY environment variable not set")
-    exit(1)
-
-client = AnthropicClient(api_key=api_key)
-
-print("Sending request to Claude API...")
-response = client.generate("Hello, how are you?")
-print("\nResponse from Claude:")
-print(response)
+@pytest.mark.skipif(
+    not os.environ.get("ANTHROPIC_API_KEY"), 
+    reason="ANTHROPIC_API_KEY environment variable not set"
+)
+def test_anthropic_client():
+    """Test the Anthropic client with a real API key (skipped if key not available)."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    client = AnthropicClient(api_key=api_key)
+    
+    response = client.generate("Hello, how are you?")
+    assert isinstance(response, str)
+    assert len(response) > 0

@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 
 from cort_sdk.llm.openai_client import OpenAIClient
@@ -58,7 +57,7 @@ def test_generate_with_options(mock_openai):
 
     client = OpenAIClient(api_key="test_key", temperature=0.7)
 
-    response = client.generate("Test prompt", temperature=0.2, max_tokens=50)
+    client.generate("Test prompt", temperature=0.2, max_tokens=50)
 
     call_args = mock_client.chat.completions.create.call_args[1]
     assert call_args["temperature"] == 0.2

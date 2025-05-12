@@ -1,7 +1,6 @@
 import os
 import pytest
 from tempfile import NamedTemporaryFile
-from pydantic import ValidationError
 
 from cort_sdk.config import CoRTConfig, create_config
 
@@ -58,7 +57,7 @@ def test_env_file():
     env_content = """
 OPENAI_API_KEY=sk-env-test123
 ANTHROPIC_API_KEY=sk-ant-env-test456
-PROVIDER=huggingface
+PROVIDER=hf
 ALTERNATIVES=4
 """
 
@@ -70,7 +69,7 @@ ALTERNATIVES=4
 
         assert config.openai_api_key == "sk-env-test123"
         assert config.anthropic_api_key == "sk-ant-env-test456"
-        assert config.provider == "huggingface"
+        assert config.provider == "hf"
         assert config.alternatives == 4
 
         assert config.hf_api_token is None
