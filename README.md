@@ -1,6 +1,6 @@
 # ThinkThread SDK
 
-The Chain-of-Recursive-Thoughts (CoRT) SDK provides a framework for improving LLM responses through a multi-round self-debate technique. ThinkThread enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
+The ThinkThread SDK provides a framework for improving LLM responses through a Chain-of-Recursive-Thoughts technique. ThinkThread enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
 
 ## What is Chain-of-Recursive-Thoughts?
 
@@ -69,14 +69,14 @@ thinkthread run "Describe the water cycle" --stream
 ### Using the Python API
 
 ```python
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
 # Initialize an LLM client
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
 
-# Create a CoRT session
-session = CoRTSession(llm_client=client, alternatives=3, rounds=2)
+# Create a ThinkThread session
+session = ThinkThreadSession(llm_client=client, alternatives=3, rounds=2)
 
 # Run recursive reasoning on a question
 question = "What are the major challenges in sustainable energy adoption?"
@@ -138,6 +138,10 @@ poetry run pytest
 ```
 
 For detailed documentation, see the docs directory.
+
+## Contributing
+
+Found a bug or have a feature request? Please open an issue on the [GitHub Issues](https://github.com/tomascupr/cort-sdk/issues) page.
 
 ## License
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.evaluation import EvaluationStrategy
 from typing import List
@@ -30,7 +30,7 @@ responses = [
 
 client = DummyLLMClient(responses=responses)
 
-session = CoRTSession(
+session = ThinkThreadSession(
     llm_client=client,
     max_rounds=1,
     alternatives=3,
@@ -60,12 +60,12 @@ pairwise_responses = [
 
 pairwise_client = DummyLLMClient(responses=pairwise_responses)
 
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.config import ThinkThreadConfig
 
-pairwise_config = CoRTConfig()
+pairwise_config = ThinkThreadConfig()
 pairwise_config.use_pairwise_evaluation = True
 
-pairwise_session = CoRTSession(
+pairwise_session = ThinkThreadSession(
     llm_client=pairwise_client, max_rounds=1, alternatives=3, config=pairwise_config
 )
 

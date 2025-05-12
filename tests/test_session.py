@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, call, MagicMock
 
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.prompting import TemplateManager
 
@@ -27,15 +27,15 @@ def mock_template_manager():
 @pytest.fixture
 def mock_config():
     """Provide a mock config object."""
-    from thinkthread_sdk.config import CoRTConfig
+    from thinkthread_sdk.config import ThinkThreadConfig
 
-    return CoRTConfig()
+    return ThinkThreadConfig()
 
 
-def test_cort_session_init(mock_template_manager, mock_config):
-    """Test that CoRTSession initializes with correct default values."""
+def test_thinkthread_session_init(mock_template_manager, mock_config):
+    """Test that ThinkThreadSession initializes with correct default values."""
     client = DummyLLMClient()
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, template_manager=mock_template_manager, config=mock_config
     )
 
@@ -46,10 +46,10 @@ def test_cort_session_init(mock_template_manager, mock_config):
     assert session.template_manager == mock_template_manager
 
 
-def test_cort_session_custom_params(mock_template_manager, mock_config):
-    """Test that CoRTSession initializes with custom parameter values."""
+def test_thinkthread_session_custom_params(mock_template_manager, mock_config):
+    """Test that ThinkThreadSession initializes with custom parameter values."""
     client = DummyLLMClient()
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         alternatives=5,
         rounds=3,
@@ -65,12 +65,12 @@ def test_cort_session_custom_params(mock_template_manager, mock_config):
     assert session.template_manager == mock_template_manager
 
 
-def test_cort_session_zero_rounds(mock_template_manager, mock_config):
+def test_thinkthread_session_zero_rounds(mock_template_manager, mock_config):
     """Test that when max_rounds=0, the session returns the initial answer unchanged."""
     initial_answer = "This is the initial answer."
     client = DummyLLMClient(responses=[initial_answer])
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         max_rounds=0,
         template_manager=mock_template_manager,
@@ -83,7 +83,7 @@ def test_cort_session_zero_rounds(mock_template_manager, mock_config):
     assert mock_template_manager.render_template.call_count == 1
 
 
-def test_cort_session_normal_case(mock_template_manager, mock_config):
+def test_thinkthread_session_normal_case(mock_template_manager, mock_config):
     """Test the normal case with rounds=2 default."""
     initial_answer = "Initial answer"
     alt1_round1 = "Alternative 1 (round 1)"
@@ -111,7 +111,7 @@ def test_cort_session_normal_case(mock_template_manager, mock_config):
     # Disable pairwise evaluation for this test to use the DefaultEvaluationStrategy
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, template_manager=mock_template_manager, config=mock_config
     )
 
@@ -125,7 +125,7 @@ def test_cort_session_normal_case(mock_template_manager, mock_config):
     )  # 1 initial + 2*3 alternatives + 2 evals
 
 
-def test_cort_session_same_answer_selected(mock_template_manager, mock_config):
+def test_thinkthread_session_same_answer_selected(mock_template_manager, mock_config):
     """Test the case where the model's evaluation picks the same answer as current."""
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
@@ -149,7 +149,7 @@ def test_cort_session_same_answer_selected(mock_template_manager, mock_config):
     # Disable pairwise evaluation for this test to use the DefaultEvaluationStrategy
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, template_manager=mock_template_manager, config=mock_config
     )
 
@@ -193,7 +193,7 @@ def test_evaluation_strategy_parse_evaluation(mock_template_manager, mock_config
     assert strategy._parse_evaluation("All answers have merit.", 3) == 0
 
 
-def test_cort_session_max_rounds(mock_template_manager, mock_config):
+def test_thinkthread_session_max_rounds(mock_template_manager, mock_config):
     """Test that max_rounds parameter works correctly."""
     initial_answer = "Initial answer"
     alt1_round1 = "Alternative 1 (round 1)"
@@ -213,7 +213,7 @@ def test_cort_session_max_rounds(mock_template_manager, mock_config):
     # Set max_rounds=1 explicitly and disable pairwise evaluation
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         max_rounds=1,
@@ -227,7 +227,7 @@ def test_cort_session_max_rounds(mock_template_manager, mock_config):
     assert mock_template_manager.render_template.call_count == 5
 
 
-def test_cort_session_custom_evaluation_strategy(mock_template_manager, mock_config):
+def test_thinkthread_session_custom_evaluation_strategy(mock_template_manager, mock_config):
     """Test that a custom evaluation strategy works correctly."""
     from tests.test_strategies import SimpleEvaluationStrategy
 
@@ -250,7 +250,7 @@ def test_cort_session_custom_evaluation_strategy(mock_template_manager, mock_con
     # Disable pairwise evaluation for this test to use the custom evaluation strategy
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         max_rounds=1,
@@ -268,7 +268,7 @@ def test_cort_session_custom_evaluation_strategy(mock_template_manager, mock_con
     )  # Initial + 3 alternatives
 
 
-def test_cort_session_exception_handling(mock_template_manager, mock_config):
+def test_thinkthread_session_exception_handling(mock_template_manager, mock_config):
     """Test that no exceptions are raised during normal operation."""
 
     class ExceptionClient(DummyLLMClient):
@@ -278,7 +278,7 @@ def test_cort_session_exception_handling(mock_template_manager, mock_config):
             return super().generate(prompt, **kwargs)
 
     client = ExceptionClient(responses=["Answer"] * 10)
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, template_manager=mock_template_manager, config=mock_config
     )
 

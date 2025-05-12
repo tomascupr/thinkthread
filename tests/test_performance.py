@@ -4,8 +4,8 @@ import time
 from typing import Dict, Any, List
 
 from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.cort_session import CoRTSession
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 class TimingStats:
@@ -57,11 +57,11 @@ class ProfilingLLMClient(DummyLLMClient):
 
 
 def test_cort_session_performance():
-    """Test and profile the performance of CoRT session with multiple rounds."""
+    """Test and profile the performance of ThinkThread session with multiple rounds."""
     client = ProfilingLLMClient(
         responses=["Initial"] + ["Alt" for _ in range(9)] + ["Best" for _ in range(3)]
     )
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
     overall_stats = TimingStats()
 
@@ -72,7 +72,7 @@ def test_cort_session_performance():
 
         start_time = time.time()
 
-        session = CoRTSession(
+        session = ThinkThreadSession(
             llm_client=client, max_rounds=rounds, alternatives=3, config=config
         )
 
