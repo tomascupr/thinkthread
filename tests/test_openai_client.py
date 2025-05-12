@@ -79,8 +79,7 @@ def test_generate_api_error(mock_openai):
 
 
 def test_manual_example():
-    """
-    Manual test example (not automatically run).
+    """Manual test example (not automatically run).
 
     This test demonstrates how to use the OpenAIClient with a real API key.
     To run this test, uncomment the code and set your API key.

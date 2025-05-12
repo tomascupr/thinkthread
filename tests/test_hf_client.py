@@ -118,8 +118,7 @@ def test_generate_request_exception(mock_post):
 
 
 def test_manual_example():
-    """
-    Manual test example (not automatically run).
+    """Manual test example (not automatically run).
 
     This test demonstrates how to use the HuggingFaceClient with a real API token.
     To run this test, uncomment the code and set your API token.
