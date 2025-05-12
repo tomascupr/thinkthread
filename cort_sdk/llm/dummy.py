@@ -1,4 +1,5 @@
-from typing import Callable, List, Optional, Union
+from typing import Callable, List, Optional, Union, AsyncIterator
+import asyncio
 
 from .base import LLMClient
 
@@ -74,3 +75,24 @@ class DummyLLMClient(LLMClient):
         Reset the call counter to zero.
         """
         self._call_count = 0
+        
+    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
+        """
+        Asynchronously stream a response in chunks to simulate streaming responses.
+
+        Splits the full response into words and yields them one by one with a small
+        delay to simulate a streaming response.
+
+        Args:
+            prompt: The input text
+            **kwargs: Additional parameters (ignored in this implementation)
+
+        Yields:
+            Chunks of the response string
+        """
+        full_response = await self.acomplete(prompt, **kwargs)
+        words = full_response.split()
+        
+        for word in words:
+            await asyncio.sleep(0.1)  # Simulate network delay
+            yield word + " "

@@ -1,5 +1,7 @@
-from typing import Optional, Dict, Any, Union, List
+from typing import Optional, Dict, Any, Union, List, AsyncIterator
 import requests
+import asyncio
+import aiohttp
 
 from .base import LLMClient
 
@@ -92,3 +94,72 @@ class HuggingFaceClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
             return error_message
+            
+    async def acomplete(self, prompt: str, **kwargs) -> str:
+        """
+        Asynchronously generate text using Hugging Face's text generation inference API.
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional parameters to override the default options
+
+        Returns:
+            The generated text response from the model
+        """
+        options = self.opts.copy()
+        options.update(kwargs)
+        
+        payload = {
+            "inputs": prompt,
+            **options
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.base_url, headers=self.headers, json=payload) as response:
+                    if response.status != 200:
+                        return f"Hugging Face API error: {response.status} - {await response.text()}"
+                    
+                    response_data = await response.json()
+                    
+                    if isinstance(response_data, list) and len(response_data) > 0:
+                        if "generated_text" in response_data[0]:
+                            return response_data[0]["generated_text"]
+                        else:
+                            return str(response_data[0])
+                    elif isinstance(response_data, dict):
+                        if "generated_text" in response_data:
+                            return response_data["generated_text"]
+                        elif "error" in response_data:
+                            return f"Hugging Face API error: {response_data['error']}"
+                        else:
+                            return str(response_data)
+                    else:
+                        return str(response_data)
+            
+        except aiohttp.ClientError as e:
+            error_message = f"Request error when calling Hugging Face API: {str(e)}"
+            return error_message
+        except Exception as e:
+            error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
+            return error_message
+    
+    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
+        """
+        Asynchronously stream text generation from Hugging Face's API.
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional parameters to override the default options
+
+        Yields:
+            Chunks of the generated text response from the model
+        """
+        full_response = await self.acomplete(prompt, **kwargs)
+        
+        words = full_response.split()
+            
+        for i in range(0, len(words), 3):  # Yield 3 words at a time
+            chunk = " ".join(words[i:i+3])
+            await asyncio.sleep(0.1)  # Simulate network delay
+            yield chunk + " "
