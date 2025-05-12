@@ -33,7 +33,29 @@ def ask(
     stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
 ):
     """
-    Ask a question and get an answer using CoRT reasoning
+    Ask a question and get an answer using CoRT reasoning.
+    
+    This command provides a CLI interface to the Chain-of-Recursive-Thoughts
+    reasoning process. It supports multiple LLM providers and offers both
+    synchronous and streaming output modes.
+    
+    The command uses the async implementation of CoRT internally, even when
+    called from the synchronous CLI context. This is achieved by using
+    asyncio.run() to run the async code in the event loop.
+    
+    When streaming is enabled (the default), the final answer will be displayed
+    token by token as it's generated, providing a more responsive user experience.
+    When streaming is disabled, the command will wait for the complete answer
+    before displaying it.
+    
+    Examples:
+        $ python -m cort_sdk ask "What is the meaning of life?"
+        
+        $ python -m cort_sdk ask "What is the meaning of life?" --provider anthropic
+        
+        $ python -m cort_sdk ask "What is the meaning of life?" --no-stream
+        
+        $ python -m cort_sdk ask "What is the meaning of life?" --alternatives 5 --rounds 3
     """
     config = create_config()
     
@@ -59,7 +81,30 @@ def ask(
     asyncio.run(run_session(session, question, stream))
 
 async def run_session(session: CoRTSession, question: str, stream: bool):
-    """Run the CoRT session asynchronously with optional streaming"""
+    """
+    Run the CoRT session asynchronously with optional streaming.
+    
+    This function handles the execution of the CoRT reasoning process in an
+    asynchronous manner, with support for streaming the final answer as it's
+    generated. It provides two modes of operation:
+    
+    1. Streaming mode (default): Shows the answer being generated token by token
+       in real-time, providing immediate feedback to the user and reducing
+       perceived latency.
+       
+    2. Non-streaming mode: Waits for the complete answer before displaying it,
+       which is useful for scripting or when the output needs to be captured
+       as a single block.
+    
+    The implementation uses the async CoRT session and, when streaming is enabled,
+    leverages the LLM client's astream method to progressively display tokens
+    as they're generated.
+    
+    Args:
+        session: The CoRTSession instance to use for reasoning
+        question: The question to answer
+        stream: Whether to stream the final answer as it's generated
+    """
     if stream:
         print(f"Question: {question}")
         print("Thinking...", end="", flush=True)

@@ -151,13 +151,32 @@ class CoRTSession:
         """
         Execute the Chain-of-Recursive-Thoughts process asynchronously on a question.
         
-        The process is the same as the synchronous version but uses async LLM calls.
+        This method provides a non-blocking way to run the CoRT reasoning process,
+        making it suitable for use in async applications like web servers, GUI
+        applications, or any context where you don't want to block the main thread.
+        
+        The async implementation follows the same logical flow as the synchronous
+        version but uses async LLM calls throughout the process. This provides
+        several benefits:
+        
+        1. Improved responsiveness in interactive applications
+        2. Better resource utilization in server environments
+        3. Ability to handle multiple reasoning sessions concurrently
+        4. Integration with other async frameworks and libraries
+        
+        The implementation awaits each LLM call and uses helper methods that are
+        also async to maintain the non-blocking nature throughout the entire
+        reasoning process.
         
         Args:
             question: The question to answer
             
         Returns:
             The final best answer after all refinement rounds
+            
+        Note:
+            This method is safe to call concurrently from multiple tasks, as
+            the state is maintained within the method's execution context.
         """
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
@@ -198,6 +217,21 @@ class CoRTSession:
         """
         Asynchronously generate alternative answers to the question.
         
+        This method is the async counterpart to _generate_alternatives and creates
+        multiple alternative answers to the given question based on the current
+        best answer. It uses async LLM calls to generate these alternatives without
+        blocking the event loop.
+        
+        While the synchronous version would block during each LLM call, this
+        implementation allows other tasks to run while waiting for each alternative
+        to be generated. This is particularly beneficial when generating multiple
+        alternatives, as it allows for better resource utilization.
+        
+        Note that this implementation still generates alternatives sequentially
+        rather than in parallel. This is intentional to avoid overwhelming the
+        LLM service with concurrent requests, which could lead to rate limiting
+        or degraded performance.
+        
         Args:
             question: The original question
             current_answer: The current best answer
@@ -225,6 +259,19 @@ class CoRTSession:
         """
         Asynchronously evaluate whether answer2 is better than answer1.
         
+        This method is the async counterpart to the evaluator's evaluate method.
+        It uses asyncio.to_thread to run the synchronous evaluation in a separate
+        thread without blocking the event loop, allowing other async tasks to
+        continue running during the evaluation process.
+        
+        Using a thread-based approach for evaluation is appropriate here because:
+        1. The evaluation logic is CPU-bound rather than I/O-bound
+        2. The existing evaluator interface is synchronous
+        3. It avoids duplicating complex evaluation logic in an async version
+        
+        This approach maintains the non-blocking nature of the async reasoning
+        loop while reusing the existing evaluation logic.
+        
         Args:
             question: The original question
             answer1: The first answer
@@ -232,6 +279,10 @@ class CoRTSession:
             
         Returns:
             True if answer2 is better than answer1, False otherwise
+            
+        Note:
+            This method is thread-safe and can be called concurrently from
+            multiple tasks.
         """
         return await asyncio.to_thread(
             self.evaluator.evaluate,
@@ -242,12 +293,30 @@ class CoRTSession:
         """
         Asynchronously evaluate all answers and return the index of the best one.
         
+        This method is the async counterpart to the evaluation strategy's evaluate
+        method. Similar to _evaluate_async, it uses asyncio.to_thread to run the
+        synchronous evaluation in a separate thread without blocking the event loop.
+        
+        The evaluation strategy compares all answers simultaneously and returns
+        the index of the best one. This is more efficient than pairwise comparison
+        when evaluating multiple alternatives, as it requires only a single LLM call
+        rather than multiple comparisons.
+        
+        Using a thread-based approach for evaluation maintains the non-blocking
+        nature of the async reasoning loop while reusing the existing evaluation
+        logic, which is particularly important for this potentially complex
+        multi-answer evaluation.
+        
         Args:
             question: The original question
             answers: List of answers to evaluate
             
         Returns:
             Index of the best answer in the list
+            
+        Note:
+            This method is thread-safe and can be called concurrently from
+            multiple tasks.
         """
         return await asyncio.to_thread(
             self.evaluation_strategy.evaluate,
