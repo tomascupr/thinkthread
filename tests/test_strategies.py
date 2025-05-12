@@ -1,9 +1,9 @@
 """Tests for evaluation strategies in the CORT SDK."""
 from typing import List
 
-from cort_sdk.llm import LLMClient
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.evaluation import EvaluationStrategy
+from thinkthread_sdk.llm import LLMClient
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.evaluation import EvaluationStrategy
 
 
 class SimpleEvaluationStrategy(EvaluationStrategy):

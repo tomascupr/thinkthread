@@ -2,12 +2,12 @@
 import pytest
 from unittest.mock import MagicMock
 
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.config import CoRTConfig
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.prompting import TemplateManager
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.prompting import TemplateManager
 from tests.test_evaluator import SimpleEvaluator
-from cort_sdk.llm import LLMClient
+from thinkthread_sdk.llm import LLMClient
 
 
 @pytest.fixture
@@ -113,7 +113,7 @@ def test_cort_session_with_self_evaluation_prefer_previous(
 
 def test_cort_session_with_model_evaluator(mock_template_manager, mock_config):
     """Test CoRT session with the ModelEvaluator."""
-    from cort_sdk.evaluation import ModelEvaluator
+    from thinkthread_sdk.evaluation import ModelEvaluator
 
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
@@ -154,7 +154,7 @@ def test_cort_session_multiple_rounds_with_self_evaluation(
     mock_template_manager, mock_config
 ):
     """Test the self-evaluation over multiple rounds to verify improvement."""
-    from cort_sdk.evaluation import ModelEvaluator
+    from thinkthread_sdk.evaluation import ModelEvaluator
 
     initial_answer = "Initial answer (round 0)"
 

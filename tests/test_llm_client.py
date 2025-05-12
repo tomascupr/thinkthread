@@ -1,6 +1,6 @@
 import pytest
 from typing import Dict, Any, AsyncIterator
-from cort_sdk.llm import LLMClient
+from thinkthread_sdk.llm import LLMClient
 
 
 def test_llm_client_is_abstract():

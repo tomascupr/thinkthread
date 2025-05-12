@@ -3,7 +3,7 @@ import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from cort_sdk.prompting import TemplateManager
+from thinkthread_sdk.prompting import TemplateManager
 
 
 def test_template_manager_default_dir():
