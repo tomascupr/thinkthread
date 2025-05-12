@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 @pytest.fixture
@@ -71,9 +71,9 @@ class RoundAwareDummyClient(DummyLLMClient):
 def test_zero_rounds():
     """Test that when max_rounds=0, the initial answer is returned unchanged."""
     client = DummyLLMClient(responses=["Initial answer"])
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(llm_client=client, max_rounds=0, config=config)
+    session = ThinkThreadSession(llm_client=client, max_rounds=0, config=config)
 
     result = session.run("Test question")
 
@@ -84,9 +84,9 @@ def test_zero_rounds():
 def test_single_round():
     """Test a single round of recursive reasoning."""
     client = RoundAwareDummyClient()
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=1, alternatives=1, config=config
     )
 
@@ -99,9 +99,9 @@ def test_single_round():
 def test_multiple_rounds():
     """Test multiple rounds of recursive reasoning."""
     client = RoundAwareDummyClient()
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=2, alternatives=1, config=config
     )
 
@@ -125,9 +125,9 @@ def test_evaluation_selects_best_answer():
     ]
 
     client = DummyLLMClient(responses=responses)
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=1, alternatives=2, config=config
     )
 
@@ -146,9 +146,9 @@ def test_with_mock_template_manager(mock_template_manager):
     ]
 
     client = DummyLLMClient(responses=responses)
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         max_rounds=1,
@@ -184,11 +184,11 @@ def test_self_evaluation():
     ]
 
     client = DummyLLMClient(responses=responses)
-    config = CoRTConfig(use_self_evaluation=True, use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_self_evaluation=True, use_pairwise_evaluation=False)
 
     evaluator = TestEvaluator()
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         max_rounds=1,
         alternatives=2,
@@ -207,9 +207,9 @@ def test_self_evaluation():
 def test_very_short_question():
     """Test that the system handles very short questions properly."""
     client = DummyLLMClient(responses=["Short response for a short question"])
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=1, alternatives=1, config=config
     )
 
@@ -226,9 +226,9 @@ def test_long_answer_handling():
     client = DummyLLMClient(
         responses=[long_response, "Short alternative", "The best answer is Answer 1"]
     )
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=1, alternatives=1, config=config
     )
 

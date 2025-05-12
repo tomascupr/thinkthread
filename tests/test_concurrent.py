@@ -4,9 +4,9 @@ import pytest
 import asyncio
 
 from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 @pytest.mark.asyncio
@@ -16,10 +16,10 @@ async def test_concurrent_sessions():
 
     clients = [DummyLLMClient(responses=[f"Answer from client {i}"]) for i in range(5)]
 
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
     sessions = [
-        CoRTSession(
+        ThinkThreadSession(
             llm_client=clients[i],
             template_manager=template_manager,  # Shared template manager
             max_rounds=1,

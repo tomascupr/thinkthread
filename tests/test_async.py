@@ -4,9 +4,9 @@ import asyncio
 from typing import List
 
 from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def mock_template_manager():
 @pytest.fixture
 def mock_config():
     """Provide a mock config object."""
-    return CoRTConfig()
+    return ThinkThreadConfig()
 
 
 @pytest.mark.asyncio
@@ -66,7 +66,7 @@ async def test_dummy_client_astream():
 
 @pytest.mark.asyncio
 async def test_cort_session_run_async(mock_template_manager, mock_config):
-    """Test that CoRTSession.run_async works correctly."""
+    """Test that ThinkThreadSession.run_async works correctly."""
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
     alt2 = "Alternative 2"
@@ -84,7 +84,7 @@ async def test_cort_session_run_async(mock_template_manager, mock_config):
 
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         max_rounds=1,
@@ -105,7 +105,7 @@ async def test_sync_vs_async_results(mock_template_manager, mock_config):
 
     mock_config.use_pairwise_evaluation = False
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         max_rounds=1,

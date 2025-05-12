@@ -9,7 +9,7 @@ import asyncio
 import logging
 from typing import Optional
 from thinkthread_sdk import __version__
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.config import create_config
 from thinkthread_sdk.llm import (
     OpenAIClient,
@@ -95,7 +95,7 @@ def ask(
         print(f"Unknown provider: {provider}")
         return
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, alternatives=alternatives, rounds=rounds, config=config
     )
 
@@ -103,7 +103,7 @@ def ask(
 
 
 async def run_session(
-    session: CoRTSession, question: str, stream: bool, verbose: bool = False
+    session: ThinkThreadSession, question: str, stream: bool, verbose: bool = False
 ) -> None:
     """Run the ThinkThread session asynchronously with optional streaming.
 
@@ -264,7 +264,7 @@ def run(
         print(f"Unknown provider: {provider}")
         return
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, alternatives=alternatives, rounds=rounds, config=config
     )
 
