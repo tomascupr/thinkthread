@@ -1,15 +1,15 @@
-# CoRT SDK Usage Guide
+# ThinkThread SDK Usage Guide
 
-This guide provides detailed instructions on how to use the CoRT SDK for various scenarios.
+This guide provides detailed instructions on how to use the ThinkThread SDK for various scenarios.
 
 ## Basic Usage with CLI
 
-The CoRT SDK provides a command-line interface for quick access to its functionality.
+The ThinkThread SDK provides a command-line interface for quick access to its functionality.
 
 ### Running a Simple Query
 
 ```bash
-cort run "What is the significance of the Fibonacci sequence in nature?"
+thinkthread run "What is the significance of the Fibonacci sequence in nature?"
 ```
 
 This will:
@@ -25,16 +25,16 @@ You can customise the behaviour with various options:
 
 ```bash
 # Use a different LLM provider
-cort run "Explain quantum entanglement" --provider anthropic
+thinkthread run "Explain quantum entanglement" --provider anthropic
 
 # Increase the number of alternatives and rounds
-cort run "What are the ethical implications of AI?" --alternatives 5 --rounds 3
+thinkthread run "What are the ethical implications of AI?" --alternatives 5 --rounds 3
 
 # Enable streaming output
-cort run "Describe the formation of black holes" --stream
+thinkthread run "Describe the formation of black holes" --stream
 
 # Enable verbose logging
-cort run "Explain blockchain technology" --verbose
+thinkthread run "Explain blockchain technology" --verbose
 ```
 
 ### Getting Help
@@ -42,8 +42,8 @@ cort run "Explain blockchain technology" --verbose
 To see all available commands and options:
 
 ```bash
-cort --help
-cort run --help
+thinkthread --help
+thinkthread run --help
 ```
 
 ## Using the Python API
@@ -53,8 +53,8 @@ For more control or to integrate with your applications, use the Python API.
 ### Basic Example
 
 ```python
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm import OpenAIClient
 
 # Initialize an LLM client
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
@@ -76,8 +76,8 @@ For non-blocking operation in async applications:
 
 ```python
 import asyncio
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm import OpenAIClient
 
 async def main():
     # Initialize client and session
@@ -111,21 +111,21 @@ The SDK supports multiple LLM providers:
 
 ```python
 # OpenAI
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.llm import OpenAIClient
 openai_client = OpenAIClient(
     api_key="your-openai-api-key",
     model_name="gpt-4"
 )
 
 # Anthropic
-from cort_sdk.llm import AnthropicClient
+from thinkthread_sdk.llm import AnthropicClient
 anthropic_client = AnthropicClient(
     api_key="your-anthropic-api-key",
     model_name="claude-2"
 )
 
 # HuggingFace
-from cort_sdk.llm import HuggingFaceClient
+from thinkthread_sdk.llm import HuggingFaceClient
 hf_client = HuggingFaceClient(
     api_token="your-hf-token",
     model_name="gpt2"
@@ -137,7 +137,7 @@ hf_client = HuggingFaceClient(
 ### Without CoRT (Direct LLM Response)
 
 ```python
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.llm import OpenAIClient
 
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
 question = "What is the best strategy for addressing climate change?"
@@ -151,8 +151,8 @@ print(f"Direct Answer: {direct_answer}")
 ### With CoRT (Recursive Refinement)
 
 ```python
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm import OpenAIClient
 
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
 session = CoRTSession(llm_client=client, alternatives=3, rounds=2)

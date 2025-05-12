@@ -1,4 +1,4 @@
-"""Command-line interface for the CORT SDK.
+"""Command-line interface for the ThinkThread SDK.
 
 This module provides a CLI for running CoRT reasoning using different LLM providers
 and viewing the results.
@@ -8,10 +8,10 @@ import typer
 import asyncio
 import logging
 from typing import Optional
-from cort_sdk import __version__
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.config import create_config
-from cort_sdk.llm import (
+from thinkthread_sdk import __version__
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.config import create_config
+from thinkthread_sdk.llm import (
     OpenAIClient,
     DummyLLMClient,
     AnthropicClient,
@@ -24,13 +24,13 @@ app = typer.Typer()
 
 @app.callback()
 def callback() -> None:
-    """CORT SDK - Command Line Interface."""
+    """ThinkThread SDK - Command Line Interface."""
 
 
 @app.command()
 def version() -> None:
-    """Show the current version of CORT SDK."""
-    print(f"CORT SDK version: {__version__}")
+    """Show the current version of ThinkThread SDK."""
+    print(f"ThinkThread SDK version: {__version__}")
 
 
 @app.command()
@@ -62,13 +62,13 @@ def ask(
     before displaying it.
 
     Examples:
-        $ python -m cort_sdk ask "What is the meaning of life?"
+        $ python -m thinkthread_sdk ask "What is the meaning of life?"
 
-        $ python -m cort_sdk ask "What is the meaning of life?" --provider anthropic
+        $ python -m thinkthread_sdk ask "What is the meaning of life?" --provider anthropic
 
-        $ python -m cort_sdk ask "What is the meaning of life?" --no-stream
+        $ python -m thinkthread_sdk ask "What is the meaning of life?" --no-stream
 
-        $ python -m cort_sdk ask "What is the meaning of life?" --alternatives 5 --rounds 3
+        $ python -m thinkthread_sdk ask "What is the meaning of life?" --alternatives 5 --rounds 3
 
     """
     config = create_config()
@@ -212,17 +212,17 @@ def run(
     debug information about the reasoning process.
 
     Examples:
-        $ cort run "What is the most effective way to combat climate change?"
+        $ thinkthread run "What is the most effective way to combat climate change?"
 
-        $ cort run "Explain quantum computing" --provider anthropic
+        $ thinkthread run "Explain quantum computing" --provider anthropic
 
-        $ cort run "Summarize the Iliad" --stream
+        $ thinkthread run "Summarize the Iliad" --stream
 
-        $ cort run "Pros and cons of renewable energy" --rounds 3 --alternatives 5
+        $ thinkthread run "Pros and cons of renewable energy" --rounds 3 --alternatives 5
 
-        $ cort run "How do neural networks work?" --verbose
+        $ thinkthread run "How do neural networks work?" --verbose
 
-        $ cort run "Explain blockchain technology" --self-evaluation
+        $ thinkthread run "Explain blockchain technology" --self-evaluation
 
     """
     if verbose:

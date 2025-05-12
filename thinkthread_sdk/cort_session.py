@@ -7,10 +7,10 @@ questioning and refinement process using LLMs.
 from typing import List, Optional
 import asyncio
 
-from cort_sdk.llm import LLMClient
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.config import CoRTConfig, create_config
-from cort_sdk.evaluation import (
+from thinkthread_sdk.llm import LLMClient
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.config import CoRTConfig, create_config
+from thinkthread_sdk.evaluation import (
     EvaluationStrategy,
     DefaultEvaluationStrategy,
     Evaluator,

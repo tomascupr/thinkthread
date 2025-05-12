@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.config import CoRTConfig
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.config import CoRTConfig
 
 
 @pytest.fixture
@@ -165,7 +165,7 @@ def test_with_mock_template_manager(mock_template_manager):
 
 def test_self_evaluation():
     """Test recursive reasoning with self-evaluation."""
-    from cort_sdk.evaluation import ModelEvaluator
+    from thinkthread_sdk.evaluation import ModelEvaluator
 
     class TestEvaluator(ModelEvaluator):
         def evaluate(

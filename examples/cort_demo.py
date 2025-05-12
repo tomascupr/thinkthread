@@ -4,9 +4,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.evaluation import EvaluationStrategy
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.evaluation import EvaluationStrategy
 from typing import List
 
 
@@ -60,7 +60,7 @@ pairwise_responses = [
 
 pairwise_client = DummyLLMClient(responses=pairwise_responses)
 
-from cort_sdk.config import CoRTConfig
+from thinkthread_sdk.config import CoRTConfig
 
 pairwise_config = CoRTConfig()
 pairwise_config.use_pairwise_evaluation = True

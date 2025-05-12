@@ -1,6 +1,6 @@
-# CoRT SDK Documentation
+# ThinkThread SDK Documentation
 
-This directory contains comprehensive documentation for the CoRT SDK.
+This directory contains comprehensive documentation for the ThinkThread SDK.
 
 ## Documentation Structure
 

@@ -1,4 +1,4 @@
-# CoRT SDK Documentation
+# ThinkThread SDK Documentation
 
 Welcome to the documentation for the Chain-of-Recursive-Thoughts (CoRT) SDK.
 

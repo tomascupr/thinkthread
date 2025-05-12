@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 
-from cort_sdk.cli import app
+from thinkthread_sdk.cli import app
 
 
 @pytest.fixture
@@ -13,18 +13,18 @@ def runner():
 
 def test_version_command(runner):
     """Test the version command."""
-    from cort_sdk import __version__
+    from thinkthread_sdk import __version__
 
     result = runner.invoke(app, ["version"])
 
     assert result.exit_code == 0
-    assert f"CORT SDK version: {__version__}" in result.stdout
+    assert f"ThinkThread SDK version: {__version__}" in result.stdout
 
 
-@patch("cort_sdk.cli.create_config")
-@patch("cort_sdk.cli.DummyLLMClient")
-@patch("cort_sdk.cli.CoRTSession")
-@patch("cort_sdk.cli.asyncio.run")
+@patch("thinkthread_sdk.cli.create_config")
+@patch("thinkthread_sdk.cli.DummyLLMClient")
+@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.asyncio.run")
 def test_ask_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):
@@ -46,10 +46,10 @@ def test_ask_command(
     mock_asyncio_run.assert_called_once()
 
 
-@patch("cort_sdk.cli.create_config")
-@patch("cort_sdk.cli.DummyLLMClient")
-@patch("cort_sdk.cli.CoRTSession")
-@patch("cort_sdk.cli.asyncio.run")
+@patch("thinkthread_sdk.cli.create_config")
+@patch("thinkthread_sdk.cli.DummyLLMClient")
+@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.asyncio.run")
 def test_run_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):
@@ -83,10 +83,10 @@ def test_run_command(
     mock_asyncio_run.assert_called_once()
 
 
-@patch("cort_sdk.cli.create_config")
-@patch("cort_sdk.cli.OpenAIClient")
-@patch("cort_sdk.cli.CoRTSession")
-@patch("cort_sdk.cli.asyncio.run")
+@patch("thinkthread_sdk.cli.create_config")
+@patch("thinkthread_sdk.cli.OpenAIClient")
+@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.asyncio.run")
 def test_provider_selection(
     mock_asyncio_run, mock_session, mock_openai, mock_create_config, runner
 ):
@@ -111,7 +111,7 @@ def test_help_output(runner):
     result = runner.invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    assert "CORT SDK - Command Line Interface" in result.stdout
+    assert "ThinkThread SDK - Command Line Interface" in result.stdout
 
     result_run = runner.invoke(app, ["run", "--help"])
     assert result_run.exit_code == 0
@@ -122,10 +122,10 @@ def test_help_output(runner):
     assert "Ask a question and get an answer" in result_ask.stdout
 
 
-@patch("cort_sdk.cli.create_config")
-@patch("cort_sdk.cli.DummyLLMClient")
-@patch("cort_sdk.cli.CoRTSession")
-@patch("cort_sdk.cli.asyncio.run")
+@patch("thinkthread_sdk.cli.create_config")
+@patch("thinkthread_sdk.cli.DummyLLMClient")
+@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.asyncio.run")
 def test_cli_with_options(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):
