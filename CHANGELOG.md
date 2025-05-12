@@ -2,7 +2,7 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
-## [Unreleased]
+## [0.5.0] - 2025-05-12
 
 ### Added
 - Comprehensive documentation including README, usage guide, developer guide, configuration reference, and CLI reference

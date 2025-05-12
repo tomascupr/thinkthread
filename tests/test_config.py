@@ -2,12 +2,12 @@ import os
 import pytest
 from tempfile import NamedTemporaryFile
 
-from thinkthread_sdk.config import CoRTConfig, create_config
+from thinkthread_sdk.config import ThinkThreadConfig, create_config
 
 
 def test_default_values():
     """Test that default values are set correctly when no environment variables are present."""
-    for env_var in CoRTConfig._env_vars.values():
+    for env_var in ThinkThreadConfig._env_vars.values():
         if env_var in os.environ:
             del os.environ[env_var]
 

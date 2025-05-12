@@ -4,7 +4,7 @@ This module provides a deterministic LLM client that can be used for testing
 without making API calls to actual providers.
 """
 
-from typing import Callable, List, Optional, Union, AsyncIterator, Dict, Any
+from typing import Callable, List, Optional, AsyncIterator, Dict, Any
 import asyncio
 
 from .base import LLMClient
@@ -106,7 +106,9 @@ class DummyLLMClient(LLMClient):
         """
         return await super().acomplete(prompt, **kwargs)
 
-    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+    async def astream(
+        self, prompt: str, **kwargs: Dict[str, Any]
+    ) -> AsyncIterator[str]:
         """Asynchronously stream a response in chunks to simulate streaming responses.
 
         This method demonstrates how streaming works by splitting the full response

@@ -1,12 +1,11 @@
 import pytest
 from unittest.mock import MagicMock
 
-from thinkthread_sdk.cort_session import CoRTSession
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.config import ThinkThreadConfig
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.prompting import TemplateManager
 from tests.test_evaluator import SimpleEvaluator
-from thinkthread_sdk.llm import LLMClient
 
 
 @pytest.fixture
@@ -30,7 +29,7 @@ def mock_template_manager():
 @pytest.fixture
 def mock_config():
     """Provide a mock config object with pairwise evaluation enabled."""
-    config = CoRTConfig()
+    config = ThinkThreadConfig()
     config.use_pairwise_evaluation = True
     return config
 
@@ -55,7 +54,7 @@ def test_cort_session_with_pairwise_evaluation_prefer_new(
 
     evaluator = SimpleEvaluator(should_prefer_new=True)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         config=mock_config,
@@ -91,7 +90,7 @@ def test_cort_session_with_pairwise_evaluation_prefer_previous(
 
     evaluator = SimpleEvaluator(should_prefer_new=False)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         config=mock_config,
@@ -109,7 +108,6 @@ def test_cort_session_with_pairwise_evaluation_prefer_previous(
 
 def test_cort_session_with_model_evaluator(mock_template_manager, mock_config):
     """Test CoRT session with the ModelEvaluator."""
-    from thinkthread_sdk.evaluation import ModelEvaluator
 
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
@@ -131,7 +129,7 @@ def test_cort_session_with_model_evaluator(mock_template_manager, mock_config):
 
     client = DummyLLMClient(responses=responses)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client,
         template_manager=mock_template_manager,
         config=mock_config,

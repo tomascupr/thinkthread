@@ -1,4 +1,5 @@
 """Tests for the Anthropic LLM client implementation."""
+
 import os
 import pytest
 from thinkthread_sdk.llm.anthropic_client import AnthropicClient
