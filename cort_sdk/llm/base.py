@@ -5,7 +5,7 @@ providing a consistent API for different language model providers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, AsyncIterator, Dict, Any
+from typing import Optional, AsyncIterator, Any
 import asyncio
 
 
@@ -31,7 +31,7 @@ class LLMClient(ABC):
         self.model_name = model_name
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text from the language model based on the provided prompt.
 
         Args:
@@ -44,7 +44,7 @@ class LLMClient(ABC):
         """
         pass
 
-    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text from the language model.
 
         This method provides a non-blocking way to generate text from the LLM,
@@ -75,7 +75,7 @@ class LLMClient(ABC):
         return await asyncio.to_thread(self.generate, prompt, **kwargs)
 
     @abstractmethod
-    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+    def astream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
         """Asynchronously stream text generation from the language model.
 
         This method yields chunks of the generated text as they become available,

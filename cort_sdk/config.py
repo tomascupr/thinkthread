@@ -52,16 +52,31 @@ class CoRTConfig(BaseModel):
         "prompt_dir": "PROMPT_DIR",
     }
 
-    @field_validator("alternatives", "rounds", mode="before")
+    @field_validator("alternatives", "rounds", "max_rounds", mode="before")
     @classmethod
     def validate_int_fields(cls, v: Union[str, int]) -> int:
-        """Validate integer fields."""
+        """Validate integer fields to ensure they are valid non-negative integers."""
         if isinstance(v, str):
             try:
-                return int(v)
+                v = int(v)
             except ValueError:
                 raise ValueError(f"Value must be a valid integer, got {v}")
+
+        if v < 0:
+            raise ValueError(f"Value must be non-negative, got {v}")
+
         return v
+
+    @field_validator("provider", mode="before")
+    @classmethod
+    def validate_provider(cls, v: str) -> str:
+        """Validate provider name against supported providers."""
+        valid_providers = ["openai", "anthropic", "hf", "dummy"]
+        if v.lower() not in valid_providers:
+            raise ValueError(
+                f"Unknown provider: {v}. Valid providers are: {', '.join(valid_providers)}"
+            )
+        return v.lower()
 
 
 def load_dotenv(env_file: Union[str, Path]) -> Dict[str, str]:
@@ -74,7 +89,7 @@ def load_dotenv(env_file: Union[str, Path]) -> Dict[str, str]:
         Dictionary of environment variables
 
     """
-    env_vars = {}
+    env_vars: Dict[str, str] = {}
 
     if not os.path.exists(env_file):
         return env_vars
@@ -101,11 +116,11 @@ def create_config(env_file: Optional[str] = ".env") -> CoRTConfig:
         CoRTConfig instance
 
     """
-    env_vars = {}
+    env_vars: Dict[str, str] = {}
     if env_file and os.path.exists(env_file):
         env_vars = load_dotenv(env_file)
 
-    config_data = {}
+    config_data: Dict[str, Any] = {}
 
     for field_name, env_var in CoRTConfig._env_vars.items():
         if env_var in env_vars:
