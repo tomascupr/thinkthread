@@ -3,8 +3,8 @@ import asyncio
 from typing import AsyncIterator, List
 
 from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.cort_session import CoRTSession
-from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.cort_session import ThinkThreadSession
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 class CustomStreamingClient(DummyLLMClient):
@@ -72,7 +72,7 @@ async def test_large_stream():
 @pytest.mark.asyncio
 async def test_async_reasoning_loop():
     """Test async reasoning loop with streaming results."""
-    config = CoRTConfig(use_pairwise_evaluation=False)
+    config = ThinkThreadConfig(use_pairwise_evaluation=False)
 
     responses = [
         "Initial answer",
@@ -82,7 +82,7 @@ async def test_async_reasoning_loop():
 
     client = DummyLLMClient(responses=responses)
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, max_rounds=1, alternatives=1, config=config
     )
 
