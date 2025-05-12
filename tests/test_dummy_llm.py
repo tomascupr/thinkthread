@@ -1,5 +1,5 @@
 import pytest
-from cort_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.llm.dummy import DummyLLMClient
 
 
 def test_dummy_llm_default_behavior():

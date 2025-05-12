@@ -2,7 +2,7 @@ import os
 import pytest
 from tempfile import NamedTemporaryFile
 
-from cort_sdk.config import CoRTConfig, create_config
+from thinkthread_sdk.config import CoRTConfig, create_config
 
 
 def test_default_values():

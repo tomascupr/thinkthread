@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch, call, MagicMock
 
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.prompting import TemplateManager
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.prompting import TemplateManager
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def mock_template_manager():
 @pytest.fixture
 def mock_config():
     """Provide a mock config object."""
-    from cort_sdk.config import CoRTConfig
+    from thinkthread_sdk.config import CoRTConfig
 
     return CoRTConfig()
 
@@ -165,7 +165,7 @@ def test_cort_session_same_answer_selected(mock_template_manager, mock_config):
 
 def test_evaluation_strategy_parse_evaluation(mock_template_manager, mock_config):
     """Test the _parse_evaluation method of DefaultEvaluationStrategy with different evaluation texts."""
-    from cort_sdk.evaluation import DefaultEvaluationStrategy
+    from thinkthread_sdk.evaluation import DefaultEvaluationStrategy
 
     strategy = DefaultEvaluationStrategy()
 

@@ -1,7 +1,7 @@
 import requests
 from unittest.mock import patch, MagicMock
 
-from cort_sdk.llm.hf_client import HuggingFaceClient
+from thinkthread_sdk.llm.hf_client import HuggingFaceClient
 
 
 def test_hf_client_init():

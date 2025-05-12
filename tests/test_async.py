@@ -3,10 +3,10 @@ import pytest
 import asyncio
 from typing import List
 
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.config import CoRTConfig
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.config import CoRTConfig
 
 
 @pytest.fixture
