@@ -72,13 +72,23 @@ class CoRTSession:
     def run(self, question: str) -> str:
         """Execute the Chain-of-Recursive-Thoughts process on a question.
 
-        The process involves:
-        1. Generating an initial answer
-        2. For each round:
-           a. Generating alternative answers
-           b. Evaluating all answers to select the best one
+        The Chain-of-Recursive-Thoughts (CoRT) algorithm improves answer quality through
+        multiple rounds of refinement. The process involves:
+        
+        1. Generating an initial answer with moderate temperature (0.7) for creativity
+        2. For each refinement round:
+           a. Generating alternative answers with higher temperature (0.9) to explore diverse solutions
+           b. Evaluating all answers using one of three strategies:
+              - Self-evaluation: Compare each alternative against the current best answer
+              - Pairwise evaluation: Similar to self-evaluation but with different implementation
+              - Default strategy: Evaluate all answers together to select the best one
            c. Using the best answer as the current answer for the next round
-        3. Returning the final best answer
+        3. Returning the final best answer after all refinement rounds
+
+        The evaluation strategy is determined by configuration settings:
+        - use_self_evaluation: Uses the evaluator to compare alternatives one by one
+        - use_pairwise_evaluation: Similar approach with different implementation details
+        - Default: Uses the evaluation_strategy to rank all answers at once
 
         Args:
             question: The question to answer

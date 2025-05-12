@@ -49,8 +49,15 @@ class HuggingFaceClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Exception: If there's an error communicating with the Hugging Face API
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "Hugging Face API error: {status_code} - {response_text}" for HTTP status errors
+            - "Hugging Face API error: {error_message}" for API-reported errors
+            - "Request error when calling Hugging Face API: ..." for request exceptions, which may include:
+              - Authentication errors (invalid API token)
+              - Connection errors (network issues)
+              - Timeout errors (request took too long)
+            - "Unexpected error when calling Hugging Face API: ..." for other errors
 
         """
         options = self.opts.copy()
@@ -115,10 +122,16 @@ class HuggingFaceClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Returns error messages as strings instead of raising exceptions:
-            - "Hugging Face API error: ..." for HTTP status errors
-            - "Request error when calling Hugging Face API: ..." for aiohttp errors
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "Hugging Face API error: {status_code} - {response_text}" for HTTP status errors
+            - "Hugging Face API error: {error_message}" for API-reported errors
+            - "Request error when calling Hugging Face API: ..." for aiohttp ClientError exceptions, which may include:
+              - Authentication errors (invalid API token)
+              - Connection errors (network issues)
+              - Timeout errors (request took too long)
+              - DNS resolution errors
+              - SSL certificate errors
             - "Unexpected error when calling Hugging Face API: ..." for other errors
 
         Note:
@@ -196,6 +209,15 @@ class HuggingFaceClient(LLMClient):
             Small chunks of the generated text response (3 words at a time),
             with spaces preserved between words and a trailing space after
             each chunk.
+
+        Error Handling:
+            This method inherits error handling from the acomplete method:
+            - If acomplete returns an error message, the entire error message is
+              yielded as a single chunk
+            - Error messages will begin with either "Hugging Face API error: ...",
+              "Request error when calling Hugging Face API: ...", or
+              "Unexpected error when calling Hugging Face API: ..."
+            - See acomplete method documentation for details on specific error types
 
         Note:
             The artificial delay (0.1s per chunk) can be adjusted to simulate

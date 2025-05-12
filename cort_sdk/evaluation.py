@@ -80,7 +80,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
             },
         )
 
-        evaluation = llm_client.generate(prompt, temperature=0.2)
+        evaluation = llm_client.generate(prompt, **{"temperature": 0.2})
 
         return self._parse_evaluation(evaluation, len(answers))
 
@@ -184,7 +184,7 @@ class ModelEvaluator(Evaluator):
             },
         )
 
-        evaluation = llm_client.generate(prompt, temperature=0.2)
+        evaluation = llm_client.generate(prompt, **{"temperature": 0.2})
 
         return self._parse_evaluation(evaluation)
 

@@ -52,8 +52,15 @@ class AnthropicClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Exception: If there's an error communicating with the Anthropic API
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "Anthropic API request error: ..." for HTTP request errors, which may include:
+              - Authentication errors (invalid API key)
+              - Rate limit errors (too many requests)
+              - Quota exceeded errors (billing issues)
+              - Invalid request errors (bad parameters)
+              - Connection errors (network issues)
+            - "Unexpected error when calling Anthropic API: ..." for other errors
 
         """
         current_time = time.time()
@@ -131,9 +138,15 @@ class AnthropicClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Returns error messages as strings instead of raising exceptions:
-            - "Anthropic API request error: ..." for aiohttp-specific errors
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "Anthropic API request error: ..." for aiohttp ClientError exceptions, which may include:
+              - Authentication errors (invalid API key)
+              - Rate limit errors (HTTP 429 Too Many Requests)
+              - Quota exceeded errors (billing issues)
+              - Invalid request errors (HTTP 400 Bad Request)
+              - Connection errors (network issues, timeouts)
+              - Server errors (HTTP 5xx errors)
             - "Unexpected error when calling Anthropic API: ..." for other errors
 
         Note:
@@ -223,6 +236,14 @@ class AnthropicClient(LLMClient):
             Chunks of the generated text response from the model, approximately
             sentence by sentence. If the response doesn't contain periods, the
             entire response is yielded as a single chunk.
+
+        Error Handling:
+            This method inherits error handling from the acomplete method:
+            - If acomplete returns an error message, the entire error message is
+              yielded as a single chunk
+            - Error messages will begin with either "Anthropic API request error: ..."
+              or "Unexpected error when calling Anthropic API: ..."
+            - See acomplete method documentation for details on specific error types
 
         Note:
             The artificial delay (0.2s per chunk) can be adjusted to simulate
