@@ -99,12 +99,38 @@ class HuggingFaceClient(LLMClient):
         """
         Asynchronously generate text using Hugging Face's text generation inference API.
 
+        This method provides a non-blocking way to generate text from Hugging Face
+        models, making it suitable for use in async applications like web servers,
+        GUI applications, or any context where you don't want to block the main thread.
+        It uses aiohttp for asynchronous HTTP requests to the Hugging Face Inference API.
+        
+        The implementation creates a new aiohttp ClientSession for each call, which
+        is appropriate for serverless environments but may not be optimal for
+        high-throughput applications. It properly handles various response formats
+        from the Hugging Face API, which can vary depending on the model being used.
+
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
-
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_new_tokens: Maximum number of tokens to generate
+                - top_k: Limits sampling to the k most likely tokens
+                - top_p: Controls diversity via nucleus sampling
+                - repetition_penalty: Penalizes repeated tokens
+            
         Returns:
             The generated text response from the model
+            
+        Raises:
+            Returns error messages as strings instead of raising exceptions:
+            - "Hugging Face API error: ..." for HTTP status errors
+            - "Request error when calling Hugging Face API: ..." for aiohttp errors
+            - "Unexpected error when calling Hugging Face API: ..." for other errors
+            
+        Note:
+            This implementation uses proper async context managers for the aiohttp
+            ClientSession and response objects to ensure resources are properly
+            cleaned up even in case of exceptions.
         """
         options = self.opts.copy()
         options.update(kwargs)
@@ -148,12 +174,39 @@ class HuggingFaceClient(LLMClient):
         """
         Asynchronously stream text generation from Hugging Face's API.
 
+        This method simulates streaming by splitting the complete response into
+        small word groups and yielding them with a small delay. While some Hugging
+        Face models support native streaming, this implementation uses a simpler
+        approach that works consistently across all models without requiring
+        model-specific streaming configurations.
+        
+        The simulated streaming is useful for:
+        1. Providing a responsive user experience with progressive output
+        2. Testing streaming UI components without complex streaming logic
+        3. Demonstrating the benefits of streaming in educational contexts
+        4. Allowing early processing of partial responses
+        
+        The implementation first gets the complete response using `acomplete`,
+        then splits it into words and yields them in small groups (3 words at a time)
+        with a delay to simulate network latency and token-by-token generation.
+
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
-
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_new_tokens: Maximum number of tokens to generate
+                - top_k: Limits sampling to the k most likely tokens
+                - top_p: Controls diversity via nucleus sampling
+                - repetition_penalty: Penalizes repeated tokens
+            
         Yields:
-            Chunks of the generated text response from the model
+            Small chunks of the generated text response (3 words at a time),
+            with spaces preserved between words and a trailing space after
+            each chunk.
+            
+        Note:
+            The artificial delay (0.1s per chunk) can be adjusted to simulate
+            different network conditions or model generation speeds.
         """
         full_response = await self.acomplete(prompt, **kwargs)
         

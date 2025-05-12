@@ -39,16 +39,29 @@ class LLMClient(ABC):
         """
         Asynchronously generate text from the language model.
 
-        By default, this wraps the synchronous generate method, but
-        subclasses should override this with a native async implementation
-        when possible.
+        This method provides a non-blocking way to generate text from the LLM,
+        allowing the calling application to perform other tasks while waiting
+        for the model's response. Use this method in async applications or when
+        you need to make multiple concurrent LLM calls.
+
+        By default, this wraps the synchronous generate method using asyncio.to_thread,
+        but subclasses should override this with a native async implementation
+        when possible for better performance and resource management.
 
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional model-specific parameters
+            **kwargs: Additional model-specific parameters which may include:
+                - temperature: Controls randomness (higher = more random)
+                - max_tokens: Maximum number of tokens to generate
+                - stop: Sequences where the API will stop generating further tokens
 
         Returns:
             The generated text response from the model
+
+        Raises:
+            Various exceptions may be raised depending on the implementation,
+            including network errors, authentication issues, or rate limiting.
+            Implementations should document their specific error handling behavior.
         """
         return await asyncio.to_thread(self.generate, prompt, **kwargs)
 
@@ -57,11 +70,32 @@ class LLMClient(ABC):
         """
         Asynchronously stream text generation from the language model.
 
+        This method yields chunks of the generated text as they become available,
+        rather than waiting for the complete response. This is particularly useful for:
+        
+        1. Providing real-time feedback to users as text is being generated
+        2. Processing very long responses without waiting for completion
+        3. Implementing responsive UIs that display partial results
+        4. Handling early termination of generation if needed
+
+        Implementations should ensure proper resource cleanup even if the caller
+        stops consuming the stream before it's complete.
+
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional model-specific parameters
+            **kwargs: Additional model-specific parameters which may include:
+                - temperature: Controls randomness (higher = more random)
+                - max_tokens: Maximum number of tokens to generate
+                - stop: Sequences where the API will stop generating further tokens
 
         Yields:
-            Chunks of the generated text response from the model
+            Chunks of the generated text response from the model. The exact
+            chunking behavior depends on the implementation (e.g., by tokens,
+            by words, or by sentences).
+
+        Raises:
+            Various exceptions may be raised depending on the implementation,
+            including network errors, authentication issues, or rate limiting.
+            Implementations should document their specific error handling behavior.
         """
         pass

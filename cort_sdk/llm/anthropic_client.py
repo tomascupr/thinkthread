@@ -106,12 +106,36 @@ class AnthropicClient(LLMClient):
         """
         Asynchronously generate text using Anthropic's API.
 
+        This method provides a non-blocking way to generate text from Anthropic's
+        Claude models, making it suitable for use in async applications like web
+        servers, GUI applications, or any context where you don't want to block
+        the main thread. It uses aiohttp for asynchronous HTTP requests.
+        
+        The implementation includes rate limiting (minimum 500ms between calls)
+        to help avoid Anthropic API rate limits. It creates a new aiohttp ClientSession
+        for each call, which is appropriate for serverless environments but may
+        not be optimal for high-throughput applications.
+
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
-
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_tokens: Maximum number of tokens to generate
+                - top_k: Limits sampling to the k most likely tokens
+                - top_p: Controls diversity via nucleus sampling
+            
         Returns:
             The generated text response from the model
+            
+        Raises:
+            Returns error messages as strings instead of raising exceptions:
+            - "Anthropic API request error: ..." for aiohttp-specific errors
+            - "Unexpected error when calling Anthropic API: ..." for other errors
+            
+        Note:
+            This implementation uses proper async context managers for the aiohttp
+            ClientSession and response objects to ensure resources are properly
+            cleaned up even in case of exceptions.
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
@@ -166,12 +190,37 @@ class AnthropicClient(LLMClient):
         """
         Asynchronously stream text generation from Anthropic's API.
 
+        This method simulates streaming by splitting the complete response into
+        sentence-like chunks and yielding them with a small delay. While Anthropic's
+        API does support native streaming, this implementation uses a simpler approach
+        that works well for most use cases without requiring additional complexity.
+        
+        The simulated streaming is useful for:
+        1. Providing a responsive user experience with progressive output
+        2. Testing streaming UI components without complex streaming logic
+        3. Demonstrating the benefits of streaming in educational contexts
+        4. Allowing early processing of partial responses
+        
+        The implementation first gets the complete response using `acomplete`,
+        then splits it by periods and yields each sentence-like chunk with a
+        delay to simulate network latency and token-by-token generation.
+
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
-
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_tokens: Maximum number of tokens to generate
+                - top_k: Limits sampling to the k most likely tokens
+                - top_p: Controls diversity via nucleus sampling
+            
         Yields:
-            Chunks of the generated text response from the model
+            Chunks of the generated text response from the model, approximately
+            sentence by sentence. If the response doesn't contain periods, the
+            entire response is yielded as a single chunk.
+            
+        Note:
+            The artificial delay (0.2s per chunk) can be adjusted to simulate
+            different network conditions or model generation speeds.
         """
         full_response = await self.acomplete(prompt, **kwargs)
         

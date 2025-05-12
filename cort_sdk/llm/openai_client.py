@@ -85,12 +85,36 @@ class OpenAIClient(LLMClient):
         """
         Asynchronously generate text using OpenAI's Chat Completion API.
         
+        This method provides a non-blocking way to generate text from OpenAI models,
+        making it suitable for use in async applications like web servers, GUI
+        applications, or any context where you don't want to block the main thread.
+        It uses OpenAI's native async client for optimal performance.
+        
+        The implementation includes rate limiting (minimum 500ms between calls)
+        to help avoid OpenAI API rate limits. It creates a new AsyncOpenAI client
+        for each call, which is appropriate for serverless environments but may
+        not be optimal for high-throughput applications.
+        
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_tokens: Maximum number of tokens to generate
+                - top_p: Controls diversity via nucleus sampling
+                - frequency_penalty: Reduces repetition of token sequences
+                - presence_penalty: Reduces repetition of topics
             
         Returns:
             The generated text response from the model
+            
+        Raises:
+            Returns error messages as strings instead of raising exceptions:
+            - "OpenAI API error: ..." for OpenAI-specific errors
+            - "Unexpected error when calling OpenAI API: ..." for other errors
+            
+        Note:
+            For high-throughput applications, consider implementing a shared
+            AsyncOpenAI client with proper lifecycle management.
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
@@ -125,12 +149,41 @@ class OpenAIClient(LLMClient):
         """
         Asynchronously stream text generation from OpenAI's Chat Completion API.
         
+        This method provides real-time streaming of tokens as they're generated
+        by the model, rather than waiting for the complete response. This is
+        particularly valuable for:
+        
+        1. Creating responsive UIs that show text generation in real-time
+        2. Processing very long responses without waiting for completion
+        3. Implementing early-stopping logic based on generated content
+        4. Reducing perceived latency for end users
+        
+        The implementation uses OpenAI's native streaming support by setting
+        the `stream=True` parameter. It creates a new AsyncOpenAI client for
+        each call and properly handles the streaming response, yielding each
+        content delta as it arrives.
+        
         Args:
             prompt: The input text to send to the model
-            **kwargs: Additional parameters to override the default options
+            **kwargs: Additional parameters to override the default options, including:
+                - temperature: Controls randomness (0.0-1.0)
+                - max_tokens: Maximum number of tokens to generate
+                - top_p: Controls diversity via nucleus sampling
+                - frequency_penalty: Reduces repetition of token sequences
+                - presence_penalty: Reduces repetition of topics
             
         Yields:
-            Chunks of the generated text response from the model
+            Chunks of the generated text response from the model as they become
+            available. Each chunk is a string containing a portion of the response.
+            
+        Raises:
+            Yields error messages as strings instead of raising exceptions:
+            - "OpenAI API error: ..." for OpenAI-specific errors
+            - "Unexpected error when calling OpenAI API: ..." for other errors
+            
+        Note:
+            The stream parameter is automatically set to True and will override
+            any value provided in kwargs.
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
