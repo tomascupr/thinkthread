@@ -24,7 +24,13 @@ class OpenAIClient(LLMClient):
     lifecycle of these clients to ensure resources are cleaned up appropriately.
     """
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4", model: Optional[str] = None, **opts: Any) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model_name: str = "gpt-4",
+        model: Optional[str] = None,
+        **opts: Any,
+    ) -> None:
         """Initialize the OpenAI client.
 
         Args:

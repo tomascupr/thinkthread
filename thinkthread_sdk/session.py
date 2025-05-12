@@ -53,7 +53,6 @@ class ThinkThreadSession:
         self.alternatives = alternatives
         self.rounds = rounds
 
-        # Initialize configuration and template manager
         self.config = config or create_config()
         self.template_manager = template_manager or TemplateManager(
             self.config.prompt_dir
@@ -61,10 +60,8 @@ class ThinkThreadSession:
 
         self.max_rounds = max_rounds if max_rounds is not None else self.rounds
 
-        # Initialize evaluation strategy
         self.evaluation_strategy = evaluation_strategy or DefaultEvaluationStrategy()
 
-        # Initialize evaluator for pairwise comparison
         self.evaluator = evaluator or ModelEvaluator()
         self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
         self.use_self_evaluation = self.config.use_self_evaluation
@@ -112,7 +109,6 @@ class ThinkThreadSession:
                 best_answer = current_answer
 
                 for alternative in alternatives:
-                    # Use the evaluator to decide if the alternative is better
                     if self.evaluator.evaluate(
                         question,
                         best_answer,
@@ -140,7 +136,6 @@ class ThinkThreadSession:
             else:
                 all_answers = [current_answer] + alternatives
 
-                # Use the evaluation strategy to select the best answer
                 best_index = self.evaluation_strategy.evaluate(
                     question, all_answers, self.llm_client, self.template_manager
                 )
@@ -172,8 +167,6 @@ class ThinkThreadSession:
             alternatives.append(alternative)
 
         return alternatives
-
-    # They are now implemented in DefaultEvaluationStrategy
 
     async def run_async(self, question: str) -> str:
         """Execute the ThinkThread process asynchronously on a question.
@@ -225,7 +218,6 @@ class ThinkThreadSession:
                 best_answer = current_answer
 
                 for alternative in alternatives:
-                    # Use the evaluator to decide if the alternative is better
                     is_better = await self._evaluate_async(
                         question, best_answer, alternative
                     )
@@ -236,7 +228,6 @@ class ThinkThreadSession:
             else:
                 all_answers = [current_answer] + alternatives
 
-                # Use the evaluation strategy to select the best answer
                 best_index = await self._evaluate_all_async(question, all_answers)
 
                 current_answer = all_answers[best_index]

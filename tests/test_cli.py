@@ -23,7 +23,7 @@ def test_version_command(runner):
 
 @patch("thinkthread_sdk.cli.create_config")
 @patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.ThinkThreadSession")
 @patch("thinkthread_sdk.cli.asyncio.run")
 def test_ask_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
@@ -48,7 +48,7 @@ def test_ask_command(
 
 @patch("thinkthread_sdk.cli.create_config")
 @patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.ThinkThreadSession")
 @patch("thinkthread_sdk.cli.asyncio.run")
 def test_run_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
@@ -85,7 +85,7 @@ def test_run_command(
 
 @patch("thinkthread_sdk.cli.create_config")
 @patch("thinkthread_sdk.cli.OpenAIClient")
-@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.ThinkThreadSession")
 @patch("thinkthread_sdk.cli.asyncio.run")
 def test_provider_selection(
     mock_asyncio_run, mock_session, mock_openai, mock_create_config, runner
@@ -124,7 +124,7 @@ def test_help_output(runner):
 
 @patch("thinkthread_sdk.cli.create_config")
 @patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.CoRTSession")
+@patch("thinkthread_sdk.cli.ThinkThreadSession")
 @patch("thinkthread_sdk.cli.asyncio.run")
 def test_cli_with_options(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner

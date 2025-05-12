@@ -1,6 +1,6 @@
 """Command-line interface for the ThinkThread SDK.
 
-This module provides a CLI for running CoRT reasoning using different LLM providers
+This module provides a CLI for running ThinkThread reasoning using different LLM providers
 and viewing the results.
 """
 
@@ -9,7 +9,7 @@ import asyncio
 import logging
 from typing import Optional
 from thinkthread_sdk import __version__
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.config import create_config
 from thinkthread_sdk.llm import (
     OpenAIClient,
@@ -46,13 +46,13 @@ def ask(
     rounds: int = typer.Option(2, help="Number of refinement rounds"),
     stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
 ) -> None:
-    """Ask a question and get an answer using CoRT reasoning.
+    """Ask a question and get an answer using ThinkThread reasoning.
 
     This command provides a CLI interface to the Chain-of-Recursive-Thoughts
     reasoning process. It supports multiple LLM providers and offers both
     synchronous and streaming output modes.
 
-    The command uses the async implementation of CoRT internally, even when
+    The command uses the async implementation of ThinkThread internally, even when
     called from the synchronous CLI context. This is achieved by using
     asyncio.run() to run the async code in the event loop.
 
@@ -95,7 +95,7 @@ def ask(
         print(f"Unknown provider: {provider}")
         return
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, alternatives=alternatives, rounds=rounds, config=config
     )
 
@@ -103,11 +103,11 @@ def ask(
 
 
 async def run_session(
-    session: CoRTSession, question: str, stream: bool, verbose: bool = False
+    session: ThinkThreadSession, question: str, stream: bool, verbose: bool = False
 ) -> None:
-    """Run the CoRT session asynchronously with optional streaming.
+    """Run the ThinkThread session asynchronously with optional streaming.
 
-    This function handles the execution of the CoRT reasoning process in an
+    This function handles the execution of the ThinkThread reasoning process in an
     asynchronous manner, with support for streaming the final answer as it's
     generated. It provides two modes of operation:
 
@@ -119,12 +119,12 @@ async def run_session(
        which is useful for scripting or when the output needs to be captured
        as a single block.
 
-    The implementation uses the async CoRT session and, when streaming is enabled,
+    The implementation uses the async ThinkThread session and, when streaming is enabled,
     leverages the LLM client's astream method to progressively display tokens
     as they're generated.
 
     Args:
-        session: The CoRTSession instance to use for reasoning
+        session: The ThinkThread session instance to use for reasoning
         question: The question to answer
         stream: Whether to stream the final answer as it's generated
         verbose: Whether to enable verbose logging
@@ -143,7 +143,7 @@ async def run_session(
         answer = await session.run_async(question)
 
         if verbose:
-            logging.debug("Received answer from CoRT session")
+            logging.debug("Received answer from ThinkThread session")
 
         print("\r" + " " * 20 + "\r", end="", flush=True)
 
@@ -169,7 +169,7 @@ async def run_session(
         answer = await session.run_async(question)
 
         if verbose:
-            logging.debug("Received answer from CoRT session")
+            logging.debug("Received answer from ThinkThread session")
 
         print("Answer:")
         print(answer)
@@ -264,12 +264,12 @@ def run(
         print(f"Unknown provider: {provider}")
         return
 
-    session = CoRTSession(
+    session = ThinkThreadSession(
         llm_client=client, alternatives=alternatives, rounds=rounds, config=config
     )
 
     if verbose:
-        logging.debug("Starting CoRT session")
+        logging.debug("Starting ThinkThread session")
 
     asyncio.run(run_session(session, question, stream, verbose))
 

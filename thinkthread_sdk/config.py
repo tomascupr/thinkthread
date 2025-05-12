@@ -10,10 +10,10 @@ from pathlib import Path
 from pydantic import BaseModel, field_validator
 
 
-class CoRTConfig(BaseModel):
+class ThinkThreadConfig(BaseModel):
     """Configuration for the ThinkThread SDK.
 
-    This class manages settings like API keys, model choices, and default CoRT parameters.
+    This class manages settings like API keys, model choices, and default ThinkThread parameters.
     Values are loaded from environment variables or a .env file if present.
     """
 
@@ -106,14 +106,14 @@ def load_dotenv(env_file: Union[str, Path]) -> Dict[str, str]:
     return env_vars
 
 
-def create_config(env_file: Optional[str] = ".env") -> CoRTConfig:
-    """Create a CoRTConfig instance with values from environment variables and .env file.
+def create_config(env_file: Optional[str] = ".env") -> ThinkThreadConfig:
+    """Create a ThinkThreadConfig instance with values from environment variables and .env file.
 
     Args:
         env_file: Path to the .env file (default: ".env")
 
     Returns:
-        CoRTConfig instance
+        ThinkThreadConfig instance
 
     """
     env_vars: Dict[str, str] = {}
@@ -122,11 +122,11 @@ def create_config(env_file: Optional[str] = ".env") -> CoRTConfig:
 
     config_data: Dict[str, Any] = {}
 
-    for field_name, env_var in CoRTConfig._env_vars.items():
+    for field_name, env_var in ThinkThreadConfig._env_vars.items():
         if env_var in env_vars:
             config_data[field_name] = env_vars[env_var]
 
         if env_var in os.environ:
             config_data[field_name] = os.environ[env_var]
 
-    return CoRTConfig(**config_data)
+    return ThinkThreadConfig(**config_data)

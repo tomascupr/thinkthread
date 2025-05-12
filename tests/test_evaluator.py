@@ -1,7 +1,11 @@
 import pytest
 from unittest.mock import MagicMock
 
-from thinkthread_sdk.evaluation import Evaluator, ModelEvaluator, DefaultEvaluationStrategy
+from thinkthread_sdk.evaluation import (
+    Evaluator,
+    ModelEvaluator,
+    DefaultEvaluationStrategy,
+)
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.prompting import TemplateManager
 from thinkthread_sdk.llm import LLMClient

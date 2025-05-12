@@ -4,7 +4,7 @@ This module provides evaluation strategies that determine which answer is best
 among a set of alternatives in the CoRT reasoning process.
 """
 
-from typing import List, Optional
+from typing import List
 from abc import ABC, abstractmethod
 import re
 
