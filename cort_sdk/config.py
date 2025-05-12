@@ -26,6 +26,7 @@ class CoRTConfig(BaseModel):
     max_rounds: int = 3
     
     use_pairwise_evaluation: bool = True
+    use_self_evaluation: bool = False
     
     prompt_dir: Optional[str] = None
     
@@ -41,6 +42,7 @@ class CoRTConfig(BaseModel):
         "rounds": "ROUNDS",
         "max_rounds": "MAX_ROUNDS",
         "use_pairwise_evaluation": "USE_PAIRWISE_EVALUATION",
+        "use_self_evaluation": "USE_SELF_EVALUATION",
         "prompt_dir": "PROMPT_DIR",
     }
     
