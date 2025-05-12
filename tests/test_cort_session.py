@@ -95,6 +95,9 @@ def test_cort_session_normal_case(mock_template_manager, mock_config):
     
     client = DummyLLMClient(responses=responses)
     
+    # Disable pairwise evaluation for this test to use the DefaultEvaluationStrategy
+    mock_config.use_pairwise_evaluation = False
+    
     session = CoRTSession(llm_client=client, template_manager=mock_template_manager, config=mock_config)
     
     result = session.run("What is the meaning of life?")
@@ -121,6 +124,9 @@ def test_cort_session_same_answer_selected(mock_template_manager, mock_config):
     ]
     
     client = DummyLLMClient(responses=responses)
+    
+    # Disable pairwise evaluation for this test to use the DefaultEvaluationStrategy
+    mock_config.use_pairwise_evaluation = False
     
     session = CoRTSession(llm_client=client, template_manager=mock_template_manager, config=mock_config)
     
@@ -162,7 +168,9 @@ def test_cort_session_max_rounds(mock_template_manager, mock_config):
     
     client = DummyLLMClient(responses=responses)
     
-    # Set max_rounds=1 explicitly
+    # Set max_rounds=1 explicitly and disable pairwise evaluation
+    mock_config.use_pairwise_evaluation = False
+    
     session = CoRTSession(
         llm_client=client, 
         template_manager=mock_template_manager, 
@@ -194,6 +202,9 @@ def test_cort_session_custom_evaluation_strategy(mock_template_manager, mock_con
     client = DummyLLMClient(responses=responses)
     
     custom_strategy = SimpleEvaluationStrategy(index_to_select=2)
+    
+    # Disable pairwise evaluation for this test to use the custom evaluation strategy
+    mock_config.use_pairwise_evaluation = False
     
     session = CoRTSession(
         llm_client=client, 

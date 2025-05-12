@@ -106,3 +106,105 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
                     return i - 1
         
         return 0
+
+
+class Evaluator(ABC):
+    """
+    Abstract base class for pairwise answer evaluation.
+    
+    This defines the interface for evaluating whether a new answer 
+    is better than the previous answer.
+    """
+    
+    @abstractmethod
+    def evaluate(
+        self, 
+        question: str, 
+        prev_answer: str, 
+        new_answer: str, 
+        llm_client: LLMClient,
+        template_manager: TemplateManager
+    ) -> bool:
+        """
+        Evaluate whether the new answer is better than the previous answer.
+        
+        Args:
+            question: The original question
+            prev_answer: The previous answer
+            new_answer: The new answer to evaluate
+            llm_client: LLM client to use for evaluation
+            template_manager: Template manager for prompt templates
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        pass
+
+
+class ModelEvaluator(Evaluator):
+    """
+    Default implementation of the pairwise evaluator.
+    
+    Uses an LLM to evaluate whether a new answer is better than the previous one.
+    """
+    
+    def evaluate(
+        self, 
+        question: str, 
+        prev_answer: str, 
+        new_answer: str, 
+        llm_client: LLMClient,
+        template_manager: TemplateManager
+    ) -> bool:
+        """
+        Evaluate using the LLM and prompt template to determine if the new answer is better.
+        
+        Args:
+            question: The original question
+            prev_answer: The previous answer
+            new_answer: The new answer to evaluate
+            llm_client: LLM client to use for evaluation
+            template_manager: Template manager for prompt templates
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        prompt = template_manager.render_template(
+            "pairwise_prompt.j2",
+            {
+                "question": question,
+                "prev_answer": prev_answer,
+                "new_answer": new_answer
+            }
+        )
+        
+        evaluation = llm_client.generate(prompt, temperature=0.2)
+        
+        return self._parse_evaluation(evaluation)
+    
+    def _parse_evaluation(self, evaluation: str) -> bool:
+        """
+        Parse the evaluation text to determine if the new answer should be selected.
+        
+        Args:
+            evaluation: The evaluation text from the LLM
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        better_indicators = [
+            "new answer is better",
+            "second answer is better",
+            "prefer the new answer",
+            "prefer the second answer",
+            "new answer is more accurate",
+            "second answer is more accurate",
+            "new answer should replace",
+            "second answer should replace",
+        ]
+        
+        for indicator in better_indicators:
+            if indicator.lower() in evaluation.lower():
+                return True
+        
+        return False
