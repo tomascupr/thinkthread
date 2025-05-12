@@ -1,4 +1,3 @@
-import pytest
 import requests
 from unittest.mock import patch, MagicMock
 
@@ -71,7 +70,7 @@ def test_generate_with_options(mock_post):
 
     client = HuggingFaceClient(api_token="test_token", temperature=0.7)
 
-    response = client.generate("Test prompt", temperature=0.2, max_new_tokens=50)
+    client.generate("Test prompt", temperature=0.2, max_new_tokens=50)
 
     call_args = mock_post.call_args
     assert call_args[1]["json"]["temperature"] == 0.2

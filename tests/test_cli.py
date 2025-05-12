@@ -3,7 +3,6 @@ from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 
 from cort_sdk.cli import app
-from cort_sdk.llm.dummy import DummyLLMClient
 
 
 @pytest.fixture
@@ -169,4 +168,4 @@ def test_cli_with_options(
     )
 
     assert result.exit_code == 0
-    assert mock_config.use_self_evaluation == True
+    assert mock_config.use_self_evaluation

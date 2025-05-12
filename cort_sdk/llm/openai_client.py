@@ -4,7 +4,7 @@ This module provides a client for interacting with OpenAI's models
 through their Chat Completion API.
 """
 
-from typing import Optional, Dict, Any, AsyncIterator
+from typing import Any, AsyncIterator, Optional
 import time
 import openai
 import asyncio
@@ -24,18 +24,20 @@ class OpenAIClient(LLMClient):
     lifecycle of these clients to ensure resources are cleaned up appropriately.
     """
 
-    def __init__(self, api_key: str, model: str = "gpt-4", **opts: Dict[str, Any]) -> None:
+    def __init__(self, api_key: str, model_name: str = "gpt-4", model: Optional[str] = None, **opts: Any) -> None:
         """Initialize the OpenAI client.
 
         Args:
             api_key: OpenAI API key
-            model: Model name to use (default: "gpt-4")
+            model_name: Model name to use (default: "gpt-4")
+            model: Alternative parameter name for model_name (for compatibility)
             **opts: Additional options to pass to the API (e.g., temperature, max_tokens)
 
         """
-        super().__init__(model_name=model)
+        model_to_use = model if model is not None else model_name
+        super().__init__(model_name=model_to_use)
         self.api_key = api_key
-        self.model = model
+        self.model = model_to_use
         self.opts = opts
 
         # Initialize the synchronous OpenAI client
@@ -44,9 +46,9 @@ class OpenAIClient(LLMClient):
         # Initialize the asynchronous OpenAI client
         self.async_client = openai.AsyncOpenAI(api_key=api_key)
 
-        self._last_call_time = 0
+        self._last_call_time: float = 0.0
 
-    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text using OpenAI's Chat Completion API.
 
         Args:
@@ -77,14 +79,16 @@ class OpenAIClient(LLMClient):
         options = self.opts.copy()
         options.update(kwargs)
 
-        messages = [{"role": "user", "content": prompt}]
-
         try:
             response = self.client.chat.completions.create(
-                model=self.model, messages=messages, **options
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **options,
             )
 
-            return response.choices[0].message.content
+            if response.choices and response.choices[0].message.content is not None:
+                return response.choices[0].message.content
+            return ""
 
         except OpenAIError as e:
             error_message = f"OpenAI API error: {str(e)}"
@@ -93,7 +97,7 @@ class OpenAIClient(LLMClient):
             error_message = f"Unexpected error when calling OpenAI API: {str(e)}"
             return error_message
 
-    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text using OpenAI's Chat Completion API.
 
         This method provides a non-blocking way to generate text from OpenAI models,
@@ -144,14 +148,16 @@ class OpenAIClient(LLMClient):
         options = self.opts.copy()
         options.update(kwargs)
 
-        messages = [{"role": "user", "content": prompt}]
-
         try:
             response = await self.async_client.chat.completions.create(
-                model=self.model, messages=messages, **options
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                **options,
             )
 
-            return response.choices[0].message.content
+            if response.choices and response.choices[0].message.content is not None:
+                return response.choices[0].message.content
+            return ""
 
         except OpenAIError as e:
             error_message = f"OpenAI API error: {str(e)}"
@@ -160,7 +166,7 @@ class OpenAIClient(LLMClient):
             error_message = f"Unexpected error when calling OpenAI API: {str(e)}"
             return error_message
 
-    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+    async def astream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
         """Asynchronously stream text generation from OpenAI's Chat Completion API.
 
         This method provides real-time streaming of tokens as they're generated
@@ -217,11 +223,12 @@ class OpenAIClient(LLMClient):
 
         options["stream"] = True
 
-        messages = [{"role": "user", "content": prompt}]
-
         try:
             stream = await self.async_client.chat.completions.create(
-                model=self.model, messages=messages, **options
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                stream=True,
+                **options,
             )
 
             async for chunk in stream:
