@@ -1,6 +1,6 @@
 # ThinkThread SDK
 
-The Chain-of-Recursive-Thoughts (CoRT) SDK provides a framework for improving LLM responses through a multi-round self-debate technique. CoRT enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
+The Chain-of-Recursive-Thoughts (CoRT) SDK provides a framework for improving LLM responses through a multi-round self-debate technique. ThinkThread enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
 
 ## What is Chain-of-Recursive-Thoughts?
 
@@ -14,6 +14,25 @@ Chain-of-Recursive-Thoughts is a technique that improves the quality of answers 
 3. Return the final selected answer
 
 This process enables the model to critically examine its own responses, consider alternative perspectives, and ultimately produce higher-quality answers.
+
+```mermaid
+graph TD
+    A[Initial Question] --> B[Generate Initial Answer]
+    B --> C[Round 1]
+    C --> D[Generate Alternative Answers]
+    D --> E[Evaluate All Answers]
+    E --> F[Select Best Answer]
+    F --> G[Round 2]
+    G --> H[Generate Alternative Answers]
+    H --> I[Evaluate All Answers]
+    I --> J[Select Best Answer]
+    J --> K[Final Answer]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style K fill:#9f9,stroke:#333,stroke-width:2px
+    style C fill:#ddf,stroke:#333,stroke-width:2px
+    style G fill:#ddf,stroke:#333,stroke-width:2px
+```
 
 ## Installation
 
@@ -69,7 +88,7 @@ print(f"Answer: {answer}")
 
 ## Configuration
 
-The CoRT SDK can be configured using environment variables or a `.env` file:
+The ThinkThread SDK can be configured using environment variables or a `.env` file:
 
 ```
 # LLM Provider API Keys
@@ -82,7 +101,7 @@ PROVIDER=openai
 OPENAI_MODEL=gpt-4
 ANTHROPIC_MODEL=claude-2
 
-# CoRT Algorithm Parameters
+# ThinkThread Algorithm Parameters
 ALTERNATIVES=3
 ROUNDS=2
 MAX_ROUNDS=3
@@ -97,7 +116,7 @@ PROMPT_DIR=/path/to/custom/prompts
 
 ## Features
 
-The CoRT SDK provides these key capabilities:
+The ThinkThread SDK provides these key capabilities:
 
 - **Multiple LLM Providers**: Support for OpenAI, Anthropic, and HuggingFace models
 - **Prompt Templating**: Customisable Jinja2 templates for all prompting needs
