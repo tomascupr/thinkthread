@@ -10,7 +10,7 @@ class LLMClient(ABC):
     This class defines the essential interface for interacting with different
     LLM providers. Concrete subclasses should implement the generate method
     for specific providers.
-    
+
     The class also provides async methods for non-blocking operation and
     streaming responses, with proper resource management through the aclose
     method for cleaning up resources when the client is no longer needed.
@@ -38,7 +38,7 @@ class LLMClient(ABC):
             The generated text response from the model
         """
         pass
-        
+
     async def acomplete(self, prompt: str, **kwargs) -> str:
         """
         Asynchronously generate text from the language model.
@@ -76,7 +76,7 @@ class LLMClient(ABC):
 
         This method yields chunks of the generated text as they become available,
         rather than waiting for the complete response. This is particularly useful for:
-        
+
         1. Providing real-time feedback to users as text is being generated
         2. Processing very long responses without waiting for completion
         3. Implementing responsive UIs that display partial results
@@ -103,19 +103,19 @@ class LLMClient(ABC):
             Implementations should document their specific error handling behavior.
         """
         pass
-        
+
     async def aclose(self) -> None:
         """
         Asynchronously close the client and clean up resources.
-        
+
         This method ensures that all resources used by the async client are
         properly released when the client is no longer needed. It should be
         called when you're done using the client to prevent resource leaks.
-        
+
         Implementations should override this method if they use resources that
         need to be explicitly cleaned up, such as HTTP sessions, database
         connections, or file handles.
-        
+
         Example usage:
             ```python
             client = SomeLLMClient(api_key="your-api-key")
@@ -125,7 +125,7 @@ class LLMClient(ABC):
             finally:
                 await client.aclose()
             ```
-            
+
         Returns:
             None
         """

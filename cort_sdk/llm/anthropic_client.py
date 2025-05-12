@@ -101,7 +101,7 @@ class AnthropicClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
-            
+
     async def acomplete(self, prompt: str, **kwargs) -> str:
         """
         Asynchronously generate text using Anthropic's API.
@@ -110,7 +110,7 @@ class AnthropicClient(LLMClient):
         Claude models, making it suitable for use in async applications like web
         servers, GUI applications, or any context where you don't want to block
         the main thread. It uses aiohttp for asynchronous HTTP requests.
-        
+
         The implementation includes rate limiting (minimum 500ms between calls)
         to help avoid Anthropic API rate limits. It creates a new aiohttp ClientSession
         for each call, which is appropriate for serverless environments but may
@@ -123,15 +123,15 @@ class AnthropicClient(LLMClient):
                 - max_tokens: Maximum number of tokens to generate
                 - top_k: Limits sampling to the k most likely tokens
                 - top_p: Controls diversity via nucleus sampling
-            
+
         Returns:
             The generated text response from the model
-            
+
         Raises:
             Returns error messages as strings instead of raising exceptions:
             - "Anthropic API request error: ..." for aiohttp-specific errors
             - "Unexpected error when calling Anthropic API: ..." for other errors
-            
+
         Note:
             This implementation uses proper async context managers for the aiohttp
             ClientSession and response objects to ensure resources are properly
@@ -168,7 +168,9 @@ class AnthropicClient(LLMClient):
             }
 
             async with aiohttp.ClientSession() as session:
-                async with session.post(self.api_url, headers=headers, json=payload) as response:
+                async with session.post(
+                    self.api_url, headers=headers, json=payload
+                ) as response:
                     response.raise_for_status()
                     response_data = await response.json()
 
@@ -194,13 +196,13 @@ class AnthropicClient(LLMClient):
         sentence-like chunks and yielding them with a small delay. While Anthropic's
         API does support native streaming, this implementation uses a simpler approach
         that works well for most use cases without requiring additional complexity.
-        
+
         The simulated streaming is useful for:
         1. Providing a responsive user experience with progressive output
         2. Testing streaming UI components without complex streaming logic
         3. Demonstrating the benefits of streaming in educational contexts
         4. Allowing early processing of partial responses
-        
+
         The implementation first gets the complete response using `acomplete`,
         then splits it by periods and yields each sentence-like chunk with a
         delay to simulate network latency and token-by-token generation.
@@ -212,22 +214,22 @@ class AnthropicClient(LLMClient):
                 - max_tokens: Maximum number of tokens to generate
                 - top_k: Limits sampling to the k most likely tokens
                 - top_p: Controls diversity via nucleus sampling
-            
+
         Yields:
             Chunks of the generated text response from the model, approximately
             sentence by sentence. If the response doesn't contain periods, the
             entire response is yielded as a single chunk.
-            
+
         Note:
             The artificial delay (0.2s per chunk) can be adjusted to simulate
             different network conditions or model generation speeds.
         """
         full_response = await self.acomplete(prompt, **kwargs)
-        
+
         chunks = [s.strip() + " " for s in full_response.split(".") if s.strip()]
         if not chunks:
             chunks = [full_response]
-            
+
         for chunk in chunks:
             await asyncio.sleep(0.2)  # Simulate network delay
             yield chunk

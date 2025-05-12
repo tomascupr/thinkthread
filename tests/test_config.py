@@ -11,19 +11,19 @@ def test_default_values():
     for env_var in CoRTConfig._env_vars.values():
         if env_var in os.environ:
             del os.environ[env_var]
-    
+
     config = create_config(env_file=None)
-    
+
     assert config.openai_api_key is None
     assert config.anthropic_api_key is None
     assert config.hf_api_token is None
-    
+
     assert config.provider == "openai"
-    
+
     assert config.openai_model == "gpt-4"
     assert config.anthropic_model == "claude-2"
     assert config.hf_model == "gpt2"
-    
+
     assert config.alternatives == 3
     assert config.rounds == 2
 
@@ -39,9 +39,9 @@ def test_environment_variables(monkeypatch):
     monkeypatch.setenv("HF_MODEL", "mistral-7b")
     monkeypatch.setenv("ALTERNATIVES", "5")
     monkeypatch.setenv("ROUNDS", "3")
-    
+
     config = create_config(env_file=None)
-    
+
     assert config.openai_api_key == "sk-test123"
     assert config.anthropic_api_key == "sk-ant-test456"
     assert config.hf_api_token == "hf-test789"
@@ -61,18 +61,18 @@ ANTHROPIC_API_KEY=sk-ant-env-test456
 PROVIDER=huggingface
 ALTERNATIVES=4
 """
-    
+
     with NamedTemporaryFile(mode="w+") as env_file:
         env_file.write(env_content)
         env_file.flush()
-        
+
         config = create_config(env_file=env_file.name)
-        
+
         assert config.openai_api_key == "sk-env-test123"
         assert config.anthropic_api_key == "sk-ant-env-test456"
         assert config.provider == "huggingface"
         assert config.alternatives == 4
-        
+
         assert config.hf_api_token is None
         assert config.openai_model == "gpt-4"
         assert config.rounds == 2
