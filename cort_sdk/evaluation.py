@@ -1,5 +1,6 @@
 from typing import List, Optional
 from abc import ABC, abstractmethod
+import re
 
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
@@ -106,3 +107,116 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
                     return i - 1
         
         return 0
+
+
+class Evaluator(ABC):
+    """
+    Abstract base class for pairwise answer evaluation.
+    
+    This defines the interface for evaluating whether a new answer 
+    is better than the previous answer.
+    """
+    
+    @abstractmethod
+    def evaluate(
+        self, 
+        question: str, 
+        prev_answer: str, 
+        new_answer: str, 
+        llm_client: LLMClient,
+        template_manager: TemplateManager
+    ) -> bool:
+        """
+        Evaluate whether the new answer is better than the previous answer.
+        
+        Args:
+            question: The original question
+            prev_answer: The previous answer
+            new_answer: The new answer to evaluate
+            llm_client: LLM client to use for evaluation
+            template_manager: Template manager for prompt templates
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        pass
+
+
+class ModelEvaluator(Evaluator):
+    """
+    Default implementation of the pairwise evaluator.
+    
+    Uses an LLM to evaluate whether a new answer is better than the previous one.
+    """
+    
+    def evaluate(
+        self, 
+        question: str, 
+        prev_answer: str, 
+        new_answer: str, 
+        llm_client: LLMClient,
+        template_manager: TemplateManager
+    ) -> bool:
+        """
+        Evaluate using the LLM and prompt template to determine if the new answer is better.
+        
+        Args:
+            question: The original question
+            prev_answer: The previous answer
+            new_answer: The new answer to evaluate
+            llm_client: LLM client to use for evaluation
+            template_manager: Template manager for prompt templates
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        prompt = template_manager.render_template(
+            "pairwise_prompt.j2",
+            {
+                "question": question,
+                "prev_answer": prev_answer,
+                "new_answer": new_answer
+            }
+        )
+        
+        evaluation = llm_client.generate(prompt, temperature=0.2)
+        
+        return self._parse_evaluation(evaluation)
+    
+    def _parse_evaluation(self, evaluation: str) -> bool:
+        """
+        Parse the evaluation text to determine if the new answer should be selected.
+        
+        Uses regex patterns to robustly detect whether the LLM evaluation indicates
+        the new answer is better than the previous one, handling variations in phrasing
+        and properly accounting for negations.
+        
+        Args:
+            evaluation: The evaluation text from the LLM
+            
+        Returns:
+            True if the new answer is better, False otherwise
+        """
+        positive_patterns = [
+            r'(?i)(?<!not\s)(?:new|second)\s+answer\s+(?:is|seems|appears|was)\s+better',
+            r'(?i)prefer\s+(?:the\s+)?(?:new|second)\s+answer',
+            r'(?i)(?:new|second)\s+answer\s+(?:is|seems|appears)\s+more\s+(?:accurate|complete|helpful|comprehensive)',
+            r'(?i)(?:new|second)\s+answer\s+should\s+replace',
+            r'(?i)(?:the\s+)?(?:new|second)\s+one\s+(?:is|seems|appears)\s+better',
+        ]
+        
+        negative_patterns = [
+            r'(?i)(?<!not\s)(?:previous|first|old)\s+answer\s+(?:is|seems|appears|was)\s+better',
+            r'(?i)prefer\s+(?:the\s+)?(?:previous|first|old)\s+answer',
+            r'(?i)(?:the\s+)?(?:previous|first|old)\s+one\s+(?:is|seems|appears)\s+better',
+        ]
+        
+        for pattern in negative_patterns:
+            if re.search(pattern, evaluation):
+                return False
+        
+        for pattern in positive_patterns:
+            if re.search(pattern, evaluation):
+                return True
+        
+        return False
