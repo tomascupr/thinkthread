@@ -1,4 +1,5 @@
 from typing import List, Optional
+import asyncio
 
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
@@ -145,3 +146,179 @@ class CoRTSession:
         return alternatives
     
     # They are now implemented in DefaultEvaluationStrategy
+    
+    async def run_async(self, question: str) -> str:
+        """
+        Execute the Chain-of-Recursive-Thoughts process asynchronously on a question.
+        
+        This method provides a non-blocking way to run the CoRT reasoning process,
+        making it suitable for use in async applications like web servers, GUI
+        applications, or any context where you don't want to block the main thread.
+        
+        The async implementation follows the same logical flow as the synchronous
+        version but uses async LLM calls throughout the process. This provides
+        several benefits:
+        
+        1. Improved responsiveness in interactive applications
+        2. Better resource utilization in server environments
+        3. Ability to handle multiple reasoning sessions concurrently
+        4. Integration with other async frameworks and libraries
+        
+        The implementation awaits each LLM call and uses helper methods that are
+        also async to maintain the non-blocking nature throughout the entire
+        reasoning process.
+        
+        Args:
+            question: The question to answer
+            
+        Returns:
+            The final best answer after all refinement rounds
+            
+        Note:
+            This method is safe to call concurrently from multiple tasks, as
+            the state is maintained within the method's execution context.
+        """
+        initial_prompt = self.template_manager.render_template(
+            "initial_prompt.j2", {"question": question}
+        )
+        current_answer = await self.llm_client.acomplete(initial_prompt, temperature=0.7)
+        
+        if self.max_rounds <= 0:
+            return current_answer
+        
+        for round_num in range(1, self.max_rounds + 1):
+            alternatives = await self._generate_alternatives_async(question, current_answer)
+            
+            if self.use_self_evaluation or self.use_pairwise_evaluation:
+                best_answer = current_answer
+                
+                for alternative in alternatives:
+                    # Use the evaluator to decide if the alternative is better
+                    is_better = await self._evaluate_async(
+                        question, best_answer, alternative
+                    )
+                    if is_better:
+                        best_answer = alternative
+                
+                current_answer = best_answer
+            else:
+                all_answers = [current_answer] + alternatives
+                
+                # Use the evaluation strategy to select the best answer
+                best_index = await self._evaluate_all_async(
+                    question, all_answers
+                )
+                
+                current_answer = all_answers[best_index]
+        
+        return current_answer
+    
+    async def _generate_alternatives_async(self, question: str, current_answer: str) -> List[str]:
+        """
+        Asynchronously generate alternative answers to the question.
+        
+        This method is the async counterpart to _generate_alternatives and creates
+        multiple alternative answers to the given question based on the current
+        best answer. It uses async LLM calls to generate these alternatives without
+        blocking the event loop.
+        
+        While the synchronous version would block during each LLM call, this
+        implementation allows other tasks to run while waiting for each alternative
+        to be generated. This is particularly beneficial when generating multiple
+        alternatives, as it allows for better resource utilization.
+        
+        Note that this implementation still generates alternatives sequentially
+        rather than in parallel. This is intentional to avoid overwhelming the
+        LLM service with concurrent requests, which could lead to rate limiting
+        or degraded performance.
+        
+        Args:
+            question: The original question
+            current_answer: The current best answer
+            
+        Returns:
+            List of alternative answers
+        """
+        alternatives = []
+        
+        for i in range(self.alternatives):
+            prompt = self.template_manager.render_template(
+                "alternative_prompt.j2",
+                {
+                    "question": question,
+                    "current_answer": current_answer
+                }
+            )
+            
+            alternative = await self.llm_client.acomplete(prompt, temperature=0.9)
+            alternatives.append(alternative)
+        
+        return alternatives
+    
+    async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
+        """
+        Asynchronously evaluate whether answer2 is better than answer1.
+        
+        This method is the async counterpart to the evaluator's evaluate method.
+        It uses asyncio.to_thread to run the synchronous evaluation in a separate
+        thread without blocking the event loop, allowing other async tasks to
+        continue running during the evaluation process.
+        
+        Using a thread-based approach for evaluation is appropriate here because:
+        1. The evaluation logic is CPU-bound rather than I/O-bound
+        2. The existing evaluator interface is synchronous
+        3. It avoids duplicating complex evaluation logic in an async version
+        
+        This approach maintains the non-blocking nature of the async reasoning
+        loop while reusing the existing evaluation logic.
+        
+        Args:
+            question: The original question
+            answer1: The first answer
+            answer2: The second answer
+            
+        Returns:
+            True if answer2 is better than answer1, False otherwise
+            
+        Note:
+            This method is thread-safe and can be called concurrently from
+            multiple tasks.
+        """
+        return await asyncio.to_thread(
+            self.evaluator.evaluate,
+            question, answer1, answer2, self.llm_client, self.template_manager
+        )
+    
+    async def _evaluate_all_async(self, question: str, answers: List[str]) -> int:
+        """
+        Asynchronously evaluate all answers and return the index of the best one.
+        
+        This method is the async counterpart to the evaluation strategy's evaluate
+        method. Similar to _evaluate_async, it uses asyncio.to_thread to run the
+        synchronous evaluation in a separate thread without blocking the event loop.
+        
+        The evaluation strategy compares all answers simultaneously and returns
+        the index of the best one. This is more efficient than pairwise comparison
+        when evaluating multiple alternatives, as it requires only a single LLM call
+        rather than multiple comparisons.
+        
+        Using a thread-based approach for evaluation maintains the non-blocking
+        nature of the async reasoning loop while reusing the existing evaluation
+        logic, which is particularly important for this potentially complex
+        multi-answer evaluation.
+        
+        Args:
+            question: The original question
+            answers: List of answers to evaluate
+            
+        Returns:
+            Index of the best answer in the list
+            
+        Note:
+            This method is thread-safe and can be called concurrently from
+            multiple tasks.
+        """
+        return await asyncio.to_thread(
+            self.evaluation_strategy.evaluate,
+            question, answers, self.llm_client, self.template_manager
+        )
