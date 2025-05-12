@@ -119,3 +119,7 @@ poetry run pytest
 ```
 
 For detailed documentation, see the docs directory.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

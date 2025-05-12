@@ -56,8 +56,15 @@ class OpenAIClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Exception: If there's an error communicating with the OpenAI API
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "OpenAI API error: ..." for OpenAI-specific errors, which may include:
+              - Authentication errors (invalid API key)
+              - Rate limit errors (too many requests)
+              - Quota exceeded errors (billing issues)
+              - Invalid request errors (bad parameters)
+              - Server errors (OpenAI service issues)
+            - "Unexpected error when calling OpenAI API: ..." for other errors
 
         """
         current_time = time.time()
@@ -111,9 +118,14 @@ class OpenAIClient(LLMClient):
         Returns:
             The generated text response from the model
 
-        Raises:
-            Returns error messages as strings instead of raising exceptions:
-            - "OpenAI API error: ..." for OpenAI-specific errors
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings:
+            - "OpenAI API error: ..." for OpenAI-specific errors, which may include:
+              - Authentication errors (invalid API key)
+              - Rate limit errors (too many requests)
+              - Quota exceeded errors (billing issues)
+              - Invalid request errors (bad parameters)
+              - Server errors (OpenAI service issues)
             - "Unexpected error when calling OpenAI API: ..." for other errors
 
         Note:
@@ -178,9 +190,14 @@ class OpenAIClient(LLMClient):
             Chunks of the generated text response from the model as they become
             available. Each chunk is a string containing a portion of the response.
 
-        Raises:
-            Yields error messages as strings instead of raising exceptions:
-            - "OpenAI API error: ..." for OpenAI-specific errors
+        Error Handling:
+            Instead of raising exceptions, this method yields error messages as strings:
+            - "OpenAI API error: ..." for OpenAI-specific errors, which may include:
+              - Authentication errors (invalid API key)
+              - Rate limit errors (too many requests)
+              - Quota exceeded errors (billing issues)
+              - Invalid request errors (bad parameters)
+              - Server errors (OpenAI service issues)
             - "Unexpected error when calling OpenAI API: ..." for other errors
 
         Note:
