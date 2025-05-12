@@ -75,7 +75,6 @@ def test_cort_session_with_pairwise_evaluation_prefer_previous(
     mock_template_manager, mock_config
 ):
     """Test CoRT session with pairwise evaluation that prefers previous answers."""
-
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
     alt2 = "Alternative 2"

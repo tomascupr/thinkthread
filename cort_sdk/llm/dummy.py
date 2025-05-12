@@ -1,12 +1,17 @@
-from typing import Callable, List, Optional, Union, AsyncIterator
+"""Dummy LLM client implementation for testing purposes.
+
+This module provides a deterministic LLM client that can be used for testing
+without making API calls to actual providers.
+"""
+
+from typing import Callable, List, Optional, Union, AsyncIterator, Dict, Any
 import asyncio
 
 from .base import LLMClient
 
 
 class DummyLLMClient(LLMClient):
-    """
-    A dummy implementation of LLMClient for testing purposes.
+    """A dummy implementation of LLMClient for testing purposes.
 
     This class provides deterministic responses for testing CoRT logic
     without calling external APIs. It can be configured to return responses
@@ -19,24 +24,23 @@ class DummyLLMClient(LLMClient):
         model_name: Optional[str] = None,
         responses: Optional[List[str]] = None,
         response_generator: Optional[Callable[[str, int], str]] = None,
-    ):
-        """
-        Initialize the DummyLLMClient.
+    ) -> None:
+        """Initialize the DummyLLMClient.
 
         Args:
             model_name: Optional name of the model to use
             responses: Optional list of predefined responses to cycle through
             response_generator: Optional function to generate responses based on
                                 prompt and call count
+
         """
         super().__init__(model_name=model_name)
         self._call_count = 0
         self._responses = responses or []
         self._response_generator = response_generator
 
-    def generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate a deterministic response based on configuration.
+    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate a deterministic response based on configuration.
 
         If responses were provided during initialization, cycles through them.
         If a response_generator was provided, uses it to generate a response.
@@ -48,6 +52,7 @@ class DummyLLMClient(LLMClient):
 
         Returns:
             A deterministic response string
+
         """
         self._call_count += 1
 
@@ -62,23 +67,20 @@ class DummyLLMClient(LLMClient):
 
     @property
     def call_count(self) -> int:
-        """
-        Get the number of times the generate method has been called.
+        """Get the number of times the generate method has been called.
 
         Returns:
             The call count
+
         """
         return self._call_count
 
     def reset(self) -> None:
-        """
-        Reset the call counter to zero.
-        """
+        """Reset the call counter to zero."""
         self._call_count = 0
 
-    async def acomplete(self, prompt: str, **kwargs) -> str:
-        """
-        Asynchronously generate a deterministic response based on configuration.
+    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Asynchronously generate a deterministic response based on configuration.
 
         This method provides the same functionality as the synchronous `generate`
         method but in an asynchronous context. It's useful for testing async
@@ -100,12 +102,12 @@ class DummyLLMClient(LLMClient):
         Note:
             This implementation is thread-safe and can be called concurrently
             from multiple tasks.
+
         """
         return await super().acomplete(prompt, **kwargs)
 
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """
-        Asynchronously stream a response in chunks to simulate streaming responses.
+    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+        """Asynchronously stream a response in chunks to simulate streaming responses.
 
         This method demonstrates how streaming works by splitting the full response
         into words and yielding them one by one with a small delay. It's useful for:
@@ -129,6 +131,7 @@ class DummyLLMClient(LLMClient):
         Note:
             The artificial delay (0.1s per word) can be adjusted to simulate
             different network conditions or model generation speeds.
+
         """
         full_response = await self.acomplete(prompt, **kwargs)
         words = full_response.split()

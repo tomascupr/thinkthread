@@ -1,3 +1,4 @@
+"""Tests for the self-evaluation functionality in CoRT sessions."""
 import pytest
 from unittest.mock import MagicMock
 
@@ -78,7 +79,6 @@ def test_cort_session_with_self_evaluation_prefer_previous(
     mock_template_manager, mock_config
 ):
     """Test CoRT session with self-evaluation that prefers previous answers."""
-
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
     alt2 = "Alternative 2"

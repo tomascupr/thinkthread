@@ -1,3 +1,9 @@
+"""Evaluation strategies for comparing and selecting the best answers.
+
+This module provides evaluation strategies that determine which answer is best
+among a set of alternatives in the CoRT reasoning process.
+"""
+
 from typing import List, Optional
 from abc import ABC, abstractmethod
 import re
@@ -7,8 +13,7 @@ from cort_sdk.prompting import TemplateManager
 
 
 class EvaluationStrategy(ABC):
-    """
-    Abstract base class for evaluation strategies.
+    """Abstract base class for evaluation strategies.
 
     This defines the interface for evaluating and selecting the best answer
     from a list of candidate answers.
@@ -22,8 +27,7 @@ class EvaluationStrategy(ABC):
         llm_client: LLMClient,
         template_manager: TemplateManager,
     ) -> int:
-        """
-        Evaluate the answers and return the index of the best one.
+        """Evaluate the answers and return the index of the best one.
 
         Args:
             question: The original question
@@ -33,13 +37,13 @@ class EvaluationStrategy(ABC):
 
         Returns:
             Index of the best answer in the answers list
+
         """
         pass
 
 
 class DefaultEvaluationStrategy(EvaluationStrategy):
-    """
-    Default implementation of the evaluation strategy.
+    """Default implementation of the evaluation strategy.
 
     Uses an LLM to evaluate and select the best answer.
     """
@@ -51,8 +55,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
         llm_client: LLMClient,
         template_manager: TemplateManager,
     ) -> int:
-        """
-        Evaluate answers using the LLM and prompt template.
+        """Evaluate answers using the LLM and prompt template.
 
         Args:
             question: The original question
@@ -62,6 +65,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
 
         Returns:
             Index of the best answer in the answers list
+
         """
         formatted_answers = "\n\n".join(
             [f"Answer {i + 1}:\n{answer}" for i, answer in enumerate(answers)]
@@ -81,8 +85,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
         return self._parse_evaluation(evaluation, len(answers))
 
     def _parse_evaluation(self, evaluation: str, num_answers: int) -> int:
-        """
-        Parse the evaluation text to determine which answer was selected as best.
+        """Parse the evaluation text to determine which answer was selected as best.
 
         Args:
             evaluation: The evaluation text from the LLM
@@ -90,6 +93,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
 
         Returns:
             Index of the best answer (0 to num_answers-1)
+
         """
         for i in range(1, num_answers + 1):
             if (
@@ -113,8 +117,7 @@ class DefaultEvaluationStrategy(EvaluationStrategy):
 
 
 class Evaluator(ABC):
-    """
-    Abstract base class for pairwise answer evaluation.
+    """Abstract base class for pairwise answer evaluation.
 
     This defines the interface for evaluating whether a new answer
     is better than the previous answer.
@@ -129,8 +132,7 @@ class Evaluator(ABC):
         llm_client: LLMClient,
         template_manager: TemplateManager,
     ) -> bool:
-        """
-        Evaluate whether the new answer is better than the previous answer.
+        """Evaluate whether the new answer is better than the previous answer.
 
         Args:
             question: The original question
@@ -141,13 +143,13 @@ class Evaluator(ABC):
 
         Returns:
             True if the new answer is better, False otherwise
+
         """
         pass
 
 
 class ModelEvaluator(Evaluator):
-    """
-    Default implementation of the pairwise evaluator.
+    """Default implementation of the pairwise evaluator.
 
     Uses an LLM to evaluate whether a new answer is better than the previous one.
     """
@@ -160,8 +162,7 @@ class ModelEvaluator(Evaluator):
         llm_client: LLMClient,
         template_manager: TemplateManager,
     ) -> bool:
-        """
-        Evaluate using the LLM and prompt template to determine if the new answer is better.
+        """Evaluate using the LLM and prompt template to determine if the new answer is better.
 
         Args:
             question: The original question
@@ -172,6 +173,7 @@ class ModelEvaluator(Evaluator):
 
         Returns:
             True if the new answer is better, False otherwise
+
         """
         prompt = template_manager.render_template(
             "pairwise_prompt.j2",
@@ -187,8 +189,7 @@ class ModelEvaluator(Evaluator):
         return self._parse_evaluation(evaluation)
 
     def _parse_evaluation(self, evaluation: str) -> bool:
-        """
-        Parse the evaluation text to determine if the new answer should be selected.
+        """Parse the evaluation text to determine if the new answer should be selected.
 
         Uses regex patterns to robustly detect whether the LLM evaluation indicates
         the new answer is better than the previous one, handling variations in phrasing
@@ -199,6 +200,7 @@ class ModelEvaluator(Evaluator):
 
         Returns:
             True if the new answer is better, False otherwise
+
         """
         positive_patterns = [
             r"(?i)(?<!not\s)(?:new|second)\s+answer\s+(?:is|seems|appears|was)\s+better",

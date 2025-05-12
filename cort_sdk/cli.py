@@ -1,3 +1,9 @@
+"""Command-line interface for the CORT SDK.
+
+This module provides a CLI for running CoRT reasoning using different LLM providers
+and viewing the results.
+"""
+
 import typer
 import asyncio
 import logging
@@ -16,17 +22,13 @@ app = typer.Typer()
 
 
 @app.callback()
-def callback():
-    """
-    CORT SDK - Command Line Interface
-    """
+def callback() -> None:
+    """CORT SDK - Command Line Interface."""
 
 
 @app.command()
-def version():
-    """
-    Show the current version of CORT SDK
-    """
+def version() -> None:
+    """Show the current version of CORT SDK."""
     print(f"CORT SDK version: {__version__}")
 
 
@@ -42,9 +44,8 @@ def ask(
     alternatives: int = typer.Option(3, help="Number of alternative answers per round"),
     rounds: int = typer.Option(2, help="Number of refinement rounds"),
     stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
-):
-    """
-    Ask a question and get an answer using CoRT reasoning.
+) -> None:
+    """Ask a question and get an answer using CoRT reasoning.
 
     This command provides a CLI interface to the Chain-of-Recursive-Thoughts
     reasoning process. It supports multiple LLM providers and offers both
@@ -67,6 +68,7 @@ def ask(
         $ python -m cort_sdk ask "What is the meaning of life?" --no-stream
 
         $ python -m cort_sdk ask "What is the meaning of life?" --alternatives 5 --rounds 3
+
     """
     config = create_config()
 
@@ -100,9 +102,8 @@ def ask(
 
 async def run_session(
     session: CoRTSession, question: str, stream: bool, verbose: bool = False
-):
-    """
-    Run the CoRT session asynchronously with optional streaming.
+) -> None:
+    """Run the CoRT session asynchronously with optional streaming.
 
     This function handles the execution of the CoRT reasoning process in an
     asynchronous manner, with support for streaming the final answer as it's
@@ -125,6 +126,7 @@ async def run_session(
         question: The question to answer
         stream: Whether to stream the final answer as it's generated
         verbose: Whether to enable verbose logging
+
     """
     if verbose:
         logging.debug("Starting run_session")
@@ -187,9 +189,8 @@ def run(
     ),
     verbose: bool = typer.Option(False, help="Enable debug logging"),
     self_evaluation: bool = typer.Option(False, help="Toggle self-evaluation on/off"),
-):
-    """
-    Run recursive reasoning on a question and get a refined answer.
+) -> None:
+    """Run recursive reasoning on a question and get a refined answer.
 
     This command provides a CLI interface to the Chain-of-Recursive-Thoughts
     reasoning process, which performs multiple rounds of self-refinement to
@@ -220,6 +221,7 @@ def run(
         $ cort run "How do neural networks work?" --verbose
 
         $ cort run "Explain blockchain technology" --self-evaluation
+
     """
     if verbose:
         logging.basicConfig(

@@ -1,3 +1,9 @@
+"""Chain-of-Recursive-Thoughts (CoRT) reasoning session implementation.
+
+This module contains the CoRTSession class that orchestrates the multi-round
+questioning and refinement process using LLMs.
+"""
+
 from typing import List, Optional
 import asyncio
 
@@ -13,8 +19,7 @@ from cort_sdk.evaluation import (
 
 
 class CoRTSession:
-    """
-    Chain-of-Recursive-Thoughts (CoRT) session.
+    """Chain-of-Recursive-Thoughts (CoRT) session.
 
     This class orchestrates a multi-round questioning and refinement process
     using an LLM to generate increasingly better answers to a question.
@@ -30,9 +35,8 @@ class CoRTSession:
         evaluation_strategy: Optional[EvaluationStrategy] = None,
         evaluator: Optional[Evaluator] = None,
         config: Optional[CoRTConfig] = None,
-    ):
-        """
-        Initialize a CoRT session.
+    ) -> None:
+        """Initialize a CoRT session.
 
         Args:
             llm_client: LLM client to use for generating and evaluating answers
@@ -41,7 +45,9 @@ class CoRTSession:
             max_rounds: Maximum number of refinement rounds (overrides rounds if set)
             template_manager: Optional template manager for prompt templates
             evaluation_strategy: Optional strategy for evaluating answers
+            evaluator: Optional evaluator for pairwise comparison of answers
             config: Optional configuration object
+
         """
         self.llm_client = llm_client
         self.alternatives = alternatives
@@ -64,22 +70,32 @@ class CoRTSession:
         self.use_self_evaluation = self.config.use_self_evaluation
 
     def run(self, question: str) -> str:
-        """
-        Execute the Chain-of-Recursive-Thoughts process on a question.
+        """Execute the Chain-of-Recursive-Thoughts process on a question.
 
-        The process involves:
-        1. Generating an initial answer
-        2. For each round:
-           a. Generating alternative answers
-           b. Evaluating all answers to select the best one
+        The Chain-of-Recursive-Thoughts (CoRT) algorithm improves answer quality through
+        multiple rounds of refinement. The process involves:
+        
+        1. Generating an initial answer with moderate temperature (0.7) for creativity
+        2. For each refinement round:
+           a. Generating alternative answers with higher temperature (0.9) to explore diverse solutions
+           b. Evaluating all answers using one of three strategies:
+              - Self-evaluation: Compare each alternative against the current best answer
+              - Pairwise evaluation: Similar to self-evaluation but with different implementation
+              - Default strategy: Evaluate all answers together to select the best one
            c. Using the best answer as the current answer for the next round
-        3. Returning the final best answer
+        3. Returning the final best answer after all refinement rounds
+
+        The evaluation strategy is determined by configuration settings:
+        - use_self_evaluation: Uses the evaluator to compare alternatives one by one
+        - use_pairwise_evaluation: Similar approach with different implementation details
+        - Default: Uses the evaluation_strategy to rank all answers at once
 
         Args:
             question: The question to answer
 
         Returns:
             The final best answer after all refinement rounds
+
         """
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
@@ -134,8 +150,7 @@ class CoRTSession:
         return current_answer
 
     def _generate_alternatives(self, question: str, current_answer: str) -> List[str]:
-        """
-        Generate alternative answers to the question.
+        """Generate alternative answers to the question.
 
         Args:
             question: The original question
@@ -143,6 +158,7 @@ class CoRTSession:
 
         Returns:
             List of alternative answers
+
         """
         alternatives = []
 
@@ -160,8 +176,7 @@ class CoRTSession:
     # They are now implemented in DefaultEvaluationStrategy
 
     async def run_async(self, question: str) -> str:
-        """
-        Execute the Chain-of-Recursive-Thoughts process asynchronously on a question.
+        """Execute the Chain-of-Recursive-Thoughts process asynchronously on a question.
 
         This method provides a non-blocking way to run the CoRT reasoning process,
         making it suitable for use in async applications like web servers, GUI
@@ -189,6 +204,7 @@ class CoRTSession:
         Note:
             This method is safe to call concurrently from multiple tasks, as
             the state is maintained within the method's execution context.
+
         """
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
@@ -230,8 +246,7 @@ class CoRTSession:
     async def _generate_alternatives_async(
         self, question: str, current_answer: str
     ) -> List[str]:
-        """
-        Asynchronously generate alternative answers to the question.
+        """Asynchronously generate alternative answers to the question.
 
         This method is the async counterpart to _generate_alternatives and creates
         multiple alternative answers to the given question based on the current
@@ -254,6 +269,7 @@ class CoRTSession:
 
         Returns:
             List of alternative answers
+
         """
         alternatives = []
 
@@ -269,8 +285,7 @@ class CoRTSession:
         return alternatives
 
     async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
-        """
-        Asynchronously evaluate whether answer2 is better than answer1.
+        """Asynchronously evaluate whether answer2 is better than answer1.
 
         This method is the async counterpart to the evaluator's evaluate method.
         It uses asyncio.to_thread to run the synchronous evaluation in a separate
@@ -296,6 +311,7 @@ class CoRTSession:
         Note:
             This method is thread-safe and can be called concurrently from
             multiple tasks.
+
         """
         return await asyncio.to_thread(
             self.evaluator.evaluate,
@@ -307,8 +323,7 @@ class CoRTSession:
         )
 
     async def _evaluate_all_async(self, question: str, answers: List[str]) -> int:
-        """
-        Asynchronously evaluate all answers and return the index of the best one.
+        """Asynchronously evaluate all answers and return the index of the best one.
 
         This method is the async counterpart to the evaluation strategy's evaluate
         method. Similar to _evaluate_async, it uses asyncio.to_thread to run the
@@ -334,6 +349,7 @@ class CoRTSession:
         Note:
             This method is thread-safe and can be called concurrently from
             multiple tasks.
+
         """
         return await asyncio.to_thread(
             self.evaluation_strategy.evaluate,
