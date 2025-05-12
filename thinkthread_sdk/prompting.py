@@ -1,7 +1,7 @@
-"""Template management for CoRT prompts.
+"""Template management for ThinkThread prompts.
 
 This module provides utilities for loading and rendering Jinja2 templates
-used for prompting language models in the CoRT process.
+used for prompting language models in the ThinkThread process.
 """
 
 import os
@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 class TemplateManager:
-    """Manages Jinja2 templates for CoRT prompts.
+    """Manages Jinja2 templates for ThinkThread prompts.
 
     This class is responsible for loading templates from a directory and
     rendering them with the provided context data.

@@ -28,7 +28,7 @@ thinkthread version
 
 ### `ask`
 
-Ask a question and get an answer using CoRT reasoning.
+Ask a question and get an answer using ThinkThread reasoning.
 
 ```bash
 thinkthread ask "What is the meaning of life?"
