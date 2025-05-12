@@ -2,6 +2,11 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
+## [0.5.1] - 2025-05-12
+
+### Changed
+- Minor bug fixes and improvements
+
 ## [0.5.0] - 2025-05-12
 
 ### Added
