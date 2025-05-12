@@ -1,4 +1,4 @@
-"""Tests for evaluation strategies in the CORT SDK."""
+"""Tests for evaluation strategies in the ThinkThread SDK."""
 from typing import List
 
 from thinkthread_sdk.llm import LLMClient

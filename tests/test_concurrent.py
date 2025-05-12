@@ -1,4 +1,4 @@
-"""Tests for concurrent usage of the CORT SDK."""
+"""Tests for concurrent usage of the ThinkThread SDK."""
 
 import pytest
 import asyncio

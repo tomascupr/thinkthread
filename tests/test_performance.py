@@ -1,4 +1,4 @@
-"""Tests for performance profiling of the CORT SDK."""
+"""Tests for performance profiling of the ThinkThread SDK."""
 
 import time
 from typing import Dict, Any, List
