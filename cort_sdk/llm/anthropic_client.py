@@ -1,3 +1,9 @@
+"""Anthropic Claude implementation of the LLMClient interface.
+
+This module provides a client for interacting with Anthropic's Claude models
+through their API.
+"""
+
 from typing import Optional, Dict, Any, AsyncIterator
 import time
 import json
@@ -9,8 +15,7 @@ from .base import LLMClient
 
 
 class AnthropicClient(LLMClient):
-    """
-    Anthropic implementation of LLMClient.
+    """Anthropic implementation of LLMClient.
 
     This class provides an interface to Anthropic's API for generating text
     using Claude models through direct API calls.
@@ -19,14 +24,14 @@ class AnthropicClient(LLMClient):
     HUMAN_PROMPT = "\n\nHuman: "
     AI_PROMPT = "\n\nAssistant: "
 
-    def __init__(self, api_key: str, model: str = "claude-3-haiku-20240307", **opts):
-        """
-        Initialize the Anthropic client.
+    def __init__(self, api_key: str, model: str = "claude-3-haiku-20240307", **opts: Dict[str, Any]) -> None:
+        """Initialize the Anthropic client.
 
         Args:
             api_key: Anthropic API key
             model: Model name to use (default: "claude-2")
             **opts: Additional options to pass to the API (e.g., temperature, max_tokens)
+
         """
         super().__init__(model_name=model)
         self.api_key = api_key
@@ -37,9 +42,8 @@ class AnthropicClient(LLMClient):
 
         self._last_call_time = 0
 
-    def generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate text using Anthropic's API through the official SDK.
+    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate text using Anthropic's API through the official SDK.
 
         Args:
             prompt: The input text to send to the model
@@ -50,6 +54,7 @@ class AnthropicClient(LLMClient):
 
         Raises:
             Exception: If there's an error communicating with the Anthropic API
+
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
@@ -102,9 +107,8 @@ class AnthropicClient(LLMClient):
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
 
-    async def acomplete(self, prompt: str, **kwargs) -> str:
-        """
-        Asynchronously generate text using Anthropic's API.
+    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Asynchronously generate text using Anthropic's API.
 
         This method provides a non-blocking way to generate text from Anthropic's
         Claude models, making it suitable for use in async applications like web
@@ -136,6 +140,7 @@ class AnthropicClient(LLMClient):
             This implementation uses proper async context managers for the aiohttp
             ClientSession and response objects to ensure resources are properly
             cleaned up even in case of exceptions.
+
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
@@ -188,9 +193,8 @@ class AnthropicClient(LLMClient):
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
 
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """
-        Asynchronously stream text generation from Anthropic's API.
+    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+        """Asynchronously stream text generation from Anthropic's API.
 
         This method simulates streaming by splitting the complete response into
         sentence-like chunks and yielding them with a small delay. While Anthropic's
@@ -223,6 +227,7 @@ class AnthropicClient(LLMClient):
         Note:
             The artificial delay (0.2s per chunk) can be adjusted to simulate
             different network conditions or model generation speeds.
+
         """
         full_response = await self.acomplete(prompt, **kwargs)
 

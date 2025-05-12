@@ -1,3 +1,9 @@
+"""Hugging Face implementation of the LLMClient interface.
+
+This module provides a client for interacting with models hosted on the
+Hugging Face Hub through their inference API.
+"""
+
 from typing import Optional, Dict, Any, Union, List, AsyncIterator
 import requests
 import asyncio
@@ -7,21 +13,20 @@ from .base import LLMClient
 
 
 class HuggingFaceClient(LLMClient):
-    """
-    Hugging Face implementation of LLMClient.
+    """Hugging Face implementation of LLMClient.
 
     This class provides an interface to Hugging Face's text generation inference API
     for generating text using models hosted on the Hugging Face Hub.
     """
 
-    def __init__(self, api_token: str, model: str = "gpt2", **opts):
-        """
-        Initialize the Hugging Face client.
+    def __init__(self, api_token: str, model: str = "gpt2", **opts: Dict[str, Any]) -> None:
+        """Initialize the Hugging Face client.
 
         Args:
             api_token: Hugging Face API token
             model: Model identifier to use (default: "gpt2")
             **opts: Additional options to pass to the API (e.g., temperature, max_new_tokens)
+
         """
         super().__init__(model_name=model)
         self.api_token = api_token
@@ -34,9 +39,8 @@ class HuggingFaceClient(LLMClient):
             "Content-Type": "application/json",
         }
 
-    def generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate text using Hugging Face's text generation inference API.
+    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate text using Hugging Face's text generation inference API.
 
         Args:
             prompt: The input text to send to the model
@@ -47,6 +51,7 @@ class HuggingFaceClient(LLMClient):
 
         Raises:
             Exception: If there's an error communicating with the Hugging Face API
+
         """
         options = self.opts.copy()
         options.update(kwargs)
@@ -85,9 +90,8 @@ class HuggingFaceClient(LLMClient):
             error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
             return error_message
 
-    async def acomplete(self, prompt: str, **kwargs) -> str:
-        """
-        Asynchronously generate text using Hugging Face's text generation inference API.
+    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Asynchronously generate text using Hugging Face's text generation inference API.
 
         This method provides a non-blocking way to generate text from Hugging Face
         models, making it suitable for use in async applications like web servers,
@@ -121,6 +125,7 @@ class HuggingFaceClient(LLMClient):
             This implementation uses proper async context managers for the aiohttp
             ClientSession and response objects to ensure resources are properly
             cleaned up even in case of exceptions.
+
         """
         options = self.opts.copy()
         options.update(kwargs)
@@ -159,9 +164,8 @@ class HuggingFaceClient(LLMClient):
             error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
             return error_message
 
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """
-        Asynchronously stream text generation from Hugging Face's API.
+    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+        """Asynchronously stream text generation from Hugging Face's API.
 
         This method simulates streaming by splitting the complete response into
         small word groups and yielding them with a small delay. While some Hugging
@@ -196,6 +200,7 @@ class HuggingFaceClient(LLMClient):
         Note:
             The artificial delay (0.1s per chunk) can be adjusted to simulate
             different network conditions or model generation speeds.
+
         """
         full_response = await self.acomplete(prompt, **kwargs)
 
