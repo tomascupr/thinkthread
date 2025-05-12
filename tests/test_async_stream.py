@@ -2,7 +2,6 @@ import pytest
 import asyncio
 from typing import AsyncIterator, List
 
-from thinkthread_sdk.llm.base import LLMClient
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.cort_session import CoRTSession
 from thinkthread_sdk.config import CoRTConfig

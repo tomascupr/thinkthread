@@ -1,6 +1,6 @@
 """Integration tests for template customization and usage."""
+
 import os
-import pytest
 from tempfile import TemporaryDirectory
 
 from thinkthread_sdk.cort_session import CoRTSession
