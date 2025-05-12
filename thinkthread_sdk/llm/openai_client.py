@@ -233,7 +233,6 @@ class OpenAIClient(LLMClient):
             stream = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
-                stream=True,
                 **options,
             )
 

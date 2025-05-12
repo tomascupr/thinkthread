@@ -1,5 +1,5 @@
 import os
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.cort_session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
 # Set API key
@@ -10,7 +10,7 @@ os.environ["OPENAI_API_KEY"] = api_key
 client = OpenAIClient(api_key=api_key, model_name="gpt-3.5-turbo")
 
 # Create session
-session = CoRTSession(llm_client=client, alternatives=2, rounds=1)
+session = ThinkThreadSession(llm_client=client, alternatives=2, rounds=1)
 
 # Run test
 question = "What is the capital of France?"
