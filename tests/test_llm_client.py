@@ -1,5 +1,5 @@
 import pytest
-from typing import Dict, Any, AsyncIterator
+from typing import AsyncIterator
 from thinkthread_sdk.llm import LLMClient
 
 
@@ -15,7 +15,7 @@ class MockLLMClient(LLMClient):
     def generate(self, prompt: str, **kwargs) -> str:
         """Mock implementation that returns a fixed response."""
         return f"Mock response to: {prompt}"
-        
+
     async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
         """Mock implementation of astream that yields a fixed response."""
         yield f"Mock streaming response to: {prompt}"

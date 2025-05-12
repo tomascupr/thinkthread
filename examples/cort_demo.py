@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.evaluation import EvaluationStrategy
-from typing import List
+from thinkthread_sdk.config import ThinkThreadConfig
 
 
 class VerboseEvaluationStrategy(EvaluationStrategy):
@@ -59,8 +59,6 @@ pairwise_responses = [
 ]
 
 pairwise_client = DummyLLMClient(responses=pairwise_responses)
-
-from thinkthread_sdk.config import ThinkThreadConfig
 
 pairwise_config = ThinkThreadConfig()
 pairwise_config.use_pairwise_evaluation = True

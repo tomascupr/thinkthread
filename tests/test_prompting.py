@@ -1,6 +1,5 @@
 import os
 import pytest
-from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from thinkthread_sdk.prompting import TemplateManager

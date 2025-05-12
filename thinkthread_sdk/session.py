@@ -71,7 +71,7 @@ class ThinkThreadSession:
 
         The ThinkThread algorithm improves answer quality through
         multiple rounds of refinement. The process involves:
-        
+
         1. Generating an initial answer with moderate temperature (0.7) for creativity
         2. For each refinement round:
            a. Generating alternative answers with higher temperature (0.9) to explore diverse solutions
@@ -167,7 +167,6 @@ class ThinkThreadSession:
             alternatives.append(alternative)
 
         return alternatives
-
 
     async def run_async(self, question: str) -> str:
         """Execute the ThinkThread process asynchronously on a question.

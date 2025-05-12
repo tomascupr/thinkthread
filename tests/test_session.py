@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, call, MagicMock
+from unittest.mock import MagicMock
 
 from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm.dummy import DummyLLMClient
@@ -227,7 +227,9 @@ def test_thinkthread_session_max_rounds(mock_template_manager, mock_config):
     assert mock_template_manager.render_template.call_count == 5
 
 
-def test_thinkthread_session_custom_evaluation_strategy(mock_template_manager, mock_config):
+def test_thinkthread_session_custom_evaluation_strategy(
+    mock_template_manager, mock_config
+):
     """Test that a custom evaluation strategy works correctly."""
     from tests.test_strategies import SimpleEvaluationStrategy
 

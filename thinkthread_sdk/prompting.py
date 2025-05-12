@@ -5,7 +5,6 @@ used for prompting language models in the ThinkThread process.
 """
 
 import os
-from pathlib import Path
 from typing import Dict, Any, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 

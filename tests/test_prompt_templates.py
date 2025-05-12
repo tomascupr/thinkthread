@@ -1,10 +1,8 @@
 import os
 import pytest
-from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import create_config
 
 
 @pytest.fixture

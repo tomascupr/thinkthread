@@ -1,7 +1,6 @@
 """Tests for asynchronous operations in the ThinkThread SDK."""
+
 import pytest
-import asyncio
-from typing import List
 
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.session import ThinkThreadSession

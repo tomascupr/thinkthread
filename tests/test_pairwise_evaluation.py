@@ -6,7 +6,6 @@ from thinkthread_sdk.config import ThinkThreadConfig
 from thinkthread_sdk.llm.dummy import DummyLLMClient
 from thinkthread_sdk.prompting import TemplateManager
 from tests.test_evaluator import SimpleEvaluator
-from thinkthread_sdk.llm import LLMClient
 
 
 @pytest.fixture
@@ -109,7 +108,6 @@ def test_cort_session_with_pairwise_evaluation_prefer_previous(
 
 def test_cort_session_with_model_evaluator(mock_template_manager, mock_config):
     """Test CoRT session with the ModelEvaluator."""
-    from thinkthread_sdk.evaluation import ModelEvaluator
 
     initial_answer = "Initial answer"
     alt1 = "Alternative 1"
