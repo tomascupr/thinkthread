@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the CoRT SDK will be documented in this file.
+All notable changes to the ThinkThread SDK will be documented in this file.
 
 ## [Unreleased]
 

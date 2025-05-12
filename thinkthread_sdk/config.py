@@ -1,6 +1,6 @@
-"""Configuration handling for CORT SDK.
+"""Configuration handling for ThinkThread SDK.
 
-This module manages configuration options for the CORT SDK, including API keys,
+This module manages configuration options for the ThinkThread SDK, including API keys,
 model names, and algorithm parameters.
 """
 
@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator
 
 
 class CoRTConfig(BaseModel):
-    """Configuration for the CoRT SDK.
+    """Configuration for the ThinkThread SDK.
 
     This class manages settings like API keys, model choices, and default CoRT parameters.
     Values are loaded from environment variables or a .env file if present.

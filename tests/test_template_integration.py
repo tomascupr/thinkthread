@@ -3,9 +3,9 @@ import os
 import pytest
 from tempfile import TemporaryDirectory
 
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.prompting import TemplateManager
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.prompting import TemplateManager
 
 
 def test_template_customization():
@@ -38,7 +38,7 @@ def test_template_customization():
 
         template_manager = TemplateManager(template_dir=temp_dir)
 
-        from cort_sdk.config import CoRTConfig
+        from thinkthread_sdk.config import CoRTConfig
 
         config = CoRTConfig()
         config.use_pairwise_evaluation = False

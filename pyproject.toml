@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "cort_sdk"
+name = "thinkthread"
 version = "0.1.0"
 description = "Chain-of-Recursive-Thoughts (CoRT) SDK for enhanced LLM responses"
 authors = ["Tomas Cupr <work@tomcupr.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "cort_sdk"}]
+packages = [{include = "thinkthread_sdk"}]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
@@ -32,7 +32,7 @@ ruff = "^0.11.9"
 black = "^25.1.0"
 
 [tool.poetry.scripts]
-cort = "cort_sdk.cli:app"
+thinkthread = "thinkthread_sdk.cli:app"
 
 [build-system]
 requires = ["poetry-core"]

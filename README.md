@@ -1,4 +1,4 @@
-# CoRT SDK
+# ThinkThread SDK
 
 The Chain-of-Recursive-Thoughts (CoRT) SDK provides a framework for improving LLM responses through a multi-round self-debate technique. CoRT enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
 
@@ -20,13 +20,13 @@ This process enables the model to critically examine its own responses, consider
 ### Using pip (once published)
 
 ```bash
-pip install cort-sdk
+pip install thinkthread
 ```
 
 ### Using Poetry
 
 ```bash
-poetry add cort-sdk
+poetry add thinkthread
 ```
 
 ## Quickstart
@@ -35,23 +35,23 @@ poetry add cort-sdk
 
 ```bash
 # Run a query with default settings
-cort run "What are the implications of quantum computing on cryptography?"
+thinkthread run "What are the implications of quantum computing on cryptography?"
 
 # Run a query with a specific provider
-cort run "Explain the theory of relativity" --provider anthropic
+thinkthread run "Explain the theory of relativity" --provider anthropic
 
 # Run a query with more refinement rounds
-cort run "Compare and contrast democracy and autocracy" --rounds 3 --alternatives 5
+thinkthread run "Compare and contrast democracy and autocracy" --rounds 3 --alternatives 5
 
 # Stream the response as it's generated
-cort run "Describe the water cycle" --stream
+thinkthread run "Describe the water cycle" --stream
 ```
 
 ### Using the Python API
 
 ```python
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm import OpenAIClient
 
 # Initialize an LLM client
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")

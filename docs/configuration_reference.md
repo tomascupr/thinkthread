@@ -1,10 +1,10 @@
-# CoRT SDK Configuration Reference
+# ThinkThread SDK Configuration Reference
 
-This document provides a comprehensive reference of all configuration options available in the CoRT SDK.
+This document provides a comprehensive reference of all configuration options available in the ThinkThread SDK.
 
 ## Configuration Model
 
-The CoRT SDK uses Pydantic for configuration management through the `CoRTConfig` class.
+The ThinkThread SDK uses Pydantic for configuration management through the `CoRTConfig` class.
 
 ## Configuration Options
 
@@ -28,7 +28,7 @@ The CoRT SDK uses Pydantic for configuration management through the `CoRTConfig`
 
 ### Environment Variables
 
-The simplest way to configure the CoRT SDK is through environment variables:
+The simplest way to configure the ThinkThread SDK is through environment variables:
 
 ```bash
 # Set environment variables
@@ -39,7 +39,7 @@ export ALTERNATIVES=5
 export ROUNDS=3
 
 # Run CoRT
-cort run "Your question here"
+thinkthread run "Your question here"
 ```
 
 ### .env File
@@ -55,14 +55,14 @@ ALTERNATIVES=5
 ROUNDS=3
 ```
 
-The CoRT SDK will automatically load this file when creating the configuration.
+The ThinkThread SDK will automatically load this file when creating the configuration.
 
 ### Programmatic Configuration
 
 For more control, create a configuration object programmatically:
 
 ```python
-from cort_sdk.config import CoRTConfig, create_config
+from thinkthread_sdk.config import CoRTConfig, create_config
 
 # Use environment variables and .env file with overrides
 config = create_config()
@@ -78,8 +78,8 @@ custom_config = CoRTConfig(
 )
 
 # Use with CoRTSession
-from cort_sdk.cort_session import CoRTSession
-from cort_sdk.llm import OpenAIClient
+from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.llm import OpenAIClient
 
 client = OpenAIClient(api_key=custom_config.openai_api_key, model_name=custom_config.openai_model)
 session = CoRTSession(llm_client=client, config=custom_config)

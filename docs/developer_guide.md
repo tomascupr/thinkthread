@@ -1,10 +1,10 @@
-# CoRT SDK Developer Guide
+# ThinkThread SDK Developer Guide
 
-This guide explains the architecture of the CoRT SDK and how to extend it with new providers or evaluation strategies.
+This guide explains the architecture of the ThinkThread SDK and how to extend it with new providers or evaluation strategies.
 
 ## Architecture Overview
 
-The CoRT SDK follows a modular architecture with these key components:
+The ThinkThread SDK follows a modular architecture with these key components:
 
 1. **CoRTSession**: The main orchestrator that manages the recursive reasoning process
 2. **LLMClient**: Abstract interface for different LLM providers
@@ -93,12 +93,12 @@ class TemplateManager:
 
 To add a new LLM provider, create a new class that implements the `LLMClient` interface:
 
-1. Create a new file in the `cort_sdk/llm/` directory, e.g., `new_provider_client.py`
+1. Create a new file in the `thinkthread_sdk/llm/` directory, e.g., `new_provider_client.py`
 2. Implement the required methods:
 
 ```python
 from typing import AsyncIterator
-from cort_sdk.llm.base import LLMClient
+from thinkthread_sdk.llm.base import LLMClient
 
 class NewProviderClient(LLMClient):
     def __init__(self, api_key: str, model_name: str = "default-model"):
@@ -146,7 +146,7 @@ class NewProviderClient(LLMClient):
         pass
 ```
 
-3. Add the new client to `cort_sdk/llm/__init__.py`:
+3. Add the new client to `thinkthread_sdk/llm/__init__.py`:
 
 ```python
 from .new_provider_client import NewProviderClient
@@ -157,7 +157,7 @@ __all__ = [
 ]
 ```
 
-4. Update the CLI to support the new provider in `cort_sdk/cli.py`.
+4. Update the CLI to support the new provider in `thinkthread_sdk/cli.py`.
 
 ## Adding a New Evaluation Strategy
 
@@ -167,9 +167,9 @@ To add a new evaluation strategy:
 
 ```python
 from typing import List
-from cort_sdk.evaluation import EvaluationStrategy
-from cort_sdk.llm import LLMClient
-from cort_sdk.prompting import TemplateManager
+from thinkthread_sdk.evaluation import EvaluationStrategy
+from thinkthread_sdk.llm import LLMClient
+from thinkthread_sdk.prompting import TemplateManager
 
 class NewEvaluationStrategy(EvaluationStrategy):
     def evaluate(
@@ -195,7 +195,7 @@ class NewEvaluationStrategy(EvaluationStrategy):
 2. Use your strategy when creating a CoRTSession:
 
 ```python
-from cort_sdk.cort_session import CoRTSession
+from thinkthread_sdk.cort_session import CoRTSession
 from your_module import NewEvaluationStrategy
 
 session = CoRTSession(
@@ -206,15 +206,15 @@ session = CoRTSession(
 
 ## Customising Prompt Templates
 
-The SDK uses Jinja2 templates for all prompts. The default templates are in `cort_sdk/prompts/`, but you can provide your own:
+The SDK uses Jinja2 templates for all prompts. The default templates are in `thinkthread_sdk/prompts/`, but you can provide your own:
 
 1. Create a directory for your templates
 2. Create template files with the `.j2` extension
 3. Pass the directory path when creating a TemplateManager:
 
 ```python
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.cort_session import CoRTSession
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.cort_session import CoRTSession
 
 template_manager = TemplateManager(template_dir="/path/to/your/templates")
 session = CoRTSession(llm_client=client, template_manager=template_manager)
@@ -241,8 +241,8 @@ Core templates that need to be implemented:
 For advanced configuration, create a custom `CoRTConfig` instance:
 
 ```python
-from cort_sdk.config import CoRTConfig
-from cort_sdk.cort_session import CoRTSession
+from thinkthread_sdk.config import CoRTConfig
+from thinkthread_sdk.cort_session import CoRTSession
 
 # Create custom configuration
 config = CoRTConfig(

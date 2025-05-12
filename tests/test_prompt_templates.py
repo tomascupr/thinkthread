@@ -3,8 +3,8 @@ import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.config import create_config
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.config import create_config
 
 
 @pytest.fixture

@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from cort_sdk.evaluation import Evaluator, ModelEvaluator, DefaultEvaluationStrategy
-from cort_sdk.llm.dummy import DummyLLMClient
-from cort_sdk.prompting import TemplateManager
-from cort_sdk.llm import LLMClient
+from thinkthread_sdk.evaluation import Evaluator, ModelEvaluator, DefaultEvaluationStrategy
+from thinkthread_sdk.llm.dummy import DummyLLMClient
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.llm import LLMClient
 
 
 class SimpleEvaluator(Evaluator):

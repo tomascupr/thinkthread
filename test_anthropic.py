@@ -1,6 +1,6 @@
 import os
 import pytest
-from cort_sdk.llm.anthropic_client import AnthropicClient
+from thinkthread_sdk.llm.anthropic_client import AnthropicClient
 
 @pytest.mark.skipif(
     not os.environ.get("ANTHROPIC_API_KEY"), 
