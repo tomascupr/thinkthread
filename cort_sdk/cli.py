@@ -134,7 +134,7 @@ async def run_session(session: CoRTSession, question: str, stream: bool, verbose
         if verbose:
             logging.debug("Streaming final answer")
         
-        async for token in session.llm_client.astream(prompt):
+        async for token in await session.llm_client.astream(prompt):
             print(token, end="", flush=True)
         print()
     else:
