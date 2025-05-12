@@ -1,3 +1,4 @@
+"""Integration tests for template customization and usage."""
 import os
 import pytest
 from tempfile import TemporaryDirectory

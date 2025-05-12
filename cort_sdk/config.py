@@ -1,3 +1,9 @@
+"""Configuration handling for CORT SDK.
+
+This module manages configuration options for the CORT SDK, including API keys,
+model names, and algorithm parameters.
+"""
+
 import os
 from typing import Optional, Dict, Any, Union, ClassVar
 from pathlib import Path
@@ -5,8 +11,7 @@ from pydantic import BaseModel, field_validator
 
 
 class CoRTConfig(BaseModel):
-    """
-    Configuration for the CoRT SDK.
+    """Configuration for the CoRT SDK.
 
     This class manages settings like API keys, model choices, and default CoRT parameters.
     Values are loaded from environment variables or a .env file if present.
@@ -49,7 +54,7 @@ class CoRTConfig(BaseModel):
 
     @field_validator("alternatives", "rounds", mode="before")
     @classmethod
-    def validate_int_fields(cls, v):
+    def validate_int_fields(cls, v: Union[str, int]) -> int:
         """Validate integer fields."""
         if isinstance(v, str):
             try:
@@ -60,14 +65,14 @@ class CoRTConfig(BaseModel):
 
 
 def load_dotenv(env_file: Union[str, Path]) -> Dict[str, str]:
-    """
-    Load environment variables from a .env file.
+    """Load environment variables from a .env file.
 
     Args:
         env_file: Path to the .env file
 
     Returns:
         Dictionary of environment variables
+
     """
     env_vars = {}
 
@@ -87,14 +92,14 @@ def load_dotenv(env_file: Union[str, Path]) -> Dict[str, str]:
 
 
 def create_config(env_file: Optional[str] = ".env") -> CoRTConfig:
-    """
-    Create a CoRTConfig instance with values from environment variables and .env file.
+    """Create a CoRTConfig instance with values from environment variables and .env file.
 
     Args:
         env_file: Path to the .env file (default: ".env")
 
     Returns:
         CoRTConfig instance
+
     """
     env_vars = {}
     if env_file and os.path.exists(env_file):

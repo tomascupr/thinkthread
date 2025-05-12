@@ -1,3 +1,4 @@
+"""Tests for evaluation strategies in the CORT SDK."""
 from typing import List
 
 from cort_sdk.llm import LLMClient
@@ -18,8 +19,7 @@ class SimpleEvaluationStrategy(EvaluationStrategy):
         llm_client: LLMClient,
         template_manager: TemplateManager,
     ) -> int:
-        """
-        Always select the configured index if it's within range.
+        """Always select the configured index if it's within range.
 
         Args:
             question: The original question
@@ -29,6 +29,7 @@ class SimpleEvaluationStrategy(EvaluationStrategy):
 
         Returns:
             Index of the best answer in the answers list
+
         """
         if self.index_to_select < len(answers):
             return self.index_to_select

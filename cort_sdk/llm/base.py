@@ -1,11 +1,16 @@
+"""Abstract base class for LLM client implementations.
+
+This module defines the interface that all LLM client implementations must follow,
+providing a consistent API for different language model providers.
+"""
+
 from abc import ABC, abstractmethod
-from typing import Optional, AsyncIterator
+from typing import Optional, AsyncIterator, Dict, Any
 import asyncio
 
 
 class LLMClient(ABC):
-    """
-    Abstract base class for Large Language Model clients.
+    """Abstract base class for Large Language Model clients.
 
     This class defines the essential interface for interacting with different
     LLM providers. Concrete subclasses should implement the generate method
@@ -16,19 +21,18 @@ class LLMClient(ABC):
     method for cleaning up resources when the client is no longer needed.
     """
 
-    def __init__(self, model_name: Optional[str] = None):
-        """
-        Initialize the LLM client.
+    def __init__(self, model_name: Optional[str] = None) -> None:
+        """Initialize the LLM client.
 
         Args:
             model_name: Optional name of the model to use
+
         """
         self.model_name = model_name
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs) -> str:
-        """
-        Generate text from the language model based on the provided prompt.
+    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate text from the language model based on the provided prompt.
 
         Args:
             prompt: The input text to send to the model
@@ -36,12 +40,12 @@ class LLMClient(ABC):
 
         Returns:
             The generated text response from the model
+
         """
         pass
 
-    async def acomplete(self, prompt: str, **kwargs) -> str:
-        """
-        Asynchronously generate text from the language model.
+    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Asynchronously generate text from the language model.
 
         This method provides a non-blocking way to generate text from the LLM,
         allowing the calling application to perform other tasks while waiting
@@ -66,13 +70,13 @@ class LLMClient(ABC):
             Various exceptions may be raised depending on the implementation,
             including network errors, authentication issues, or rate limiting.
             Implementations should document their specific error handling behavior.
+
         """
         return await asyncio.to_thread(self.generate, prompt, **kwargs)
 
     @abstractmethod
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """
-        Asynchronously stream text generation from the language model.
+    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+        """Asynchronously stream text generation from the language model.
 
         This method yields chunks of the generated text as they become available,
         rather than waiting for the complete response. This is particularly useful for:
@@ -101,12 +105,12 @@ class LLMClient(ABC):
             Various exceptions may be raised depending on the implementation,
             including network errors, authentication issues, or rate limiting.
             Implementations should document their specific error handling behavior.
+
         """
         pass
 
     async def aclose(self) -> None:
-        """
-        Asynchronously close the client and clean up resources.
+        """Asynchronously close the client and clean up resources.
 
         This method ensures that all resources used by the async client are
         properly released when the client is no longer needed. It should be
@@ -128,5 +132,6 @@ class LLMClient(ABC):
 
         Returns:
             None
+
         """
         pass
