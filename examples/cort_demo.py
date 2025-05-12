@@ -44,3 +44,32 @@ print(f"Question: {question}\n")
 answer = session.run(question)
 
 print(f"Final answer: {answer}")
+
+print("\n--- With Pairwise Evaluation ---\n")
+
+pairwise_responses = [
+    "Initial answer: AI is a field of computer science.",
+    "Alternative 1: AI involves creating systems that can perform tasks normally requiring human intelligence.",
+    "Alternative 2: AI refers to the simulation of human intelligence in machines that are programmed to think and learn like humans.",
+    "Alternative 3: AI encompasses various technologies including machine learning, natural language processing, and computer vision.",
+    "The new answer is better.",
+    "The new answer is better.",
+    "The new answer is better."
+]
+
+pairwise_client = DummyLLMClient(responses=pairwise_responses)
+
+from cort_sdk.config import CoRTConfig
+pairwise_config = CoRTConfig()
+pairwise_config.use_pairwise_evaluation = True
+
+pairwise_session = CoRTSession(
+    llm_client=pairwise_client, 
+    max_rounds=1,
+    alternatives=3,
+    config=pairwise_config
+)
+
+pairwise_answer = pairwise_session.run(question)
+
+print(f"Final answer with pairwise evaluation: {pairwise_answer}")

@@ -18,6 +18,9 @@ def test_template_customization():
             
         with open(os.path.join(temp_dir, "evaluation_prompt.j2"), "w") as f:
             f.write("CUSTOM EVALUATION: {{ question }}\n{{ formatted_answers }}\nBest?")
+            
+        with open(os.path.join(temp_dir, "pairwise_prompt.j2"), "w") as f:
+            f.write("CUSTOM PAIRWISE: {{ question }}\nPrev: {{ prev_answer }}\nNew: {{ new_answer }}")
         
         prompts_received = []
         
@@ -32,6 +35,7 @@ def test_template_customization():
         
         from cort_sdk.config import CoRTConfig
         config = CoRTConfig()
+        config.use_pairwise_evaluation = False
         
         session = CoRTSession(
             llm_client=client,

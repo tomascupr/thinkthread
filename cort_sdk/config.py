@@ -25,6 +25,8 @@ class CoRTConfig(BaseModel):
     rounds: int = 2
     max_rounds: int = 3
     
+    use_pairwise_evaluation: bool = True
+    
     prompt_dir: Optional[str] = None
     
     _env_vars: ClassVar[Dict[str, str]] = {
@@ -38,6 +40,7 @@ class CoRTConfig(BaseModel):
         "alternatives": "ALTERNATIVES",
         "rounds": "ROUNDS",
         "max_rounds": "MAX_ROUNDS",
+        "use_pairwise_evaluation": "USE_PAIRWISE_EVALUATION",
         "prompt_dir": "PROMPT_DIR",
     }
     
