@@ -4,9 +4,8 @@ This module provides a client for interacting with Anthropic's Claude models
 through their API.
 """
 
-from typing import Optional, Dict, Any, AsyncIterator
+from typing import Dict, Any, AsyncIterator
 import time
-import json
 import requests
 import asyncio
 import aiohttp
@@ -24,7 +23,12 @@ class AnthropicClient(LLMClient):
     HUMAN_PROMPT = "\n\nHuman: "
     AI_PROMPT = "\n\nAssistant: "
 
-    def __init__(self, api_key: str, model: str = "claude-3-haiku-20240307", **opts: Dict[str, Any]) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "claude-3-haiku-20240307",
+        **opts: Dict[str, Any],
+    ) -> None:
         """Initialize the Anthropic client.
 
         Args:
@@ -40,9 +44,9 @@ class AnthropicClient(LLMClient):
 
         self.api_url = "https://api.anthropic.com/v1/messages"
 
-        self._last_call_time = 0
+        self._last_call_time: float = 0.0
 
-    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text using Anthropic's API through the official SDK.
 
         Args:
@@ -114,7 +118,7 @@ class AnthropicClient(LLMClient):
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
 
-    async def acomplete(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+    async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text using Anthropic's API.
 
         This method provides a non-blocking way to generate text from Anthropic's
@@ -206,7 +210,7 @@ class AnthropicClient(LLMClient):
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
 
-    async def astream(self, prompt: str, **kwargs: Dict[str, Any]) -> AsyncIterator[str]:
+    async def astream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
         """Asynchronously stream text generation from Anthropic's API.
 
         This method simulates streaming by splitting the complete response into

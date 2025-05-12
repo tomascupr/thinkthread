@@ -43,28 +43,19 @@ def test_model_evaluator_parse_evaluation():
     """Test the _parse_evaluation method of ModelEvaluator with different evaluation texts."""
     evaluator = ModelEvaluator()
 
-    assert (
-        evaluator._parse_evaluation(
-            "After careful consideration, the new answer is better."
-        )
-        == True
+    assert evaluator._parse_evaluation(
+        "After careful consideration, the new answer is better."
     )
-    assert (
-        evaluator._parse_evaluation(
-            "I prefer the second answer because it's more comprehensive."
-        )
-        == True
+    assert evaluator._parse_evaluation(
+        "I prefer the second answer because it's more comprehensive."
     )
-    assert (
-        evaluator._parse_evaluation(
-            "The new answer is more accurate and should replace the previous one."
-        )
-        == True
+    assert evaluator._parse_evaluation(
+        "The new answer is more accurate and should replace the previous one."
     )
 
-    assert evaluator._parse_evaluation("The previous answer is more accurate.") == False
-    assert evaluator._parse_evaluation("I prefer the first answer.") == False
-    assert evaluator._parse_evaluation("Both answers have merit.") == False
+    assert not evaluator._parse_evaluation("The previous answer is more accurate.")
+    assert not evaluator._parse_evaluation("I prefer the first answer.")
+    assert not evaluator._parse_evaluation("Both answers have merit.")
 
 
 def test_model_evaluator_evaluate(mock_template_manager):
@@ -84,7 +75,7 @@ def test_model_evaluator_evaluate(mock_template_manager):
         question, prev_answer, new_answer, client, mock_template_manager
     )
 
-    assert result == True
+    assert result
     assert client.call_count == 1
     assert mock_template_manager.render_template.call_count == 1
 
@@ -139,31 +130,20 @@ def test_model_evaluator_edge_cases():
     """Test ModelEvaluator with edge case evaluation responses."""
     evaluator = ModelEvaluator()
 
-    assert evaluator._parse_evaluation("I can't decide which is better.") == False
-    assert (
-        evaluator._parse_evaluation("Both answers have merit but are flawed.") == False
-    )
-    assert (
-        evaluator._parse_evaluation(
-            "The previous answer was good, but the new one is not better."
-        )
-        == False
+    assert not evaluator._parse_evaluation("I can't decide which is better.")
+    assert not evaluator._parse_evaluation("Both answers have merit but are flawed.")
+    assert not evaluator._parse_evaluation(
+        "The previous answer was good, but the new one is not better."
     )
 
-    assert evaluator._parse_evaluation("The new answer is not better.") == False
-    assert evaluator._parse_evaluation("I cannot say the new answer is better.") == True
+    assert not evaluator._parse_evaluation("The new answer is not better.")
+    assert evaluator._parse_evaluation("I cannot say the new answer is better.")
 
-    assert (
-        evaluator._parse_evaluation(
-            "The new answer is significantly better and more comprehensive."
-        )
-        == False
+    assert not evaluator._parse_evaluation(
+        "The new answer is significantly better and more comprehensive."
     )
-    assert (
-        evaluator._parse_evaluation(
-            "The second answer corrects errors in the first and adds more depth."
-        )
-        == False
+    assert not evaluator._parse_evaluation(
+        "The second answer corrects errors in the first and adds more depth."
     )
 
 
@@ -182,7 +162,7 @@ def test_model_evaluator_with_different_llm_responses():
         question, prev_answer, new_answer, client1, template_manager
     )
 
-    assert result1 == True
+    assert result1
 
     client2 = DummyLLMClient(
         responses=["The previous answer is more concise and better."]
@@ -191,4 +171,4 @@ def test_model_evaluator_with_different_llm_responses():
         question, prev_answer, new_answer, client2, template_manager
     )
 
-    assert result2 == False
+    assert not result2
