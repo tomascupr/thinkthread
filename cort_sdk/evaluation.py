@@ -1,5 +1,6 @@
 from typing import List, Optional
 from abc import ABC, abstractmethod
+import re
 
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
@@ -186,25 +187,36 @@ class ModelEvaluator(Evaluator):
         """
         Parse the evaluation text to determine if the new answer should be selected.
         
+        Uses regex patterns to robustly detect whether the LLM evaluation indicates
+        the new answer is better than the previous one, handling variations in phrasing
+        and properly accounting for negations.
+        
         Args:
             evaluation: The evaluation text from the LLM
             
         Returns:
             True if the new answer is better, False otherwise
         """
-        better_indicators = [
-            "new answer is better",
-            "second answer is better",
-            "prefer the new answer",
-            "prefer the second answer",
-            "new answer is more accurate",
-            "second answer is more accurate",
-            "new answer should replace",
-            "second answer should replace",
+        positive_patterns = [
+            r'(?i)(?<!not\s)(?:new|second)\s+answer\s+(?:is|seems|appears|was)\s+better',
+            r'(?i)prefer\s+(?:the\s+)?(?:new|second)\s+answer',
+            r'(?i)(?:new|second)\s+answer\s+(?:is|seems|appears)\s+more\s+(?:accurate|complete|helpful|comprehensive)',
+            r'(?i)(?:new|second)\s+answer\s+should\s+replace',
+            r'(?i)(?:the\s+)?(?:new|second)\s+one\s+(?:is|seems|appears)\s+better',
         ]
         
-        for indicator in better_indicators:
-            if indicator.lower() in evaluation.lower():
+        negative_patterns = [
+            r'(?i)(?<!not\s)(?:previous|first|old)\s+answer\s+(?:is|seems|appears|was)\s+better',
+            r'(?i)prefer\s+(?:the\s+)?(?:previous|first|old)\s+answer',
+            r'(?i)(?:the\s+)?(?:previous|first|old)\s+one\s+(?:is|seems|appears)\s+better',
+        ]
+        
+        for pattern in negative_patterns:
+            if re.search(pattern, evaluation):
+                return False
+        
+        for pattern in positive_patterns:
+            if re.search(pattern, evaluation):
                 return True
         
         return False
