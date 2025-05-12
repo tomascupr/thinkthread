@@ -3,7 +3,7 @@ from typing import List, Optional
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
 from cort_sdk.config import CoRTConfig, create_config
-from cort_sdk.evaluation import EvaluationStrategy, DefaultEvaluationStrategy
+from cort_sdk.evaluation import EvaluationStrategy, DefaultEvaluationStrategy, Evaluator, ModelEvaluator
 
 
 class CoRTSession:
@@ -22,6 +22,7 @@ class CoRTSession:
         max_rounds: Optional[int] = None,
         template_manager: Optional[TemplateManager] = None,
         evaluation_strategy: Optional[EvaluationStrategy] = None,
+        evaluator: Optional[Evaluator] = None,
         config: Optional[CoRTConfig] = None,
     ):
         """
@@ -48,6 +49,10 @@ class CoRTSession:
         
         # Initialize evaluation strategy
         self.evaluation_strategy = evaluation_strategy or DefaultEvaluationStrategy()
+        
+        # Initialize evaluator for pairwise comparison
+        self.evaluator = evaluator or ModelEvaluator()
+        self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
     
     def run(self, question: str) -> str:
         """
@@ -78,14 +83,25 @@ class CoRTSession:
         for round_num in range(1, self.max_rounds + 1):
             alternatives = self._generate_alternatives(question, current_answer)
             
-            all_answers = [current_answer] + alternatives
-            
-            # Use the evaluation strategy to select the best answer
-            best_index = self.evaluation_strategy.evaluate(
-                question, all_answers, self.llm_client, self.template_manager
-            )
-            
-            current_answer = all_answers[best_index]
+            if self.use_pairwise_evaluation:
+                best_answer = current_answer
+                
+                for alternative in alternatives:
+                    if self.evaluator.evaluate(
+                        question, best_answer, alternative, self.llm_client, self.template_manager
+                    ):
+                        best_answer = alternative
+                
+                current_answer = best_answer
+            else:
+                all_answers = [current_answer] + alternatives
+                
+                # Use the evaluation strategy to select the best answer
+                best_index = self.evaluation_strategy.evaluate(
+                    question, all_answers, self.llm_client, self.template_manager
+                )
+                
+                current_answer = all_answers[best_index]
         
         return current_answer
     
