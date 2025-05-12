@@ -10,6 +10,10 @@ class LLMClient(ABC):
     This class defines the essential interface for interacting with different
     LLM providers. Concrete subclasses should implement the generate method
     for specific providers.
+    
+    The class also provides async methods for non-blocking operation and
+    streaming responses, with proper resource management through the aclose
+    method for cleaning up resources when the client is no longer needed.
     """
 
     def __init__(self, model_name: Optional[str] = None):
@@ -97,5 +101,32 @@ class LLMClient(ABC):
             Various exceptions may be raised depending on the implementation,
             including network errors, authentication issues, or rate limiting.
             Implementations should document their specific error handling behavior.
+        """
+        pass
+        
+    async def aclose(self) -> None:
+        """
+        Asynchronously close the client and clean up resources.
+        
+        This method ensures that all resources used by the async client are
+        properly released when the client is no longer needed. It should be
+        called when you're done using the client to prevent resource leaks.
+        
+        Implementations should override this method if they use resources that
+        need to be explicitly cleaned up, such as HTTP sessions, database
+        connections, or file handles.
+        
+        Example usage:
+            ```python
+            client = SomeLLMClient(api_key="your-api-key")
+            try:
+                result = await client.acomplete("Hello, world!")
+                print(result)
+            finally:
+                await client.aclose()
+            ```
+            
+        Returns:
+            None
         """
         pass

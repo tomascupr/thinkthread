@@ -13,6 +13,10 @@ class OpenAIClient(LLMClient):
     
     This class provides an interface to OpenAI's API for generating text
     using models like GPT-4 or GPT-3.5-turbo through the Chat Completion endpoint.
+    
+    The implementation uses both synchronous and asynchronous OpenAI clients
+    for optimal performance in different contexts. It properly manages the
+    lifecycle of these clients to ensure resources are cleaned up appropriately.
     """
 
     def __init__(
@@ -34,8 +38,11 @@ class OpenAIClient(LLMClient):
         self.model = model
         self.opts = opts
         
-        # Initialize the OpenAI client
+        # Initialize the synchronous OpenAI client
         self.client = openai.OpenAI(api_key=api_key)
+        
+        # Initialize the asynchronous OpenAI client
+        self.async_client = openai.AsyncOpenAI(api_key=api_key)
         
         self._last_call_time = 0
 
@@ -91,9 +98,9 @@ class OpenAIClient(LLMClient):
         It uses OpenAI's native async client for optimal performance.
         
         The implementation includes rate limiting (minimum 500ms between calls)
-        to help avoid OpenAI API rate limits. It creates a new AsyncOpenAI client
-        for each call, which is appropriate for serverless environments but may
-        not be optimal for high-throughput applications.
+        to help avoid OpenAI API rate limits. It uses a shared AsyncOpenAI client
+        instance that is created once during initialization and reused for all
+        calls, providing better resource management and performance.
         
         Args:
             prompt: The input text to send to the model
@@ -113,8 +120,9 @@ class OpenAIClient(LLMClient):
             - "Unexpected error when calling OpenAI API: ..." for other errors
             
         Note:
-            For high-throughput applications, consider implementing a shared
-            AsyncOpenAI client with proper lifecycle management.
+            The shared AsyncOpenAI client instance is properly managed throughout
+            the lifecycle of the OpenAIClient object, ensuring resources are
+            cleaned up when the client is no longer needed.
         """
         current_time = time.time()
         time_since_last_call = current_time - self._last_call_time
@@ -129,8 +137,7 @@ class OpenAIClient(LLMClient):
         messages = [{"role": "user", "content": prompt}]
         
         try:
-            async_client = openai.AsyncOpenAI(api_key=self.api_key)
-            response = await async_client.chat.completions.create(
+            response = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 **options
@@ -159,9 +166,9 @@ class OpenAIClient(LLMClient):
         4. Reducing perceived latency for end users
         
         The implementation uses OpenAI's native streaming support by setting
-        the `stream=True` parameter. It creates a new AsyncOpenAI client for
-        each call and properly handles the streaming response, yielding each
-        content delta as it arrives.
+        the `stream=True` parameter. It uses the shared AsyncOpenAI client
+        instance that is created once during initialization and reused for all
+        calls, providing better resource management and performance.
         
         Args:
             prompt: The input text to send to the model
@@ -200,8 +207,7 @@ class OpenAIClient(LLMClient):
         messages = [{"role": "user", "content": prompt}]
         
         try:
-            async_client = openai.AsyncOpenAI(api_key=self.api_key)
-            stream = await async_client.chat.completions.create(
+            stream = await self.async_client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 **options
@@ -215,3 +221,36 @@ class OpenAIClient(LLMClient):
             yield f"OpenAI API error: {str(e)}"
         except Exception as e:
             yield f"Unexpected error when calling OpenAI API: {str(e)}"
+            
+    async def aclose(self) -> None:
+        """
+        Asynchronously close the client and clean up resources.
+        
+        This method ensures that all resources used by the async client are
+        properly released when the client is no longer needed. It should be
+        called when you're done using the client to prevent resource leaks.
+        
+        Example usage:
+            ```python
+            client = OpenAIClient(api_key="your-api-key")
+            try:
+                result = await client.acomplete("Hello, world!")
+                print(result)
+            finally:
+                await client.aclose()
+            ```
+            
+        Or with an async context manager:
+            ```python
+            async with AsyncContextManager(OpenAIClient(api_key="your-api-key")) as client:
+                result = await client.acomplete("Hello, world!")
+                print(result)
+            ```
+            
+        Returns:
+            None
+        """
+        if hasattr(self.async_client, "close") and callable(self.async_client.close):
+            await self.async_client.close()
+        elif hasattr(self.async_client, "aclose") and callable(self.async_client.aclose):
+            await self.async_client.aclose()
