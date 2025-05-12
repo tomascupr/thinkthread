@@ -53,6 +53,7 @@ class CoRTSession:
         # Initialize evaluator for pairwise comparison
         self.evaluator = evaluator or ModelEvaluator()
         self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
+        self.use_self_evaluation = self.config.use_self_evaluation
     
     def run(self, question: str) -> str:
         """
@@ -83,7 +84,18 @@ class CoRTSession:
         for round_num in range(1, self.max_rounds + 1):
             alternatives = self._generate_alternatives(question, current_answer)
             
-            if self.use_pairwise_evaluation:
+            if self.use_self_evaluation:
+                best_answer = current_answer
+                
+                for alternative in alternatives:
+                    # Use the evaluator to decide if the alternative is better
+                    if self.evaluator.evaluate(
+                        question, best_answer, alternative, self.llm_client, self.template_manager
+                    ):
+                        best_answer = alternative
+                
+                current_answer = best_answer
+            elif self.use_pairwise_evaluation:
                 best_answer = current_answer
                 
                 for alternative in alternatives:
