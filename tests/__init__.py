@@ -1,4 +1,4 @@
-"""Test suite for the CORT SDK.
+"""Test suite for the ThinkThread SDK.
 
-This package contains tests for all components of the CORT SDK.
+This package contains tests for all components of the ThinkThread SDK.
 """

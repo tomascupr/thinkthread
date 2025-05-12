@@ -1,4 +1,4 @@
-"""Tests for asynchronous operations in the CORT SDK."""
+"""Tests for asynchronous operations in the ThinkThread SDK."""
 import pytest
 import asyncio
 from typing import List
