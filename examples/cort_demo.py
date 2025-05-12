@@ -9,14 +9,15 @@ from cort_sdk.llm.dummy import DummyLLMClient
 from cort_sdk.evaluation import EvaluationStrategy
 from typing import List
 
+
 class VerboseEvaluationStrategy(EvaluationStrategy):
     def evaluate(self, question, answers, llm_client, template_manager):
         print("Evaluating answers:")
         for i, answer in enumerate(answers):
-            print(f"Answer {i+1}:\n{answer}\n")
-            
+            print(f"Answer {i + 1}:\n{answer}\n")
+
         selected = len(answers) - 1
-        print(f"Selected answer {selected+1}\n")
+        print(f"Selected answer {selected + 1}\n")
         return selected
 
 
@@ -30,10 +31,10 @@ responses = [
 client = DummyLLMClient(responses=responses)
 
 session = CoRTSession(
-    llm_client=client, 
+    llm_client=client,
     max_rounds=1,
     alternatives=3,
-    evaluation_strategy=VerboseEvaluationStrategy()
+    evaluation_strategy=VerboseEvaluationStrategy(),
 )
 
 os.makedirs("examples", exist_ok=True)
@@ -54,20 +55,18 @@ pairwise_responses = [
     "Alternative 3: AI encompasses various technologies including machine learning, natural language processing, and computer vision.",
     "The new answer is better.",
     "The new answer is better.",
-    "The new answer is better."
+    "The new answer is better.",
 ]
 
 pairwise_client = DummyLLMClient(responses=pairwise_responses)
 
 from cort_sdk.config import CoRTConfig
+
 pairwise_config = CoRTConfig()
 pairwise_config.use_pairwise_evaluation = True
 
 pairwise_session = CoRTSession(
-    llm_client=pairwise_client, 
-    max_rounds=1,
-    alternatives=3,
-    config=pairwise_config
+    llm_client=pairwise_client, max_rounds=1, alternatives=3, config=pairwise_config
 )
 
 pairwise_answer = pairwise_session.run(question)

@@ -7,7 +7,7 @@ from .base import LLMClient
 class DummyLLMClient(LLMClient):
     """
     A dummy implementation of LLMClient for testing purposes.
-    
+
     This class provides deterministic responses for testing CoRT logic
     without calling external APIs. It can be configured to return responses
     from a predefined list, use a counter-based approach, or use a custom
@@ -75,7 +75,7 @@ class DummyLLMClient(LLMClient):
         Reset the call counter to zero.
         """
         self._call_count = 0
-        
+
     async def acomplete(self, prompt: str, **kwargs) -> str:
         """
         Asynchronously generate a deterministic response based on configuration.
@@ -109,7 +109,7 @@ class DummyLLMClient(LLMClient):
 
         This method demonstrates how streaming works by splitting the full response
         into words and yielding them one by one with a small delay. It's useful for:
-        
+
         1. Testing streaming UI components without real API calls
         2. Simulating different streaming speeds by adjusting the delay
         3. Developing and testing streaming handlers in your application
@@ -132,7 +132,7 @@ class DummyLLMClient(LLMClient):
         """
         full_response = await self.acomplete(prompt, **kwargs)
         words = full_response.split()
-        
+
         for word in words:
             await asyncio.sleep(0.1)  # Simulate network delay
             yield word + " "
