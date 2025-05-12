@@ -1,4 +1,5 @@
 from typing import List, Optional
+import asyncio
 
 from cort_sdk.llm import LLMClient
 from cort_sdk.prompting import TemplateManager
@@ -145,3 +146,110 @@ class CoRTSession:
         return alternatives
     
     # They are now implemented in DefaultEvaluationStrategy
+    
+    async def run_async(self, question: str) -> str:
+        """
+        Execute the Chain-of-Recursive-Thoughts process asynchronously on a question.
+        
+        The process is the same as the synchronous version but uses async LLM calls.
+        
+        Args:
+            question: The question to answer
+            
+        Returns:
+            The final best answer after all refinement rounds
+        """
+        initial_prompt = self.template_manager.render_template(
+            "initial_prompt.j2", {"question": question}
+        )
+        current_answer = await self.llm_client.acomplete(initial_prompt, temperature=0.7)
+        
+        if self.max_rounds <= 0:
+            return current_answer
+        
+        for round_num in range(1, self.max_rounds + 1):
+            alternatives = await self._generate_alternatives_async(question, current_answer)
+            
+            if self.use_self_evaluation or self.use_pairwise_evaluation:
+                best_answer = current_answer
+                
+                for alternative in alternatives:
+                    # Use the evaluator to decide if the alternative is better
+                    is_better = await self._evaluate_async(
+                        question, best_answer, alternative
+                    )
+                    if is_better:
+                        best_answer = alternative
+                
+                current_answer = best_answer
+            else:
+                all_answers = [current_answer] + alternatives
+                
+                # Use the evaluation strategy to select the best answer
+                best_index = await self._evaluate_all_async(
+                    question, all_answers
+                )
+                
+                current_answer = all_answers[best_index]
+        
+        return current_answer
+    
+    async def _generate_alternatives_async(self, question: str, current_answer: str) -> List[str]:
+        """
+        Asynchronously generate alternative answers to the question.
+        
+        Args:
+            question: The original question
+            current_answer: The current best answer
+            
+        Returns:
+            List of alternative answers
+        """
+        alternatives = []
+        
+        for i in range(self.alternatives):
+            prompt = self.template_manager.render_template(
+                "alternative_prompt.j2",
+                {
+                    "question": question,
+                    "current_answer": current_answer
+                }
+            )
+            
+            alternative = await self.llm_client.acomplete(prompt, temperature=0.9)
+            alternatives.append(alternative)
+        
+        return alternatives
+    
+    async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
+        """
+        Asynchronously evaluate whether answer2 is better than answer1.
+        
+        Args:
+            question: The original question
+            answer1: The first answer
+            answer2: The second answer
+            
+        Returns:
+            True if answer2 is better than answer1, False otherwise
+        """
+        return await asyncio.to_thread(
+            self.evaluator.evaluate,
+            question, answer1, answer2, self.llm_client, self.template_manager
+        )
+    
+    async def _evaluate_all_async(self, question: str, answers: List[str]) -> int:
+        """
+        Asynchronously evaluate all answers and return the index of the best one.
+        
+        Args:
+            question: The original question
+            answers: List of answers to evaluate
+            
+        Returns:
+            Index of the best answer in the list
+        """
+        return await asyncio.to_thread(
+            self.evaluation_strategy.evaluate,
+            question, answers, self.llm_client, self.template_manager
+        )
