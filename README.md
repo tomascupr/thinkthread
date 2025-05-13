@@ -7,11 +7,12 @@
 
 ## Supercharge Your AI Applications with Human-Like Reasoning
 
-**ThinkThread SDK** transforms ordinary AI responses into extraordinary insights by teaching language models to think more like humans do – considering alternatives, evaluating options, and refining their thoughts. 
+**ThinkThread SDK** transforms ordinary AI responses into extraordinary insights by teaching language models to think more like humans do – considering alternatives, evaluating options, and refining their thoughts through both linear and tree-based reasoning approaches.
 
 Imagine if your AI could:
 - **Challenge its own first assumptions** instead of sticking with initial responses
-- **Explore multiple perspectives** before settling on an answer
+- **Explore multiple reasoning paths in parallel** to tackle complex problems
+- **Evaluate and prune less promising solutions** to focus on the best ideas
 - **Self-critique and improve** through iterative reasoning
 - **Deliver consistently higher-quality responses** that your users will love
 
@@ -43,9 +44,11 @@ ThinkThread is designed for next-generation AI applications across industries:
 | **Research** | Literature analysis and hypothesis generation | Considers contradictory evidence and alternative explanations |
 | **Decision Support** | Strategic planning assistants | Evaluates multiple scenarios before making recommendations |
 
-## How It Works: Chain-of-Recursive-Thoughts
+## How It Works: Advanced Reasoning Approaches
 
-ThinkThread implements a human-inspired thinking process:
+ThinkThread implements two powerful human-inspired thinking processes:
+
+### Chain-of-Recursive-Thoughts
 
 ```mermaid
 graph LR
@@ -55,6 +58,29 @@ graph LR
     
     style A fill:#f9f,stroke:#333,stroke-width:1px
     style F fill:#9f9,stroke:#333,stroke-width:1px
+```
+
+### Tree-of-Thoughts
+
+```mermaid
+graph TD
+    A[Question] --> B[Initial Thought]
+    A --> C[Initial Thought]
+    A --> D[Initial Thought]
+    
+    B --> E[Branch 1.1]
+    B --> F[Branch 1.2]
+    
+    C --> G[Branch 2.1]
+    C --> H[Branch 2.2]
+    
+    D --> I[Branch 3.1]
+    D --> J[Branch 3.2]
+    
+    E --> K[Best Solution]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style K fill:#9f9,stroke:#333,stroke-width:1px
 ```
 
 The process works like this:
