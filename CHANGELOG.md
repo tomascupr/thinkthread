@@ -2,7 +2,7 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
-## [0.5.2] - 2025-05-13
+## [0.6.0] - 2025-05-13
 
 ### Fixed
 - Fixed missing `_generate_uncached` abstract method implementation in all LLM clients
