@@ -8,6 +8,8 @@ from typing import List, Dict, Any, Optional, Union, Callable
 from dataclasses import dataclass
 import uuid
 import re
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
@@ -327,3 +329,244 @@ class TreeThinker:
             alternatives.append(alternative)
 
         return alternatives
+
+    async def _generate_continuations_async(
+        self, session: ThinkThreadSession, problem: str, current_answer: str
+    ) -> List[str]:
+        """Asynchronously generate continuations for a thought thread.
+
+        This method uses the session's ability to generate alternatives to create
+        continuations for the current thought thread. It leverages async LLM calls
+        to generate multiple continuations in parallel.
+
+        Args:
+            session: The ThinkThreadSession to use for generation
+            problem: The original problem
+            current_answer: The current answer or thought
+
+        Returns:
+            List of alternative continuations
+        """
+        num_continuations = min(self.branching_factor, 5)  # Limit to 5 for efficiency
+
+        # Create prompts for all continuations
+        prompts = []
+        for i in range(num_continuations):
+            prompt = self.template_manager.render_template(
+                "alternative_prompt.j2",
+                {"question": problem, "current_answer": current_answer},
+            )
+            prompts.append(prompt)
+
+        if hasattr(self.llm_client, "acomplete_batch"):
+            alternatives = await self.llm_client.acomplete_batch(
+                prompts, temperature=0.9
+            )
+            return alternatives
+
+        async def generate_alternative(prompt):
+            return await self.llm_client.acomplete(prompt, temperature=0.9)
+
+        alternatives = await asyncio.gather(
+            *[generate_alternative(prompt) for prompt in prompts]
+        )
+
+        return alternatives
+
+    async def expand_threads_async(
+        self,
+        nodes_to_expand: Optional[List[str]] = None,
+        beam_width: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Asynchronously expand the specified thought threads by generating the next thought for each.
+
+        This method takes the current active thought threads and expands each one
+        by generating alternative continuations in parallel. Each new continuation becomes a
+        child node in the thinking tree. After expansion, only the top N branches
+        (where N is the beam width) are kept for further expansion.
+
+        Args:
+            nodes_to_expand: List of node IDs to expand. If None, expands all nodes in the current layer.
+            beam_width: Number of top branches to keep after expansion. If None, uses the branching_factor.
+
+        Returns:
+            Dictionary containing information about the expansion results
+        """
+        if nodes_to_expand is None:
+            nodes_to_expand = self.current_layer.copy()
+
+        if beam_width is None:
+            beam_width = self.branching_factor
+
+        new_layer = []
+        new_nodes = []
+        all_expanded_nodes = []
+
+        async def process_node(node_id):
+            if node_id not in self.threads:
+                return []
+
+            parent_node = self.threads[node_id]
+
+            if parent_node.depth >= self.max_tree_depth:
+                return []
+
+            parent_session = parent_node.session
+            problem = parent_node.state.get("problem", "")
+            current_answer = parent_node.state.get("current_answer", "")
+
+            if not current_answer:
+                initial_prompt = self.template_manager.render_template(
+                    "initial_prompt.j2", {"question": problem}
+                )
+                current_answer = await self.llm_client.acomplete(
+                    initial_prompt, temperature=0.7
+                )
+                parent_node.state["current_answer"] = current_answer
+
+            alternatives = await self._generate_continuations_async(
+                parent_session, problem, current_answer
+            )
+
+            node_results = []
+
+            for i, alternative in enumerate(alternatives):
+                child_id = f"{node_id}_child_{i}"
+
+                child_session = ThinkThreadSession(
+                    llm_client=self.llm_client,
+                    template_manager=self.template_manager,
+                    config=self.config,
+                )
+
+                child_state = parent_node.state.copy()
+                child_state["current_answer"] = alternative
+
+                child_node = ThinkThreadNode(
+                    session=child_session,
+                    state=child_state,
+                    parent_id=node_id,
+                    node_id=child_id,
+                    depth=parent_node.depth + 1,
+                )
+
+                score = self._score_node(problem, child_node)
+                child_node.score = score
+
+                parent_node.children.append(child_id)
+
+                self.threads[child_id] = child_node
+                node_results.append(child_id)
+
+            return node_results
+
+        node_results = await asyncio.gather(
+            *[process_node(node_id) for node_id in nodes_to_expand]
+        )
+
+        for result in node_results:
+            all_expanded_nodes.extend(result)
+            new_nodes.extend(result)
+
+        # Implement beam search pruning: keep only the top N branches
+        if all_expanded_nodes:
+            sorted_nodes = sorted(
+                all_expanded_nodes,
+                key=lambda node_id: self.threads[node_id].score,
+                reverse=True,
+            )
+
+            pruned_nodes = sorted_nodes[:beam_width]
+            pruned_out = sorted_nodes[beam_width:]
+
+            self.current_layer = pruned_nodes
+            new_layer = pruned_nodes
+
+            pruned_scores = {
+                node_id: self.threads[node_id].score for node_id in pruned_nodes
+            }
+            pruned_out_scores = {
+                node_id: self.threads[node_id].score for node_id in pruned_out
+            }
+        else:
+            self.current_layer = []
+            new_layer = []
+            pruned_scores = {}
+            pruned_out_scores = {}
+
+        return {
+            "count": len(new_nodes),
+            "new_nodes": new_nodes,
+            "new_layer": new_layer,
+            "pruned_count": len(new_layer),
+            "pruned_out_count": len(pruned_out) if "pruned_out" in locals() else 0,
+            "scores": pruned_scores,
+            "pruned_out_scores": pruned_out_scores,
+        }
+
+    async def solve_async(
+        self, problem: str, beam_width: int = 1, max_iterations: int = 10, **kwargs: Any
+    ) -> Union[str, Dict[str, Any]]:
+        """Asynchronously solve a problem using tree-of-thoughts approach.
+
+        This method initiates the tree search process to find the best solution
+        to the given problem. It explores multiple reasoning paths by creating
+        and managing ThinkThreadSession instances in parallel.
+
+        Args:
+            problem: The problem to solve
+            beam_width: Number of parallel thought threads to create
+            max_iterations: Maximum number of iterations to perform
+            **kwargs: Additional parameters for the solving process
+
+        Returns:
+            The best solution found or a dictionary containing the solution and metadata
+        """
+        self.threads.clear()
+        self.current_layer = []
+
+        async def create_root_node(i):
+            session = ThinkThreadSession(
+                llm_client=self.llm_client,
+                template_manager=self.template_manager,
+                config=self.config,
+            )
+
+            node_id = f"root_{i}" if i > 0 else "root"
+            node = ThinkThreadNode(
+                session=session,
+                state={"problem": problem},
+                node_id=node_id,
+                depth=0,
+            )
+
+            return node_id, node
+
+        root_nodes = await asyncio.gather(
+            *[create_root_node(i) for i in range(beam_width)]
+        )
+
+        for node_id, node in root_nodes:
+            self.threads[node_id] = node
+            self.current_layer.append(node_id)
+
+        if max_iterations > 0:
+            expansion_results = await self.expand_threads_async(beam_width=beam_width)
+
+            return {
+                "status": "expanded",
+                "message": f"Created {beam_width} parallel thought threads and expanded them asynchronously with beam search (width={beam_width})",
+                "thread_count": len(self.threads),
+                "root_threads": self.current_layer[:beam_width],
+                "expanded_threads": expansion_results["new_nodes"],
+                "expansion_count": expansion_results["count"],
+                "pruned_count": expansion_results.get("pruned_count", 0),
+                "pruned_out_count": expansion_results.get("pruned_out_count", 0),
+            }
+
+        return {
+            "status": "initialized",
+            "message": f"Created {beam_width} parallel thought threads for problem: {problem}",
+            "thread_count": beam_width,
+            "thread_ids": self.current_layer,
+        }
