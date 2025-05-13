@@ -65,7 +65,7 @@ class TreeThinker:
         self.threads: Dict[str, ThinkThreadNode] = {}
 
     def solve(
-        self, problem: str, max_iterations: int = 10, **kwargs: Any
+        self, problem: str, beam_width: int = 1, max_iterations: int = 10, **kwargs: Any
     ) -> Union[str, Dict[str, Any]]:
         """Solve a problem using tree-of-thoughts approach.
 
@@ -75,25 +75,34 @@ class TreeThinker:
 
         Args:
             problem: The problem to solve
+            beam_width: Number of parallel thought threads to create
             max_iterations: Maximum number of iterations to perform
             **kwargs: Additional parameters for the solving process
 
         Returns:
             The best solution found or a dictionary containing the solution and metadata
         """
+        self.threads.clear()
 
-        root_session = ThinkThreadSession(
-            llm_client=self.llm_client,
-            template_manager=self.template_manager,
-            config=self.config,
-        )
+        for i in range(beam_width):
+            session = ThinkThreadSession(
+                llm_client=self.llm_client,
+                template_manager=self.template_manager,
+                config=self.config,
+            )
 
-        root_node = ThinkThreadNode(
-            session=root_session,
-            state={"problem": problem},
-            node_id="root",
-        )
+            node_id = f"root_{i}" if i > 0 else "root"
+            node = ThinkThreadNode(
+                session=session,
+                state={"problem": problem},
+                node_id=node_id,
+            )
 
-        self.threads["root"] = root_node
+            self.threads[node_id] = node
 
-        return f"Placeholder solution for: {problem}"
+        return {
+            "status": "initialized",
+            "message": f"Created {beam_width} parallel thought threads for problem: {problem}",
+            "thread_count": beam_width,
+            "thread_ids": list(self.threads.keys()),
+        }
