@@ -2,10 +2,21 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
-## [0.5.1] - 2025-05-12
+## [0.5.2] - 2025-05-13
+
+### Fixed
+- Fixed missing `_generate_uncached` abstract method implementation in all LLM clients
+- Fixed type errors in cache handling to ensure consistent return types
+- Fixed unused variables in test files
 
 ### Changed
-- Minor bug fixes and improvements
+- Improved README documentation with better organization and clarity
+- Simplified mermaid diagram for better readability
+- Enhanced docs README with more context about the SDK
+
+### Added
+- Created test scripts for OpenAI and Anthropic API integration
+- Added comprehensive formatting and testing report
 
 ## [0.5.0] - 2025-05-12
 
