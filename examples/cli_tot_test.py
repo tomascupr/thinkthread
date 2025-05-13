@@ -9,9 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-os.environ["OPENAI_API_KEY"] = (
-    "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"
-)
+# os.environ["OPENAI_API_KEY"] = "your-api-key-here"
 
 repo_root = Path(__file__).parent.parent.absolute()
 
@@ -48,12 +46,12 @@ def main():
 
     run_cli_command(
         'python -m thinkthread_sdk tot "What are three key benefits of tree-based search for reasoning?" '
-        "--provider openai --beam-width 2 --max-depth 2 --iterations 1"
+        "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
-
+    
     run_cli_command(
         'python -m thinkthread_sdk tot "How can we solve the climate crisis?" '
-        "--provider openai --beam-width 2 --max-depth 2 --iterations 1"
+        "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
 
     run_cli_command(
