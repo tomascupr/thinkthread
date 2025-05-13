@@ -19,19 +19,43 @@ This process enables the model to critically examine its own responses, consider
 graph TD
     A[Initial Question] --> B[Generate Initial Answer]
     B --> C[Round 1]
-    C --> D[Generate Alternative Answers]
-    D --> E[Evaluate All Answers]
+    
+    C --> D{Parallel Alternative Generation}
+    D --> |Concurrent| D1[Alternative 1]
+    D --> |Concurrent| D2[Alternative 2]
+    D --> |Concurrent| D3[Alternative 3]
+    
+    D1 --> E{Parallel Evaluation}
+    D2 --> E
+    D3 --> E
+    
     E --> F[Select Best Answer]
-    F --> G[Round 2]
-    G --> H[Generate Alternative Answers]
-    H --> I[Evaluate All Answers]
+    
+    F --> G1{Early Termination Check}
+    G1 -->|Converged| K[Final Answer]
+    G1 -->|Continue| G[Round 2]
+    
+    G --> H{Parallel Alternative Generation}
+    H --> |Concurrent| H1[Alternative 1]
+    H --> |Concurrent| H2[Alternative 2]
+    H --> |Concurrent| H3[Alternative 3]
+    
+    H1 --> I{Parallel Evaluation}
+    H2 --> I
+    H3 --> I
+    
     I --> J[Select Best Answer]
-    J --> K[Final Answer]
+    J --> K
     
     style A fill:#f9f,stroke:#333,stroke-width:2px
     style K fill:#9f9,stroke:#333,stroke-width:2px
     style C fill:#ddf,stroke:#333,stroke-width:2px
     style G fill:#ddf,stroke:#333,stroke-width:2px
+    style D fill:#ffd,stroke:#333,stroke-width:2px
+    style E fill:#ffd,stroke:#333,stroke-width:2px
+    style H fill:#ffd,stroke:#333,stroke-width:2px
+    style I fill:#ffd,stroke:#333,stroke-width:2px
+    style G1 fill:#dff,stroke:#333,stroke-width:2px
 ```
 
 ## Installation
@@ -126,6 +150,62 @@ The ThinkThread SDK provides these key capabilities:
 - **Asynchronous Support**: Non-blocking API for integration with async applications
 - **Streaming Responses**: Real-time token-by-token output for better user experience
 - **Extensible Architecture**: Easily add new providers or evaluation strategies
+
+## Performance
+
+### Optimization Techniques
+
+The ThinkThread SDK implements several advanced performance optimization techniques:
+
+- **Parallel Processing**: Concurrent alternative generation and evaluation using `asyncio.gather`
+- **Batched API Requests**: Reduce overhead by combining multiple prompts into batched requests
+- **Adaptive Temperature Control**: Dynamic temperature adjustment for improved reasoning (enabled by default)
+- **Semantic Caching**: Embeddings-based caching for similar prompts, even when wording differs
+- **Fast Similarity Calculation**: Optimized algorithms for string comparison to speed up convergence detection
+- **Early Termination**: Stop the reasoning process when answers converge to a high-quality solution
+
+### Benchmark Results
+
+| Configuration | Small Scale | Medium Scale |
+|---------------|-------------|-------------|
+| Baseline (no optimizations) | 22.09s | 41.05s |
+| All basic optimizations | 15.62s (1.41x) | 20.82s (1.97x) |
+| Batched requests | 10.53s (2.10x) | 18.98s (2.16x) |
+| Fast similarity | 7.61s (2.90x) | 25.21s (1.63x) |
+| Adaptive temperature | 17.23s (1.28x) | 9.62s (4.27x) |
+| All advanced optimizations | 17.83s (1.24x) | 22.29s (1.84x) |
+
+### Configuration
+
+Performance optimizations can be enabled through the `ThinkThreadConfig`:
+
+```python
+from thinkthread_sdk.config import ThinkThreadConfig
+from thinkthread_sdk.session import ThinkThreadSession
+
+# Configure performance optimizations
+config = ThinkThreadConfig(
+    # Basic optimizations
+    parallel_alternatives=True,
+    parallel_evaluation=True,
+    use_caching=True,
+    early_termination=True,
+    
+    # Advanced optimizations (adaptive temperature enabled by default)
+    use_batched_requests=True,
+    use_fast_similarity=True
+)
+
+# Create session with optimized configuration
+session = ThinkThreadSession(
+    llm_client=client,
+    alternatives=3,
+    max_rounds=2,
+    config=config
+)
+```
+
+For detailed performance tuning, see the [Performance Optimization Guide](docs/performance_optimization.md).
 
 ## Development
 
