@@ -4,7 +4,6 @@ This script demonstrates how to use the TreeThinker CLI to solve problems
 using tree-of-thoughts reasoning and visualize the thinking tree.
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,7 +14,6 @@ repo_root = Path(__file__).parent.parent.absolute()
 
 sys.path.insert(0, str(repo_root))
 
-from thinkthread_sdk.cli import app
 
 
 def run_cli_command(command):
@@ -48,7 +46,7 @@ def main():
         'python -m thinkthread_sdk tot "What are three key benefits of tree-based search for reasoning?" '
         "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
-    
+
     run_cli_command(
         'python -m thinkthread_sdk tot "How can we solve the climate crisis?" '
         "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
