@@ -20,15 +20,19 @@ That's exactly what ThinkThread delivers – in just a few lines of code.
 
 ## Why ThinkThread?
 
-Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing the Chain-of-Recursive-Thoughts technique – a breakthrough approach that mimics how humans refine their thinking:
+Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing advanced reasoning techniques:
 
 | Without ThinkThread | With ThinkThread |
 |---------------------|------------------|
 | Single-pass responses | Multi-round refinement process |
+| Linear reasoning only | Both linear and tree-based reasoning |
 | No self-evaluation | Critical examination of answers |
-| Limited perspective | Consideration of alternatives |
+| Limited perspective | Exploration of multiple reasoning paths |
+| No pruning of weak ideas | Focus on most promising solutions |
 | Inconsistent quality | Reliably improved responses |
 | "Take it or leave it" answers | Progressively refined insights |
+
+The Tree-of-Thoughts approach enables **parallel exploration of multiple reasoning paths**, allowing the model to consider diverse approaches to complex problems simultaneously. By evaluating and pruning less promising branches, ThinkThread focuses computational resources on the most valuable ideas.
 
 Developers report **30-70% improvement in response quality** when using ThinkThread in production applications.
 
