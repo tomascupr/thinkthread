@@ -7,14 +7,11 @@ and visualizing the tree of thoughts.
 import typer
 import asyncio
 import logging
-import json
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from rich.console import Console
 from rich.tree import Tree as RichTree
 from rich.panel import Panel
-from rich import print as rprint
 
-from thinkthread_sdk import __version__
 from thinkthread_sdk.config import create_config
 from thinkthread_sdk.tree_thinker import TreeThinker
 from thinkthread_sdk.llm import (
@@ -263,7 +260,7 @@ def visualize_tree(tree_thinker: TreeThinker) -> None:
     total_nodes = len(tree_thinker.threads)
     leaf_nodes = sum(1 for node_id in tree_thinker.threads if node_id not in tree_map)
 
-    print(f"\nStatistics:")
+    print("\nStatistics:")
     print(f"Total nodes: {total_nodes}")
     print(f"Leaf nodes: {leaf_nodes}")
     print(f"Internal nodes: {total_nodes - leaf_nodes}")

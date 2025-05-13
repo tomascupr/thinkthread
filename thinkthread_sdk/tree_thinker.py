@@ -6,10 +6,8 @@ for exploring multiple reasoning paths using ThinkThreadSession instances.
 
 from typing import List, Dict, Any, Optional, Union, Callable
 from dataclasses import dataclass
-import uuid
 import re
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
@@ -314,7 +312,7 @@ class TreeThinker:
                             )
                         else:
                             return max(parent_score - (improvement_factor / 2), 0.0)
-                    except Exception as e:
+                    except Exception:
                         return min(
                             max(base_score, parent_score - 0.1), parent_score + 0.1
                         )
@@ -324,7 +322,7 @@ class TreeThinker:
             random_factor = random.uniform(-0.05, 0.05)
             return max(min(base_score + random_factor, 1.0), 0.0)
 
-        except Exception as e:
+        except Exception:
             import random
 
             return 0.4 + random.uniform(0.0, 0.2)
@@ -381,7 +379,7 @@ class TreeThinker:
 
             return min(score, 1.0)  # Ensure score is at most 1.0
 
-        except Exception as e:
+        except Exception:
             return 0.5
 
     def _generate_continuations(
@@ -413,7 +411,7 @@ class TreeThinker:
 
                 alternative = self.llm_client.generate(prompt, temperature=0.9)
                 alternatives.append(alternative)
-            except Exception as e:
+            except Exception:
                 fallback_alternative = f"{current_answer}\n\nAdditional thoughts: Unable to generate continuation due to an error."
                 alternatives.append(fallback_alternative)
 
@@ -456,7 +454,7 @@ class TreeThinker:
                         {"question": problem, "current_answer": current_answer},
                     )
                     prompts.append(prompt)
-                except Exception as e:
+                except Exception:
                     prompts.append(f"Continue this thought: {current_answer}")
 
             # Try batch completion if available
@@ -466,14 +464,14 @@ class TreeThinker:
                         prompts, temperature=0.9
                     )
                     return alternatives
-                except Exception as e:
+                except Exception:
                     pass
 
             # Individual completions with error handling
             async def generate_alternative(prompt):
                 try:
                     return await self.llm_client.acomplete(prompt, temperature=0.9)
-                except Exception as e:
+                except Exception:
                     return f"{current_answer}\n\nAdditional thoughts: Unable to generate continuation due to an error."
 
             alternatives = await asyncio.gather(
@@ -481,7 +479,7 @@ class TreeThinker:
             )
 
             return alternatives
-        except Exception as e:
+        except Exception:
             # If all else fails, return a single fallback alternative
             return [current_answer]
 
