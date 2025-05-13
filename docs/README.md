@@ -1,6 +1,6 @@
 # ThinkThread SDK Documentation
 
-This directory contains comprehensive documentation for the ThinkThread SDK.
+This directory contains comprehensive documentation for the ThinkThread SDK, a powerful framework for improving LLM responses through the Chain-of-Recursive-Thoughts technique. The SDK enables developers to integrate sophisticated reasoning capabilities into their LLM-based applications.
 
 ## Documentation Structure
 
