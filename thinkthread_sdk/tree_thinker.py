@@ -4,14 +4,16 @@ This module contains the TreeThinker class that implements tree-based search
 for exploring multiple reasoning paths using ThinkThreadSession instances.
 """
 
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional, Union, Callable
 from dataclasses import dataclass
 import uuid
+import re
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
 from thinkthread_sdk.config import ThinkThreadConfig, create_config
 from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.evaluation import Evaluator, ModelEvaluator
 
 
 @dataclass
@@ -51,6 +53,8 @@ class TreeThinker:
         branching_factor: int = 3,
         template_manager: Optional[TemplateManager] = None,
         config: Optional[ThinkThreadConfig] = None,
+        evaluator: Optional[Evaluator] = None,
+        scoring_function: Optional[Callable[[str, Dict[str, Any]], float]] = None,
     ) -> None:
         """Initialize a TreeThinker instance.
 
@@ -60,6 +64,8 @@ class TreeThinker:
             branching_factor: Number of branches to explore at each node
             template_manager: Optional template manager for prompt templates
             config: Optional configuration object
+            evaluator: Optional evaluator for scoring thought branches
+            scoring_function: Optional custom function for scoring thought branches
         """
         self.llm_client = llm_client
         self.max_tree_depth = max_tree_depth
@@ -69,6 +75,8 @@ class TreeThinker:
         self.template_manager = template_manager or TemplateManager(
             self.config.prompt_dir
         )
+        self.evaluator = evaluator or ModelEvaluator()
+        self.scoring_function = scoring_function
 
         self.threads: Dict[str, ThinkThreadNode] = {}
         self.current_layer: List[str] = []
@@ -198,6 +206,9 @@ class TreeThinker:
                     depth=parent_node.depth + 1,
                 )
 
+                score = self._score_node(problem, child_node)
+                child_node.score = score
+
                 parent_node.children.append(child_id)
 
                 self.threads[child_id] = child_node
@@ -206,7 +217,51 @@ class TreeThinker:
 
         self.current_layer = new_layer
 
-        return {"count": len(new_nodes), "new_nodes": new_nodes, "new_layer": new_layer}
+        scores = {node_id: self.threads[node_id].score for node_id in new_nodes}
+
+        return {
+            "count": len(new_nodes),
+            "new_nodes": new_nodes,
+            "new_layer": new_layer,
+            "scores": scores,
+        }
+
+    def _score_node(self, problem: str, node: ThinkThreadNode) -> float:
+        """Score a node based on the quality of its thought.
+
+        This method evaluates the promise of a thought branch using either
+        a custom scoring function or a simple heuristic based on answer length
+        and complexity. This is a placeholder implementation that can be enhanced
+        with more sophisticated evaluation strategies.
+
+        Args:
+            problem: The original problem
+            node: The node to score
+
+        Returns:
+            A score between 0.0 and 1.0 indicating the quality of the thought
+        """
+        if self.scoring_function:
+            return self.scoring_function(problem, node.state)
+
+        current_answer = node.state.get("current_answer", "")
+
+        length_score = min(len(current_answer) / 1000, 1.0)
+
+        sentences = current_answer.split(". ")
+        sentence_count = len(sentences)
+        unique_words = len(set(current_answer.lower().split()))
+        word_count = len(current_answer.split())
+
+        complexity_score = 0.0
+        if word_count > 0:
+            complexity_score = min(
+                (unique_words / word_count) * (sentence_count / 5), 1.0
+            )
+
+        score = (0.7 * length_score) + (0.3 * complexity_score)
+
+        return score
 
     def _generate_continuations(
         self, session: ThinkThreadSession, problem: str, current_answer: str
