@@ -5,8 +5,11 @@ providing a consistent API for different language model providers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, AsyncIterator, Any
+from typing import Optional, AsyncIterator, Any, Dict, Tuple
 import asyncio
+import hashlib
+import json
+from functools import wraps
 
 
 class LLMClient(ABC):
@@ -21,6 +24,8 @@ class LLMClient(ABC):
     method for cleaning up resources when the client is no longer needed.
     """
 
+    _cache: Dict[str, str] = {}
+
     def __init__(self, model_name: Optional[str] = None) -> None:
         """Initialize the LLM client.
 
@@ -29,10 +34,56 @@ class LLMClient(ABC):
 
         """
         self.model_name = model_name
+        self._use_cache = False
+        self._semaphore = None
+
+    def enable_cache(self, enabled: bool = True) -> None:
+        """Enable or disable caching for this client.
+
+        Args:
+            enabled: Whether to enable caching
+        """
+        self._use_cache = enabled
+
+    def set_concurrency_limit(self, limit: int) -> None:
+        """Set the concurrency limit for API calls.
+
+        Args:
+            limit: Maximum number of concurrent API calls
+        """
+        self._semaphore = asyncio.Semaphore(limit) if limit > 0 else None
+        
+    def _get_cache_key(self, prompt: str, **kwargs: Any) -> str:
+        """Generate a cache key for the given prompt and parameters.
+
+        The cache key includes the model name, prompt, and all parameters
+        that affect the output (e.g., temperature, max_tokens).
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional model-specific parameters
+
+        Returns:
+            A unique string representing the cache key
+        """
+        cache_dict = {
+            "model": self.model_name,
+            "prompt": prompt,
+        }
+        
+        for key, value in kwargs.items():
+            if key not in ["stream", "timeout"]:  # Skip parameters that don't affect the output
+                cache_dict[key] = value
+        
+        cache_json = json.dumps(cache_dict, sort_keys=True)
+        return hashlib.md5(cache_json.encode()).hexdigest()
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Generate text from the language model based on the provided prompt.
+    def _generate_uncached(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text without using the cache.
+
+        This method should be implemented by subclasses to provide
+        the actual generation logic.
 
         Args:
             prompt: The input text to send to the model
@@ -40,9 +91,29 @@ class LLMClient(ABC):
 
         Returns:
             The generated text response from the model
-
         """
         pass
+
+    def generate(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text with optional caching.
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional model-specific parameters
+
+        Returns:
+            The generated text response from the model
+        """
+        if self._use_cache:
+            cache_key = self._get_cache_key(prompt, **kwargs)
+            if cache_key in self._cache:
+                return self._cache[cache_key]
+            
+            response = self._generate_uncached(prompt, **kwargs)
+            self._cache[cache_key] = response
+            return response
+        
+        return self._generate_uncached(prompt, **kwargs)
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text from the language model.
@@ -52,9 +123,9 @@ class LLMClient(ABC):
         for the model's response. Use this method in async applications or when
         you need to make multiple concurrent LLM calls.
 
-        By default, this wraps the synchronous generate method using asyncio.to_thread,
-        but subclasses should override this with a native async implementation
-        when possible for better performance and resource management.
+        If caching is enabled, this method will check the cache before
+        making an API call. When concurrency limits are set, it will use
+        semaphores to limit the number of concurrent API calls.
 
         Args:
             prompt: The input text to send to the model
@@ -72,7 +143,37 @@ class LLMClient(ABC):
             Implementations should document their specific error handling behavior.
 
         """
-        return await asyncio.to_thread(self.generate, prompt, **kwargs)
+        if self._use_cache:
+            cache_key = self._get_cache_key(prompt, **kwargs)
+            if cache_key in self._cache:
+                return self._cache[cache_key]
+        
+        if self._semaphore is not None:
+            async with self._semaphore:
+                response = await self._acomplete_uncached(prompt, **kwargs)
+        else:
+            response = await self._acomplete_uncached(prompt, **kwargs)
+        
+        if self._use_cache:
+            self._cache[cache_key] = response
+        
+        return response
+    
+    async def _acomplete_uncached(self, prompt: str, **kwargs: Any) -> str:
+        """Asynchronously generate text without using the cache.
+
+        By default, this wraps the synchronous _generate_uncached method using asyncio.to_thread,
+        but subclasses should override this with a native async implementation
+        when possible for better performance and resource management.
+        
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional model-specific parameters
+            
+        Returns:
+            The generated text response from the model
+        """
+        return await asyncio.to_thread(self._generate_uncached, prompt, **kwargs)
 
     @abstractmethod
     def astream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:

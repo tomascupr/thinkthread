@@ -34,6 +34,14 @@ class ThinkThreadConfig(BaseModel):
     use_pairwise_evaluation: bool = True
     use_self_evaluation: bool = False
 
+    parallel_alternatives: bool = False
+    parallel_evaluation: bool = False 
+    use_caching: bool = False
+    early_termination: bool = False
+    early_termination_threshold: float = 0.95
+    concurrency_limit: int = 5
+    enable_monitoring: bool = False
+
     prompt_dir: Optional[str] = None
 
     _env_vars: ClassVar[Dict[str, str]] = {
@@ -49,6 +57,13 @@ class ThinkThreadConfig(BaseModel):
         "max_rounds": "MAX_ROUNDS",
         "use_pairwise_evaluation": "USE_PAIRWISE_EVALUATION",
         "use_self_evaluation": "USE_SELF_EVALUATION",
+        "parallel_alternatives": "PARALLEL_ALTERNATIVES",
+        "parallel_evaluation": "PARALLEL_EVALUATION",
+        "use_caching": "USE_CACHING",
+        "early_termination": "EARLY_TERMINATION",
+        "early_termination_threshold": "EARLY_TERMINATION_THRESHOLD",
+        "concurrency_limit": "CONCURRENCY_LIMIT",
+        "enable_monitoring": "ENABLE_MONITORING",
         "prompt_dir": "PROMPT_DIR",
     }
 
