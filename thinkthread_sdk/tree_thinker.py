@@ -268,7 +268,7 @@ class TreeThinker:
         This method evaluates the promise of a thought branch using one of three approaches:
         1. A custom scoring function provided during initialization
         2. LLM-based evaluation using ModelEvaluator if a reference answer is available
-        3. A heuristic based on answer length and complexity as a fallback
+        3. A heuristic based on answer quality metrics as a fallback
 
         Args:
             problem: The original problem
@@ -282,14 +282,20 @@ class TreeThinker:
                 return self.scoring_function(problem, node.state)
 
             current_answer = node.state.get("current_answer", "")
+            if not current_answer:
+                return 0.0
 
+            base_score = self._calculate_base_score(current_answer)
+
+            # If this is a child node, compare with parent using ModelEvaluator
             if node.parent_id and node.parent_id in self.threads:
                 parent_node = self.threads[node.parent_id]
                 parent_answer = parent_node.state.get("current_answer", "")
+                parent_score = parent_node.score
 
                 if parent_answer and current_answer:
                     try:
-                        is_better = self.evaluator.evaluate(
+                        comparison_result = self.evaluator.evaluate(
                             problem,
                             parent_answer,
                             current_answer,
@@ -297,29 +303,84 @@ class TreeThinker:
                             self.template_manager,
                         )
 
-                        if is_better:
-                            return min(parent_node.score + 0.1, 1.0)
+                        improvement_factor = 0.05 + (base_score * 0.2)
+
+                        if comparison_result:
+                            import random
+
+                            random_factor = random.uniform(0.01, 0.05)
+                            return min(
+                                parent_score + improvement_factor + random_factor, 1.0
+                            )
                         else:
-                            return max(parent_node.score - 0.05, 0.0)
+                            return max(parent_score - (improvement_factor / 2), 0.0)
                     except Exception as e:
-                        pass
+                        return min(
+                            max(base_score, parent_score - 0.1), parent_score + 0.1
+                        )
 
-            length_score = min(len(current_answer) / 1000, 1.0)
+            import random
 
-            sentences = current_answer.split(". ")
+            random_factor = random.uniform(-0.05, 0.05)
+            return max(min(base_score + random_factor, 1.0), 0.0)
+
+        except Exception as e:
+            import random
+
+            return 0.4 + random.uniform(0.0, 0.2)
+
+    def _calculate_base_score(self, answer: str) -> float:
+        """Calculate a base score for an answer based on various quality metrics.
+
+        Args:
+            answer: The answer to score
+
+        Returns:
+            A score between 0.0 and 1.0 indicating the base quality
+        """
+        try:
+            length = len(answer)
+            length_score = min(length / 1000, 1.0)  # Cap at 1000 chars
+
+            sentences = answer.split(". ")
             sentence_count = len(sentences)
-            unique_words = len(set(current_answer.lower().split()))
-            word_count = len(current_answer.split())
 
-            complexity_score = 0.0
+            words = answer.lower().split()
+            word_count = len(words)
+            unique_words = len(set(words))
+
+            vocabulary_richness = 0.0
             if word_count > 0:
-                complexity_score = min(
-                    (unique_words / word_count) * (sentence_count / 5), 1.0
+                vocabulary_richness = min(unique_words / word_count, 1.0)
+
+            has_structure = bool(re.search(r"^\s*[\d\.\-\*]+\s+", answer, re.MULTILINE))
+            structure_bonus = 0.1 if has_structure else 0.0
+
+            has_examples = bool(
+                re.search(
+                    r"example|instance|case|e\.g\.|i\.e\.|for instance", answer.lower()
                 )
+            )
+            examples_bonus = 0.1 if has_examples else 0.0
 
-            score = (0.7 * length_score) + (0.3 * complexity_score)
+            avg_sentence_length = word_count / max(sentence_count, 1)
+            sentence_complexity = min(
+                avg_sentence_length / 20, 1.0
+            )  # Optimal ~20 words
 
-            return score
+            score = (
+                (0.3 * length_score)
+                + (0.2 * vocabulary_richness)
+                + (0.2 * sentence_complexity)
+                + (
+                    0.1 * min(sentence_count / 10, 1.0)
+                )  # Reward multiple sentences up to 10
+                + structure_bonus
+                + examples_bonus
+            )
+
+            return min(score, 1.0)  # Ensure score is at most 1.0
+
         except Exception as e:
             return 0.5
 
