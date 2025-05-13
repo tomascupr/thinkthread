@@ -1,6 +1,9 @@
 # ThinkThread SDK
 
+[![PyPI](https://img.shields.io/pypi/v/thinkthread)](https://pypi.org/project/thinkthread/)
+[![Python](https://img.shields.io/pypi/pyversions/thinkthread)](https://pypi.org/project/thinkthread/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 The ThinkThread SDK provides a powerful framework for improving LLM responses through the Chain-of-Recursive-Thoughts technique. By generating multiple alternative responses, evaluating them, and selecting the best option over multiple iterations, ThinkThread significantly enhances answer quality and reasoning capabilities.
 
