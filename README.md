@@ -7,11 +7,12 @@
 
 ## Supercharge Your AI Applications with Human-Like Reasoning
 
-**ThinkThread SDK** transforms ordinary AI responses into extraordinary insights by teaching language models to think more like humans do – considering alternatives, evaluating options, and refining their thoughts. 
+**ThinkThread SDK** transforms ordinary AI responses into extraordinary insights by teaching language models to think more like humans do – considering alternatives, evaluating options, and refining their thoughts through both linear and tree-based reasoning approaches.
 
 Imagine if your AI could:
 - **Challenge its own first assumptions** instead of sticking with initial responses
-- **Explore multiple perspectives** before settling on an answer
+- **Explore multiple reasoning paths in parallel** to tackle complex problems
+- **Evaluate and prune less promising solutions** to focus on the best ideas
 - **Self-critique and improve** through iterative reasoning
 - **Deliver consistently higher-quality responses** that your users will love
 
@@ -19,15 +20,19 @@ That's exactly what ThinkThread delivers – in just a few lines of code.
 
 ## Why ThinkThread?
 
-Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing the Chain-of-Recursive-Thoughts technique – a breakthrough approach that mimics how humans refine their thinking:
+Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing advanced reasoning techniques:
 
 | Without ThinkThread | With ThinkThread |
 |---------------------|------------------|
 | Single-pass responses | Multi-round refinement process |
+| Linear reasoning only | Both linear and tree-based reasoning |
 | No self-evaluation | Critical examination of answers |
-| Limited perspective | Consideration of alternatives |
+| Limited perspective | Exploration of multiple reasoning paths |
+| No pruning of weak ideas | Focus on most promising solutions |
 | Inconsistent quality | Reliably improved responses |
 | "Take it or leave it" answers | Progressively refined insights |
+
+The Tree-of-Thoughts approach enables **parallel exploration of multiple reasoning paths**, allowing the model to consider diverse approaches to complex problems simultaneously. By evaluating and pruning less promising branches, ThinkThread focuses computational resources on the most valuable ideas.
 
 Developers report **30-70% improvement in response quality** when using ThinkThread in production applications.
 
@@ -43,9 +48,11 @@ ThinkThread is designed for next-generation AI applications across industries:
 | **Research** | Literature analysis and hypothesis generation | Considers contradictory evidence and alternative explanations |
 | **Decision Support** | Strategic planning assistants | Evaluates multiple scenarios before making recommendations |
 
-## How It Works: Chain-of-Recursive-Thoughts
+## How It Works: Advanced Reasoning Approaches
 
-ThinkThread implements a human-inspired thinking process:
+ThinkThread implements two powerful human-inspired thinking processes:
+
+### Chain-of-Recursive-Thoughts
 
 ```mermaid
 graph LR
@@ -55,6 +62,29 @@ graph LR
     
     style A fill:#f9f,stroke:#333,stroke-width:1px
     style F fill:#9f9,stroke:#333,stroke-width:1px
+```
+
+### Tree-of-Thoughts
+
+```mermaid
+graph TD
+    A[Question] --> B[Initial Thought]
+    A --> C[Initial Thought]
+    A --> D[Initial Thought]
+    
+    B --> E[Branch 1.1]
+    B --> F[Branch 1.2]
+    
+    C --> G[Branch 2.1]
+    C --> H[Branch 2.2]
+    
+    D --> I[Branch 3.1]
+    D --> J[Branch 3.2]
+    
+    E --> K[Best Solution]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style K fill:#9f9,stroke:#333,stroke-width:1px
 ```
 
 The process works like this:
@@ -161,6 +191,7 @@ config = create_config(
 |---------|-------------|
 | **Multiple LLM Providers** | Support for OpenAI, Anthropic, and HuggingFace models |
 | **Recursive Reasoning** | Multi-round refinement process for improved answers |
+| **Tree-of-Thoughts** | Explore multiple reasoning paths in parallel for complex problems |
 | **Evaluation Strategies** | Self-evaluation and pairwise comparison of answers |
 | **Async & Streaming** | Non-blocking API and real-time token-by-token output |
 | **Customizable Prompts** | Jinja2 templates for all prompting needs |
@@ -202,6 +233,74 @@ session = ThinkThreadSession(
 ```
 
 For detailed tuning options, see the [Performance Guide](docs/performance_optimization.md).
+
+## Tree-of-Thoughts Reasoning
+
+ThinkThread SDK now includes a powerful Tree-of-Thoughts (ToT) solver that explores multiple reasoning paths in parallel:
+
+```python
+from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread_sdk.llm import OpenAIClient
+from thinkthread_sdk.config import create_config
+
+# Setup
+client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+tree_thinker = TreeThinker(
+    llm_client=client,
+    max_tree_depth=3,         # Maximum depth of the thinking tree
+    branching_factor=3,       # Number of branches per node
+)
+
+# Solve a problem using tree-based search
+problem = "What are three key benefits of tree-based search for reasoning?"
+result = tree_thinker.solve(
+    problem=problem,
+    beam_width=2,             # Number of parallel thought threads
+    max_iterations=2          # Number of expansion iterations
+)
+
+# Find the best solution
+best_node_id = max(
+    tree_thinker.threads.keys(),
+    key=lambda node_id: tree_thinker.threads[node_id].score
+)
+best_node = tree_thinker.threads[best_node_id]
+
+print(f"Best solution (score: {best_node.score:.2f}):")
+print(best_node.state.get("current_answer", "No answer found"))
+```
+
+### Asynchronous API
+
+For non-blocking operation, use the asynchronous API:
+
+```python
+import asyncio
+
+# Solve asynchronously
+result = await tree_thinker.solve_async(
+    problem="How can we address climate change through technology?",
+    beam_width=3,
+    max_iterations=2
+)
+```
+
+### Command Line Interface
+
+The TreeThinker module can be used from the command line:
+
+```bash
+# Basic usage
+thinkthread tot "What are the benefits of tree-based search for reasoning?"
+
+# With specific provider
+thinkthread tot "Design a system for autonomous vehicles" --provider anthropic
+
+# Advanced configuration
+thinkthread tot "What are the ethical implications of AI?" --beam-width 5 --max-depth 4
+```
+
+For detailed documentation on Tree-of-Thoughts reasoning, see the [Tree-of-Thoughts Guide](docs/tree_thinker.md).
 
 ## Development
 

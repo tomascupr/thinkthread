@@ -2,6 +2,18 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
+## [0.7.0] - 2025-05-13
+
+### Added
+- Introduced TreeThinker module for Tree-of-Thoughts reasoning
+- Added comprehensive documentation for Tree-of-Thoughts in docs/tree_thinker.md
+- Created practical examples demonstrating TreeThinker usage
+- Implemented CLI command `thinkthread tot` for tree-based reasoning
+- Added beam search pruning for efficient exploration of reasoning paths
+- Implemented sophisticated scoring algorithm for evaluating thought branches
+- Added asynchronous API for non-blocking tree-based reasoning
+- Created visualization mechanism for the tree of thoughts
+
 ## [0.6.0] - 2025-05-13
 
 ### Fixed
@@ -16,7 +28,6 @@ All notable changes to the ThinkThread SDK will be documented in this file.
 
 ### Added
 - Created test scripts for OpenAI and Anthropic API integration
-- Added comprehensive formatting and testing report
 
 ## [0.5.0] - 2025-05-12
 
