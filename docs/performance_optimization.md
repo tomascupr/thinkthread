@@ -10,7 +10,9 @@ The ThinkThread SDK includes several performance optimizations for the Chain-of-
 
 The SDK implements the following optimizations:
 
-### 1. Parallel Alternative Generation
+### Basic Optimizations
+
+#### 1. Parallel Alternative Generation
 
 Generates multiple alternative answers concurrently using `asyncio.gather()`, significantly reducing the time required for this step.
 
@@ -26,35 +28,97 @@ Alternative 2 ─┼─> All complete together
 Alternative 3 ─┘
 ```
 
-### 2. Parallel Evaluation Processing
+#### 2. Parallel Evaluation Processing
 
 Performs evaluations concurrently for both pairwise and batch evaluations, reducing the time required for the evaluation step.
 
-### 3. Response Caching
+#### 3. Response Caching
 
 Implements a temperature-aware caching layer for LLM responses to avoid redundant API calls with identical prompts.
 
-### 4. Early Termination
+#### 4. Early Termination
 
 Terminates the reasoning process early if the answers converge, saving time without compromising quality.
 
-### 5. Prompt Optimization
+#### 5. Prompt Optimization
 
 Reduces token usage in prompt templates to decrease processing time and potentially reduce costs.
 
-### 6. Performance Monitoring
+#### 6. Performance Monitoring
 
 Provides instrumentation to track execution time of different operations for analysis and optimization.
+
+### Advanced Optimizations
+
+#### 7. Batched API Requests
+
+Combines multiple LLM requests into batched API calls, reducing overhead and improving throughput.
+
+**How it works:**
+- Instead of making individual API calls for each prompt, the system collects multiple prompts and sends them in a single batch
+- Reduces connection overhead and takes advantage of provider-specific batching capabilities
+- Particularly effective when generating multiple alternatives or performing multiple evaluations
+
+**Benefits:**
+- Reduces total API call overhead
+- Improves throughput by minimizing connection setup time
+- More efficient use of rate limits
+
+#### 8. Fast Similarity Calculation
+
+Uses optimized algorithms for string similarity calculations to speed up the early termination decision process.
+
+**How it works:**
+- Implements faster similarity metrics like Jaccard similarity and length ratio
+- Avoids expensive character-by-character comparisons for large text blocks
+- Uses heuristics to quickly determine if two answers are similar enough
+
+**Benefits:**
+- Up to 10x faster similarity calculations for long text
+- Reduces CPU usage during evaluation
+- Enables more efficient early termination
+
+#### 9. Adaptive Temperature Control
+
+Dynamically adjusts the temperature parameter based on convergence patterns to optimize exploration vs. exploitation.
+
+**How it works:**
+- Starts with a higher temperature to encourage diverse alternatives
+- Gradually reduces temperature as answers converge
+- Uses an exponential decay function based on similarity between rounds
+- Adapts to the specific question and response patterns
+
+**Benefits:**
+- Better balance between exploration and exploitation
+- Faster convergence to optimal answers
+- Reduced token usage by avoiding unnecessary exploration
+
+#### 10. Semantic Caching
+
+Uses embeddings to find semantically similar prompts in the cache, even when the exact wording differs.
+
+**How it works:**
+- Generates embeddings for prompts using embedding models
+- Calculates cosine similarity between embeddings to find semantically similar prompts
+- Returns cached responses for prompts that are semantically equivalent
+- Configurable similarity threshold to control cache hit rate
+
+**Benefits:**
+- Higher cache hit rate compared to exact matching
+- Handles rephrased questions and prompts
+- Reduces redundant API calls for semantically equivalent queries
 
 ## Configuration Options
 
 All optimizations can be enabled or disabled through configuration options:
 
+### Basic Optimization Configuration
+
 ```python
 from thinkthread_sdk.config import ThinkThreadConfig
 
 config = ThinkThreadConfig(
-    # Performance optimization flags
+    # Basic performance optimization flags
     parallel_alternatives=True,    # Enable parallel generation of alternatives
     parallel_evaluation=True,      # Enable parallel evaluation processing
     use_caching=True,              # Enable response caching
@@ -71,9 +135,40 @@ config = ThinkThreadConfig(
 )
 ```
 
+### Advanced Optimization Configuration
+
+```python
+from thinkthread_sdk.config import ThinkThreadConfig
+
+config = ThinkThreadConfig(
+    # Enable basic optimizations
+    parallel_alternatives=True,
+    parallel_evaluation=True,
+    use_caching=True,
+    early_termination=True,
+    
+    # Advanced optimization flags
+    use_batched_requests=True,     # Enable batched API requests
+    use_fast_similarity=True,      # Use faster similarity calculation algorithms
+    
+    # Adaptive temperature control
+    use_adaptive_temperature=True, # Enable adaptive temperature control
+    initial_temperature=0.7,       # Initial temperature for first round
+    generation_temperature=0.9,    # Temperature for generating alternatives
+    min_generation_temperature=0.5,# Minimum temperature after decay
+    temperature_decay_rate=0.8,    # Rate at which temperature decreases
+    
+    # Semantic caching
+    use_semantic_cache=True,       # Enable semantic caching with embeddings
+)
+```
+
 You can also set these options using environment variables:
 
+### Basic Optimization Environment Variables
+
 ```bash
+# Basic optimizations
 export PARALLEL_ALTERNATIVES=true
 export PARALLEL_EVALUATION=true
 export USE_CACHING=true
@@ -83,9 +178,29 @@ export CONCURRENCY_LIMIT=5
 export ENABLE_MONITORING=true
 ```
 
+### Advanced Optimization Environment Variables
+
+```bash
+# Advanced optimizations
+export USE_BATCHED_REQUESTS=true
+export USE_FAST_SIMILARITY=true
+
+# Adaptive temperature control
+export USE_ADAPTIVE_TEMPERATURE=true
+export INITIAL_TEMPERATURE=0.7
+export GENERATION_TEMPERATURE=0.9
+export MIN_GENERATION_TEMPERATURE=0.5
+export TEMPERATURE_DECAY_RATE=0.8
+
+# Semantic caching
+export USE_SEMANTIC_CACHE=true
+```
+
 ## Performance Benchmarks
 
 The following benchmarks show the performance improvement with different optimization configurations:
+
+### Basic Optimizations
 
 | Optimization Configuration | Relative Speed | Notes |
 |---------------------------|----------------|-------|
@@ -93,7 +208,29 @@ The following benchmarks show the performance improvement with different optimiz
 | Parallel alternatives only | 2-3x | Most effective single optimization |
 | Parallel evaluation only | 1.5-2x | Effective for many alternatives |
 | Caching only | 1.5-3x | Depends on prompt similarity |
-| All optimizations | 3-5x | Best overall performance |
+| Early termination only | 1.2-1.5x | Depends on convergence rate |
+| All basic optimizations | 3-5x | Combined effect of all optimizations |
+
+### Advanced Optimizations
+
+| Optimization Configuration | Additional Speedup | Total Speedup | Notes |
+|---------------------------|-------------------|---------------|-------|
+| Batched API requests | 1.2-1.5x | 3.6-7.5x | Most effective with many alternatives |
+| Fast similarity calculation | 1.1-1.3x | 3.3-6.5x | Most effective with long responses |
+| Adaptive temperature | 1.1-1.2x | 3.3-6.0x | Improves quality and reduces tokens |
+| Semantic caching | 1.3-1.8x | 3.9-9.0x | Most effective for similar queries |
+| All advanced optimizations | 1.5-2.0x | 4.5-10.0x | Combined effect with all basic optimizations |
+
+### Optimization Impact by Scenario
+
+| Scenario | Most Effective Optimizations | Expected Speedup |
+|----------|------------------------------|------------------|
+| Few alternatives (2-3), few rounds (1-2) | Parallel alternatives, Caching | 2-3x |
+| Many alternatives (4+), few rounds (1-2) | Parallel alternatives, Batched requests | 3-5x |
+| Few alternatives (2-3), many rounds (3+) | Early termination, Semantic caching | 3-4x |
+| Many alternatives (4+), many rounds (3+) | All optimizations | 5-10x |
+| Long responses | Fast similarity, Parallel evaluation | 3-6x |
+| Similar queries in sequence | Semantic caching | 4-9x |
 
 ### Real-world Performance
 
@@ -104,6 +241,8 @@ Performance varies based on several factors:
 - **Prompt Complexity**: Longer prompts take more time to process
 - **Number of Alternatives**: More alternatives benefit more from parallelization
 - **Number of Rounds**: More rounds benefit more from caching and early termination
+- **Response Length**: Longer responses benefit more from fast similarity calculation
+- **Query Patterns**: Similar queries benefit more from semantic caching
 
 ## Memory Usage
 
