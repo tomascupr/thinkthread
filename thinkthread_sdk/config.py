@@ -34,6 +34,22 @@ class ThinkThreadConfig(BaseModel):
     use_pairwise_evaluation: bool = True
     use_self_evaluation: bool = False
 
+    parallel_alternatives: bool = False
+    parallel_evaluation: bool = False 
+    use_caching: bool = False
+    early_termination: bool = False
+    early_termination_threshold: float = 0.95
+    concurrency_limit: int = 5
+    enable_monitoring: bool = False
+    
+    use_batched_requests: bool = False
+    use_fast_similarity: bool = False
+    use_adaptive_temperature: bool = True
+    initial_temperature: float = 0.7
+    generation_temperature: float = 0.9
+    min_generation_temperature: float = 0.5
+    temperature_decay_rate: float = 0.8
+
     prompt_dir: Optional[str] = None
 
     _env_vars: ClassVar[Dict[str, str]] = {
@@ -49,6 +65,20 @@ class ThinkThreadConfig(BaseModel):
         "max_rounds": "MAX_ROUNDS",
         "use_pairwise_evaluation": "USE_PAIRWISE_EVALUATION",
         "use_self_evaluation": "USE_SELF_EVALUATION",
+        "parallel_alternatives": "PARALLEL_ALTERNATIVES",
+        "parallel_evaluation": "PARALLEL_EVALUATION",
+        "use_caching": "USE_CACHING",
+        "early_termination": "EARLY_TERMINATION",
+        "early_termination_threshold": "EARLY_TERMINATION_THRESHOLD",
+        "concurrency_limit": "CONCURRENCY_LIMIT",
+        "enable_monitoring": "ENABLE_MONITORING",
+        "use_batched_requests": "USE_BATCHED_REQUESTS",
+        "use_fast_similarity": "USE_FAST_SIMILARITY",
+        "use_adaptive_temperature": "USE_ADAPTIVE_TEMPERATURE",
+        "initial_temperature": "INITIAL_TEMPERATURE",
+        "generation_temperature": "GENERATION_TEMPERATURE",
+        "min_generation_temperature": "MIN_GENERATION_TEMPERATURE",
+        "temperature_decay_rate": "TEMPERATURE_DECAY_RATE",
         "prompt_dir": "PROMPT_DIR",
     }
 
