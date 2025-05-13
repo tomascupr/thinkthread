@@ -135,13 +135,14 @@ async def test_with_openai_client():
     """Test TreeThinker with OpenAIClient."""
     print("\n=== Testing with OpenAIClient ===")
     
-    api_key = "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"
-    os.environ["OPENAI_API_KEY"] = api_key
-    
     config = create_config()
     template_manager = TemplateManager(config.prompt_dir)
     
-    openai_client = OpenAIClient(api_key=api_key, model_name="gpt-3.5-turbo")
+    if not config.openai_api_key:
+        print("Skipping OpenAI test: No API key available")
+        return
+        
+    openai_client = OpenAIClient(api_key=str(config.openai_api_key), model_name="gpt-3.5-turbo")
     
     evaluator = ModelEvaluator()
     
