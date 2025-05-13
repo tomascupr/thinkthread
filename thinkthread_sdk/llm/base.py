@@ -5,7 +5,7 @@ providing a consistent API for different language model providers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, AsyncIterator, Any, Dict, Tuple
+from typing import Optional, AsyncIterator, Any, Dict, Tuple, List
 import asyncio
 import hashlib
 import json
@@ -25,6 +25,8 @@ class LLMClient(ABC):
     """
 
     _cache: Dict[str, str] = {}
+    _embedding_cache: Dict[str, List[float]] = {}
+    _semantic_cache: Dict[str, Tuple[List[float], str]] = {}
 
     def __init__(self, model_name: Optional[str] = None) -> None:
         """Initialize the LLM client.
@@ -35,6 +37,8 @@ class LLMClient(ABC):
         """
         self.model_name = model_name
         self._use_cache = False
+        self._use_semantic_cache = False
+        self._semantic_similarity_threshold = 0.95
         self._semaphore = None
 
     def enable_cache(self, enabled: bool = True) -> None:
@@ -44,6 +48,19 @@ class LLMClient(ABC):
             enabled: Whether to enable caching
         """
         self._use_cache = enabled
+        
+    def enable_semantic_cache(self, enabled: bool = True, similarity_threshold: float = 0.95) -> None:
+        """Enable or disable semantic caching for this client.
+        
+        Semantic caching uses embeddings to find similar prompts,
+        which can improve cache hit rates for semantically similar queries.
+        
+        Args:
+            enabled: Whether to enable semantic caching
+            similarity_threshold: Threshold for considering prompts similar (0.0 to 1.0)
+        """
+        self._use_semantic_cache = enabled
+        self._semantic_similarity_threshold = max(0.0, min(1.0, similarity_threshold))
 
     def set_concurrency_limit(self, limit: int) -> None:
         """Set the concurrency limit for API calls.
@@ -77,6 +94,65 @@ class LLMClient(ABC):
         
         cache_json = json.dumps(cache_dict, sort_keys=True)
         return hashlib.md5(cache_json.encode()).hexdigest()
+        
+    def _cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors.
+        
+        Args:
+            v1: First vector
+            v2: Second vector
+            
+        Returns:
+            Cosine similarity (0.0 to 1.0)
+        """
+        if not v1 or not v2 or len(v1) != len(v2):
+            return 0.0
+            
+        dot_product = sum(a * b for a, b in zip(v1, v2))
+        norm_v1 = sum(a * a for a in v1) ** 0.5
+        norm_v2 = sum(b * b for b in v2) ** 0.5
+        
+        if norm_v1 == 0 or norm_v2 == 0:
+            return 0.0
+            
+        return dot_product / (norm_v1 * norm_v2)
+        
+    def embed(self, text: str) -> List[float]:
+        """Get embeddings for a text.
+        
+        This method provides a synchronous wrapper around aembed.
+        
+        Args:
+            text: The text to embed
+            
+        Returns:
+            List of embedding values
+        """
+        if text in self._embedding_cache:
+            return self._embedding_cache[text]
+            
+        embeddings: List[float] = []
+        self._embedding_cache[text] = embeddings
+        return embeddings
+        
+    async def aembed(self, text: str) -> List[float]:
+        """Get embeddings for a text asynchronously.
+        
+        This method should be implemented by subclasses to provide
+        embeddings for semantic caching.
+        
+        Args:
+            text: The text to embed
+            
+        Returns:
+            List of embedding values
+        """
+        if text in self._embedding_cache:
+            return self._embedding_cache[text]
+            
+        embeddings: List[float] = []
+        self._embedding_cache[text] = embeddings
+        return embeddings
 
     @abstractmethod
     def _generate_uncached(self, prompt: str, **kwargs: Any) -> str:
@@ -109,8 +185,23 @@ class LLMClient(ABC):
             if cache_key in self._cache:
                 return self._cache[cache_key]
             
+            if self._use_semantic_cache:
+                embeddings = self.embed(prompt)
+                if embeddings:  # Only check if we have valid embeddings
+                    for key, (cached_embeddings, cached_response) in self._semantic_cache.items():
+                        similarity = self._cosine_similarity(embeddings, cached_embeddings)
+                        if similarity >= self._semantic_similarity_threshold:
+                            self._cache[cache_key] = cached_response
+                            return cached_response
+            
             response = self._generate_uncached(prompt, **kwargs)
             self._cache[cache_key] = response
+            
+            if self._use_semantic_cache:
+                embeddings = self.embed(prompt)
+                if embeddings:  # Only store if we have valid embeddings
+                    self._semantic_cache[cache_key] = (embeddings, response)
+            
             return response
         
         return self._generate_uncached(prompt, **kwargs)
@@ -147,6 +238,15 @@ class LLMClient(ABC):
             cache_key = self._get_cache_key(prompt, **kwargs)
             if cache_key in self._cache:
                 return self._cache[cache_key]
+                
+            if self._use_semantic_cache:
+                embeddings = await self.aembed(prompt)
+                if embeddings:  # Only check if we have valid embeddings
+                    for key, (cached_embeddings, cached_response) in self._semantic_cache.items():
+                        similarity = self._cosine_similarity(embeddings, cached_embeddings)
+                        if similarity >= self._semantic_similarity_threshold:
+                            self._cache[cache_key] = cached_response
+                            return cached_response
         
         if self._semaphore is not None:
             async with self._semaphore:
@@ -156,6 +256,11 @@ class LLMClient(ABC):
         
         if self._use_cache:
             self._cache[cache_key] = response
+            
+            if self._use_semantic_cache:
+                embeddings = await self.aembed(prompt)
+                if embeddings:  # Only store if we have valid embeddings
+                    self._semantic_cache[cache_key] = (embeddings, response)
         
         return response
     
@@ -209,6 +314,45 @@ class LLMClient(ABC):
 
         """
         pass
+
+    async def acomplete_batch(self, prompts: List[str], **kwargs: Any) -> List[str]:
+        """Asynchronously generate text for multiple prompts in a single API call.
+        
+        This method provides a way to batch multiple prompts into a single API call,
+        which can reduce overhead and improve throughput. Not all LLM providers
+        support batched requests, so subclasses should implement this method
+        with provider-specific optimizations when available.
+        
+        Args:
+            prompts: List of input texts to send to the model
+            **kwargs: Additional parameters to override the default options
+            
+        Returns:
+            List of generated text responses from the model
+        """
+        if self._use_cache:
+            cache_keys = [self._get_cache_key(prompt, **kwargs) for prompt in prompts]
+            cached_results = [self._cache.get(key) for key in cache_keys]
+            if all(result is not None for result in cached_results):
+                return cached_results
+        
+        results = []
+        if self._semaphore is not None:
+            async with self._semaphore:
+                for prompt in prompts:
+                    result = await self._acomplete_uncached(prompt, **kwargs)
+                    results.append(result)
+        else:
+            for prompt in prompts:
+                result = await self._acomplete_uncached(prompt, **kwargs)
+                results.append(result)
+        
+        if self._use_cache:
+            for i, prompt in enumerate(prompts):
+                cache_key = self._get_cache_key(prompt, **kwargs)
+                self._cache[cache_key] = results[i]
+        
+        return results
 
     async def aclose(self) -> None:
         """Asynchronously close the client and clean up resources.
