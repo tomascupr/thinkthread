@@ -1,6 +1,8 @@
 # ThinkThread SDK
 
-The ThinkThread SDK provides a framework for improving LLM responses through a Chain-of-Recursive-Thoughts technique. ThinkThread enhances answer quality by generating alternative responses, evaluating them, and selecting the best option over multiple iterations.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+The ThinkThread SDK provides a powerful framework for improving LLM responses through the Chain-of-Recursive-Thoughts technique. By generating multiple alternative responses, evaluating them, and selecting the best option over multiple iterations, ThinkThread significantly enhances answer quality and reasoning capabilities.
 
 ## What is Chain-of-Recursive-Thoughts?
 
@@ -17,45 +19,22 @@ This process enables the model to critically examine its own responses, consider
 
 ```mermaid
 graph TD
-    A[Initial Question] --> B[Generate Initial Answer]
+    A[Question] --> B[Initial Answer]
     B --> C[Round 1]
-    
-    C --> D{Parallel Alternative Generation}
-    D --> |Concurrent| D1[Alternative 1]
-    D --> |Concurrent| D2[Alternative 2]
-    D --> |Concurrent| D3[Alternative 3]
-    
-    D1 --> E{Parallel Evaluation}
-    D2 --> E
-    D3 --> E
-    
-    E --> F[Select Best Answer]
-    
-    F --> G1{Early Termination Check}
-    G1 -->|Converged| K[Final Answer]
-    G1 -->|Continue| G[Round 2]
-    
-    G --> H{Parallel Alternative Generation}
-    H --> |Concurrent| H1[Alternative 1]
-    H --> |Concurrent| H2[Alternative 2]
-    H --> |Concurrent| H3[Alternative 3]
-    
-    H1 --> I{Parallel Evaluation}
-    H2 --> I
-    H3 --> I
-    
-    I --> J[Select Best Answer]
+    C --> D[Generate Alternatives]
+    D --> E[Evaluate]
+    E --> F[Select Best]
+    F --> G{Converged?}
+    G -->|Yes| K[Final Answer]
+    G -->|No| H[Round 2]
+    H --> I[Generate & Evaluate]
+    I --> J[Select Best]
     J --> K
     
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style K fill:#9f9,stroke:#333,stroke-width:2px
-    style C fill:#ddf,stroke:#333,stroke-width:2px
-    style G fill:#ddf,stroke:#333,stroke-width:2px
-    style D fill:#ffd,stroke:#333,stroke-width:2px
-    style E fill:#ffd,stroke:#333,stroke-width:2px
-    style H fill:#ffd,stroke:#333,stroke-width:2px
-    style I fill:#ffd,stroke:#333,stroke-width:2px
-    style G1 fill:#dff,stroke:#333,stroke-width:2px
+    style A fill:#f9f,stroke:#333,stroke-width:1px
+    style K fill:#9f9,stroke:#333,stroke-width:1px
+    style C fill:#ddf,stroke:#333,stroke-width:1px
+    style H fill:#ddf,stroke:#333,stroke-width:1px
 ```
 
 ## Installation
@@ -72,140 +51,126 @@ pip install thinkthread
 poetry add thinkthread
 ```
 
-## Quickstart
+## Getting Started
 
-### Using the CLI
+### Installation
 
 ```bash
-# Run a query with default settings
-thinkthread run "What are the implications of quantum computing on cryptography?"
+# Using pip (once published)
+pip install thinkthread
 
-# Run a query with a specific provider
-thinkthread run "Explain the theory of relativity" --provider anthropic
-
-# Run a query with more refinement rounds
-thinkthread run "Compare and contrast democracy and autocracy" --rounds 3 --alternatives 5
-
-# Stream the response as it's generated
-thinkthread run "Describe the water cycle" --stream
+# Using Poetry
+poetry add thinkthread
 ```
 
-### Using the Python API
+### Quick Examples
+
+#### CLI Usage
+
+```bash
+# Basic usage
+thinkthread run "What are the implications of quantum computing on cryptography?"
+
+# With specific provider and streaming
+thinkthread run "Explain relativity" --provider anthropic --stream
+
+# Advanced configuration
+thinkthread run "Compare democracy and autocracy" --rounds 3 --alternatives 4
+```
+
+#### Python API
 
 ```python
 from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
-# Initialize an LLM client
+# Setup
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
-
-# Create a ThinkThread session
 session = ThinkThreadSession(llm_client=client, alternatives=3, rounds=2)
 
-# Run recursive reasoning on a question
-question = "What are the major challenges in sustainable energy adoption?"
+# Run reasoning
+question = "What are the challenges in sustainable energy adoption?"
 answer = session.run(question)
-
-print(f"Question: {question}")
 print(f"Answer: {answer}")
 ```
 
 ## Configuration
 
-The ThinkThread SDK can be configured using environment variables or a `.env` file:
+Configure the SDK using environment variables, a `.env` file, or programmatically:
 
-```
-# LLM Provider API Keys
+```python
+# Environment variables or .env file
 OPENAI_API_KEY=your-openai-api-key
 ANTHROPIC_API_KEY=your-anthropic-api-key
 HF_API_TOKEN=your-huggingface-token
 
-# Default Provider and Model
-PROVIDER=openai
-OPENAI_MODEL=gpt-4
-ANTHROPIC_MODEL=claude-2
-
-# ThinkThread Algorithm Parameters
-ALTERNATIVES=3
-ROUNDS=2
-MAX_ROUNDS=3
-
-# Evaluation Options
-USE_PAIRWISE_EVALUATION=true
-USE_SELF_EVALUATION=false
-
-# Other Settings
-PROMPT_DIR=/path/to/custom/prompts
+# Default settings
+PROVIDER=openai                # Default provider
+ALTERNATIVES=3                 # Number of alternatives per round
+ROUNDS=2                       # Number of refinement rounds
+USE_PAIRWISE_EVALUATION=true   # Evaluation method
 ```
 
-## Features
+### Programmatic Configuration
 
-The ThinkThread SDK provides these key capabilities:
+```python
+from thinkthread_sdk.config import create_config
 
-- **Multiple LLM Providers**: Support for OpenAI, Anthropic, and HuggingFace models
-- **Prompt Templating**: Customisable Jinja2 templates for all prompting needs
-- **Recursive Reasoning**: Multi-round refinement process for improved answers
-- **Self-Evaluation**: Ability to evaluate answer quality without external criteria
-- **Pairwise Evaluation**: Compare answers head-to-head for better selection
-- **Asynchronous Support**: Non-blocking API for integration with async applications
-- **Streaming Responses**: Real-time token-by-token output for better user experience
-- **Extensible Architecture**: Easily add new providers or evaluation strategies
+config = create_config(
+    provider="anthropic",
+    alternatives=4,
+    rounds=2,
+    use_pairwise_evaluation=True
+)
+```
 
-## Performance
+## Key Features
 
-### Optimization Techniques
+| Feature | Description |
+|---------|-------------|
+| **Multiple LLM Providers** | Support for OpenAI, Anthropic, and HuggingFace models |
+| **Recursive Reasoning** | Multi-round refinement process for improved answers |
+| **Evaluation Strategies** | Self-evaluation and pairwise comparison of answers |
+| **Async & Streaming** | Non-blocking API and real-time token-by-token output |
+| **Customizable Prompts** | Jinja2 templates for all prompting needs |
+| **Performance Optimizations** | Parallel processing, caching, and early termination |
+| **Extensible Architecture** | Easy to add new providers or evaluation strategies |
 
-The ThinkThread SDK implements several advanced performance optimization techniques:
+## Performance Optimizations
 
-- **Parallel Processing**: Concurrent alternative generation and evaluation using `asyncio.gather`
-- **Batched API Requests**: Reduce overhead by combining multiple prompts into batched requests
-- **Adaptive Temperature Control**: Dynamic temperature adjustment for improved reasoning (enabled by default)
-- **Semantic Caching**: Embeddings-based caching for similar prompts, even when wording differs
-- **Fast Similarity Calculation**: Optimized algorithms for string comparison to speed up convergence detection
-- **Early Termination**: Stop the reasoning process when answers converge to a high-quality solution
+The SDK includes several performance enhancements that can be enabled through configuration:
 
-### Benchmark Results
+| Optimization | Description | Speed Improvement |
+|--------------|-------------|-------------------|
+| **Parallel Processing** | Concurrent generation and evaluation | 1.4-2.0x |
+| **Batched Requests** | Combine multiple prompts in one API call | 2.1-2.2x |
+| **Semantic Caching** | Cache similar prompts using embeddings | 1.2-1.8x |
+| **Early Termination** | Stop when answers converge | 1.3-4.3x |
 
-| Configuration | Small Scale | Medium Scale |
-|---------------|-------------|-------------|
-| Baseline (no optimizations) | 22.09s | 41.05s |
-| All basic optimizations | 15.62s (1.41x) | 20.82s (1.97x) |
-| Batched requests | 10.53s (2.10x) | 18.98s (2.16x) |
-| Fast similarity | 7.61s (2.90x) | 25.21s (1.63x) |
-| Adaptive temperature | 17.23s (1.28x) | 9.62s (4.27x) |
-| All advanced optimizations | 17.83s (1.24x) | 22.29s (1.84x) |
-
-### Configuration
-
-Performance optimizations can be enabled through the `ThinkThreadConfig`:
+### Configuration Example
 
 ```python
 from thinkthread_sdk.config import ThinkThreadConfig
 from thinkthread_sdk.session import ThinkThreadSession
 
-# Configure performance optimizations
+# Enable optimizations
 config = ThinkThreadConfig(
-    # Basic optimizations
     parallel_alternatives=True,
-    parallel_evaluation=True,
     use_caching=True,
     early_termination=True,
-    
-    # Advanced optimizations (adaptive temperature enabled by default)
-    use_batched_requests=True,
-    use_fast_similarity=True
+    use_batched_requests=True
 )
 
-# Create session with optimized configuration
+# Create optimized session
 session = ThinkThreadSession(
     llm_client=client,
     alternatives=3,
-    max_rounds=2,
+    rounds=2,
     config=config
 )
 ```
 
-For detailed performance tuning, see the [Performance Optimization Guide](docs/performance_optimization.md).
+For detailed tuning options, see the [Performance Guide](docs/performance_optimization.md).
 
 ## Development
 
