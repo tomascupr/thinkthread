@@ -161,6 +161,7 @@ config = create_config(
 |---------|-------------|
 | **Multiple LLM Providers** | Support for OpenAI, Anthropic, and HuggingFace models |
 | **Recursive Reasoning** | Multi-round refinement process for improved answers |
+| **Tree-of-Thoughts** | Explore multiple reasoning paths in parallel for complex problems |
 | **Evaluation Strategies** | Self-evaluation and pairwise comparison of answers |
 | **Async & Streaming** | Non-blocking API and real-time token-by-token output |
 | **Customizable Prompts** | Jinja2 templates for all prompting needs |
@@ -202,6 +203,74 @@ session = ThinkThreadSession(
 ```
 
 For detailed tuning options, see the [Performance Guide](docs/performance_optimization.md).
+
+## Tree-of-Thoughts Reasoning
+
+ThinkThread SDK now includes a powerful Tree-of-Thoughts (ToT) solver that explores multiple reasoning paths in parallel:
+
+```python
+from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread_sdk.llm import OpenAIClient
+from thinkthread_sdk.config import create_config
+
+# Setup
+client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+tree_thinker = TreeThinker(
+    llm_client=client,
+    max_tree_depth=3,         # Maximum depth of the thinking tree
+    branching_factor=3,       # Number of branches per node
+)
+
+# Solve a problem using tree-based search
+problem = "What are three key benefits of tree-based search for reasoning?"
+result = tree_thinker.solve(
+    problem=problem,
+    beam_width=2,             # Number of parallel thought threads
+    max_iterations=2          # Number of expansion iterations
+)
+
+# Find the best solution
+best_node_id = max(
+    tree_thinker.threads.keys(),
+    key=lambda node_id: tree_thinker.threads[node_id].score
+)
+best_node = tree_thinker.threads[best_node_id]
+
+print(f"Best solution (score: {best_node.score:.2f}):")
+print(best_node.state.get("current_answer", "No answer found"))
+```
+
+### Asynchronous API
+
+For non-blocking operation, use the asynchronous API:
+
+```python
+import asyncio
+
+# Solve asynchronously
+result = await tree_thinker.solve_async(
+    problem="How can we address climate change through technology?",
+    beam_width=3,
+    max_iterations=2
+)
+```
+
+### Command Line Interface
+
+The TreeThinker module can be used from the command line:
+
+```bash
+# Basic usage
+thinkthread tot "What are the benefits of tree-based search for reasoning?"
+
+# With specific provider
+thinkthread tot "Design a system for autonomous vehicles" --provider anthropic
+
+# Advanced configuration
+thinkthread tot "What are the ethical implications of AI?" --beam-width 5 --max-depth 4
+```
+
+For detailed documentation on Tree-of-Thoughts reasoning, see the [Tree-of-Thoughts Guide](docs/tree_thinker.md).
 
 ## Development
 
