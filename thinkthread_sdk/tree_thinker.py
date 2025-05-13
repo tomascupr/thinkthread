@@ -265,10 +265,10 @@ class TreeThinker:
     def _score_node(self, problem: str, node: ThinkThreadNode) -> float:
         """Score a node based on the quality of its thought.
 
-        This method evaluates the promise of a thought branch using either
-        a custom scoring function or a simple heuristic based on answer length
-        and complexity. This is a placeholder implementation that can be enhanced
-        with more sophisticated evaluation strategies.
+        This method evaluates the promise of a thought branch using one of three approaches:
+        1. A custom scoring function provided during initialization
+        2. LLM-based evaluation using ModelEvaluator if a reference answer is available
+        3. A heuristic based on answer length and complexity as a fallback
 
         Args:
             problem: The original problem
@@ -277,27 +277,51 @@ class TreeThinker:
         Returns:
             A score between 0.0 and 1.0 indicating the quality of the thought
         """
-        if self.scoring_function:
-            return self.scoring_function(problem, node.state)
+        try:
+            if self.scoring_function:
+                return self.scoring_function(problem, node.state)
 
-        current_answer = node.state.get("current_answer", "")
+            current_answer = node.state.get("current_answer", "")
 
-        length_score = min(len(current_answer) / 1000, 1.0)
+            if node.parent_id and node.parent_id in self.threads:
+                parent_node = self.threads[node.parent_id]
+                parent_answer = parent_node.state.get("current_answer", "")
 
-        sentences = current_answer.split(". ")
-        sentence_count = len(sentences)
-        unique_words = len(set(current_answer.lower().split()))
-        word_count = len(current_answer.split())
+                if parent_answer and current_answer:
+                    try:
+                        is_better = self.evaluator.evaluate(
+                            problem,
+                            parent_answer,
+                            current_answer,
+                            self.llm_client,
+                            self.template_manager,
+                        )
 
-        complexity_score = 0.0
-        if word_count > 0:
-            complexity_score = min(
-                (unique_words / word_count) * (sentence_count / 5), 1.0
-            )
+                        if is_better:
+                            return min(parent_node.score + 0.1, 1.0)
+                        else:
+                            return max(parent_node.score - 0.05, 0.0)
+                    except Exception as e:
+                        pass
 
-        score = (0.7 * length_score) + (0.3 * complexity_score)
+            length_score = min(len(current_answer) / 1000, 1.0)
 
-        return score
+            sentences = current_answer.split(". ")
+            sentence_count = len(sentences)
+            unique_words = len(set(current_answer.lower().split()))
+            word_count = len(current_answer.split())
+
+            complexity_score = 0.0
+            if word_count > 0:
+                complexity_score = min(
+                    (unique_words / word_count) * (sentence_count / 5), 1.0
+                )
+
+            score = (0.7 * length_score) + (0.3 * complexity_score)
+
+            return score
+        except Exception as e:
+            return 0.5
 
     def _generate_continuations(
         self, session: ThinkThreadSession, problem: str, current_answer: str
@@ -305,7 +329,8 @@ class TreeThinker:
         """Generate continuations for a thought thread.
 
         This method uses the session's ability to generate alternatives to create
-        continuations for the current thought thread.
+        continuations for the current thought thread. It includes error handling
+        to gracefully handle LLM API failures.
 
         Args:
             session: The ThinkThreadSession to use for generation
@@ -316,17 +341,26 @@ class TreeThinker:
             List of alternative continuations
         """
         num_continuations = min(self.branching_factor, 5)  # Limit to 5 for efficiency
-
         alternatives = []
 
         for i in range(num_continuations):
-            prompt = self.template_manager.render_template(
-                "alternative_prompt.j2",
-                {"question": problem, "current_answer": current_answer},
-            )
+            try:
+                prompt = self.template_manager.render_template(
+                    "alternative_prompt.j2",
+                    {"question": problem, "current_answer": current_answer},
+                )
 
-            alternative = self.llm_client.generate(prompt, temperature=0.9)
-            alternatives.append(alternative)
+                alternative = self.llm_client.generate(prompt, temperature=0.9)
+                alternatives.append(alternative)
+            except Exception as e:
+                fallback_alternative = f"{current_answer}\n\nAdditional thoughts: Unable to generate continuation due to an error."
+                alternatives.append(fallback_alternative)
+
+                if not alternatives:
+                    alternatives.append(current_answer)
+
+                if i == 0:
+                    break
 
         return alternatives
 
@@ -337,7 +371,8 @@ class TreeThinker:
 
         This method uses the session's ability to generate alternatives to create
         continuations for the current thought thread. It leverages async LLM calls
-        to generate multiple continuations in parallel.
+        to generate multiple continuations in parallel. Includes robust error handling
+        to gracefully handle LLM API failures.
 
         Args:
             session: The ThinkThreadSession to use for generation
@@ -348,30 +383,46 @@ class TreeThinker:
             List of alternative continuations
         """
         num_continuations = min(self.branching_factor, 5)  # Limit to 5 for efficiency
+        alternatives = []
 
-        # Create prompts for all continuations
-        prompts = []
-        for i in range(num_continuations):
-            prompt = self.template_manager.render_template(
-                "alternative_prompt.j2",
-                {"question": problem, "current_answer": current_answer},
-            )
-            prompts.append(prompt)
+        try:
+            # Create prompts for all continuations
+            prompts = []
+            for i in range(num_continuations):
+                try:
+                    prompt = self.template_manager.render_template(
+                        "alternative_prompt.j2",
+                        {"question": problem, "current_answer": current_answer},
+                    )
+                    prompts.append(prompt)
+                except Exception as e:
+                    prompts.append(f"Continue this thought: {current_answer}")
 
-        if hasattr(self.llm_client, "acomplete_batch"):
-            alternatives = await self.llm_client.acomplete_batch(
-                prompts, temperature=0.9
+            # Try batch completion if available
+            if hasattr(self.llm_client, "acomplete_batch"):
+                try:
+                    alternatives = await self.llm_client.acomplete_batch(
+                        prompts, temperature=0.9
+                    )
+                    return alternatives
+                except Exception as e:
+                    pass
+
+            # Individual completions with error handling
+            async def generate_alternative(prompt):
+                try:
+                    return await self.llm_client.acomplete(prompt, temperature=0.9)
+                except Exception as e:
+                    return f"{current_answer}\n\nAdditional thoughts: Unable to generate continuation due to an error."
+
+            alternatives = await asyncio.gather(
+                *[generate_alternative(prompt) for prompt in prompts]
             )
+
             return alternatives
-
-        async def generate_alternative(prompt):
-            return await self.llm_client.acomplete(prompt, temperature=0.9)
-
-        alternatives = await asyncio.gather(
-            *[generate_alternative(prompt) for prompt in prompts]
-        )
-
-        return alternatives
+        except Exception as e:
+            # If all else fails, return a single fallback alternative
+            return [current_answer]
 
     async def expand_threads_async(
         self,
