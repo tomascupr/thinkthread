@@ -18,8 +18,10 @@ from thinkthread_sdk.llm import (
     HuggingFaceClient,
     LLMClient,
 )
+from thinkthread_sdk.cli_tot import app as tot_app
 
 app = typer.Typer()
+app.add_typer(tot_app, name="tot")
 
 
 @app.callback()
