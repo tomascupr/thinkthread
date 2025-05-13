@@ -39,8 +39,8 @@ class DummyLLMClient(LLMClient):
         self._responses = responses or []
         self._response_generator = response_generator
 
-    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
-        """Generate a deterministic response based on configuration.
+    def _generate_uncached(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate a deterministic response based on configuration without using cache.
 
         If responses were provided during initialization, cycles through them.
         If a response_generator was provided, uses it to generate a response.
@@ -64,6 +64,21 @@ class DummyLLMClient(LLMClient):
             return self._responses[index]
 
         return f"Dummy response #{self._call_count} to: '{prompt}'"
+        
+    def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
+        """Generate a deterministic response based on configuration.
+
+        Uses the base class implementation which handles caching.
+
+        Args:
+            prompt: The input text
+            **kwargs: Additional parameters (ignored in this implementation)
+
+        Returns:
+            A deterministic response string
+
+        """
+        return super().generate(prompt, **kwargs)
 
     @property
     def call_count(self) -> int:
