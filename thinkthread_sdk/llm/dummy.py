@@ -64,7 +64,7 @@ class DummyLLMClient(LLMClient):
             return self._responses[index]
 
         return f"Dummy response #{self._call_count} to: '{prompt}'"
-        
+
     def generate(self, prompt: str, **kwargs: Dict[str, Any]) -> str:
         """Generate a deterministic response based on configuration.
 

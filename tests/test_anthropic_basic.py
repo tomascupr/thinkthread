@@ -7,6 +7,7 @@ import os
 from thinkthread_sdk.cort_session import ThinkThreadSession
 from thinkthread_sdk.llm import AnthropicClient
 
+
 def main():
     """Run a basic test of the ThinkThread SDK with Anthropic."""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -24,6 +25,7 @@ def main():
     answer = session.run(question)
     print(f"Answer: {answer}")
     print("\nBasic Anthropic test completed successfully!")
+
 
 if __name__ == "__main__":
     main()

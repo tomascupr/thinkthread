@@ -7,7 +7,6 @@ questioning and refinement process using LLMs.
 from typing import List, Optional
 import asyncio
 import difflib
-import time
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
@@ -18,7 +17,7 @@ from thinkthread_sdk.evaluation import (
     Evaluator,
     ModelEvaluator,
 )
-from thinkthread_sdk.monitoring import GLOBAL_MONITOR, timed, timed_async
+from thinkthread_sdk.monitoring import GLOBAL_MONITOR, timed
 
 
 class ThinkThreadSession:
@@ -68,7 +67,7 @@ class ThinkThreadSession:
         self.evaluator = evaluator or ModelEvaluator()
         self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
         self.use_self_evaluation = self.config.use_self_evaluation
-        
+
         self._round_similarities = []
 
     @timed("run")
@@ -102,40 +101,52 @@ class ThinkThreadSession:
         """
         if hasattr(self.config, "enable_monitoring"):
             GLOBAL_MONITOR.enable(self.config.enable_monitoring)
-        
-        if hasattr(self.config, "use_caching") and hasattr(self.llm_client, "enable_cache"):
+
+        if hasattr(self.config, "use_caching") and hasattr(
+            self.llm_client, "enable_cache"
+        ):
             self.llm_client.enable_cache(self.config.use_caching)
-        
-        if hasattr(self.config, "concurrency_limit") and hasattr(self.llm_client, "set_concurrency_limit"):
+
+        if hasattr(self.config, "concurrency_limit") and hasattr(
+            self.llm_client, "set_concurrency_limit"
+        ):
             self.llm_client.set_concurrency_limit(self.config.concurrency_limit)
-        
+
         GLOBAL_MONITOR.start("initial_generation")
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
         )
-        
+
         initial_temperature = 0.7
-        if hasattr(self.config, "use_adaptive_temperature") and self.config.use_adaptive_temperature:
+        if (
+            hasattr(self.config, "use_adaptive_temperature")
+            and self.config.use_adaptive_temperature
+        ):
             initial_temperature = getattr(self.config, "initial_temperature", 0.7)
-            
-        current_answer = self.llm_client.generate(initial_prompt, temperature=initial_temperature)
+
+        current_answer = self.llm_client.generate(
+            initial_prompt, temperature=initial_temperature
+        )
         GLOBAL_MONITOR.end("initial_generation")
-        
+
         self._round_similarities = []
 
         if self.max_rounds <= 0:
             return current_answer
-            
+
         previous_answer = ""
-        
+
         for round_num in range(1, self.max_rounds + 1):
             if round_num > 1:
                 similarity = self._calculate_similarity(current_answer, previous_answer)
                 self._round_similarities.append(similarity)
-                
-                if self.config.early_termination and similarity >= self.config.early_termination_threshold:
+
+                if (
+                    self.config.early_termination
+                    and similarity >= self.config.early_termination_threshold
+                ):
                     break
-                
+
             previous_answer = current_answer
             alternatives = self._generate_alternatives(question, current_answer)
 
@@ -191,25 +202,29 @@ class ThinkThreadSession:
 
         """
         alternatives = []
-        
+
         generation_temperature = 0.9
-        if hasattr(self.config, "use_adaptive_temperature") and self.config.use_adaptive_temperature:
+        if (
+            hasattr(self.config, "use_adaptive_temperature")
+            and self.config.use_adaptive_temperature
+        ):
             base_temp = getattr(self.config, "generation_temperature", 0.9)
             min_temp = getattr(self.config, "min_generation_temperature", 0.5)
             decay_rate = getattr(self.config, "temperature_decay_rate", 0.8)
             round_num = len(self._round_similarities) + 1
-            
-            generation_temperature = max(
-                min_temp, 
-                base_temp * (decay_rate ** round_num)
-            )
-            
+
+            generation_temperature = max(min_temp, base_temp * (decay_rate**round_num))
+
             if self._round_similarities:
-                avg_similarity = sum(self._round_similarities) / len(self._round_similarities)
+                avg_similarity = sum(self._round_similarities) / len(
+                    self._round_similarities
+                )
                 if avg_similarity > 0.8:
                     generation_temperature *= 0.9  # Reduce by 10%
                 elif avg_similarity < 0.4:
-                    generation_temperature = min(base_temp, generation_temperature * 1.1)  # Increase by 10%
+                    generation_temperature = min(
+                        base_temp, generation_temperature * 1.1
+                    )  # Increase by 10%
 
         for i in range(self.alternatives):
             GLOBAL_MONITOR.start(f"alternative_generation_{i}")
@@ -218,7 +233,9 @@ class ThinkThreadSession:
                 {"question": question, "current_answer": current_answer},
             )
 
-            alternative = self.llm_client.generate(prompt, temperature=generation_temperature)
+            alternative = self.llm_client.generate(
+                prompt, temperature=generation_temperature
+            )
             alternatives.append(alternative)
             GLOBAL_MONITOR.end(f"alternative_generation_{i}")
 
@@ -258,42 +275,52 @@ class ThinkThreadSession:
         """
         if hasattr(self.config, "enable_monitoring"):
             GLOBAL_MONITOR.enable(self.config.enable_monitoring)
-        
-        if hasattr(self.config, "use_caching") and hasattr(self.llm_client, "enable_cache"):
+
+        if hasattr(self.config, "use_caching") and hasattr(
+            self.llm_client, "enable_cache"
+        ):
             self.llm_client.enable_cache(self.config.use_caching)
-        
-        if hasattr(self.config, "concurrency_limit") and hasattr(self.llm_client, "set_concurrency_limit"):
+
+        if hasattr(self.config, "concurrency_limit") and hasattr(
+            self.llm_client, "set_concurrency_limit"
+        ):
             self.llm_client.set_concurrency_limit(self.config.concurrency_limit)
-        
+
         GLOBAL_MONITOR.start("initial_generation_async")
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
         )
-        
+
         initial_temperature = 0.7
-        if hasattr(self.config, "use_adaptive_temperature") and self.config.use_adaptive_temperature:
+        if (
+            hasattr(self.config, "use_adaptive_temperature")
+            and self.config.use_adaptive_temperature
+        ):
             initial_temperature = getattr(self.config, "initial_temperature", 0.7)
-            
+
         current_answer = await self.llm_client.acomplete(
             initial_prompt, temperature=initial_temperature
         )
         GLOBAL_MONITOR.end("initial_generation_async")
-        
+
         self._round_similarities = []
 
         if self.max_rounds <= 0:
             return current_answer
-            
+
         previous_answer = ""
-        
+
         for round_num in range(1, self.max_rounds + 1):
             if round_num > 1:
                 similarity = self._calculate_similarity(current_answer, previous_answer)
                 self._round_similarities.append(similarity)
-                
-                if self.config.early_termination and similarity >= self.config.early_termination_threshold:
+
+                if (
+                    self.config.early_termination
+                    and similarity >= self.config.early_termination_threshold
+                ):
                     break
-                
+
             previous_answer = current_answer
             alternatives = await self._generate_alternatives_async(
                 question, current_answer
@@ -301,7 +328,7 @@ class ThinkThreadSession:
 
             if self.use_self_evaluation or self.use_pairwise_evaluation:
                 best_answer = current_answer
-                
+
                 if not self.config.parallel_evaluation:
                     # Sequential evaluation
                     for alternative in alternatives:
@@ -317,15 +344,15 @@ class ThinkThreadSession:
                             self._evaluate_async, question, best_answer, alt
                         )
                         return (alt, is_better)
-                    
-                    results = await asyncio.gather(*[
-                        evaluate_alternative(alt) for alt in alternatives
-                    ])
-                    
+
+                    results = await asyncio.gather(
+                        *[evaluate_alternative(alt) for alt in alternatives]
+                    )
+
                     for alt, is_better in results:
                         if is_better:
                             best_answer = alt
-                
+
                 current_answer = best_answer
             else:
                 all_answers = [current_answer] + alternatives
@@ -338,26 +365,29 @@ class ThinkThreadSession:
 
     async def _run_with_semaphore(self, func, *args, **kwargs):
         """Run a function with a semaphore for rate limiting.
-        
+
         Args:
             func: The function to run
             *args: Arguments for the function
             **kwargs: Keyword arguments for the function
-            
+
         Returns:
             The result of the function
         """
-        if hasattr(self.llm_client, "_semaphore") and self.llm_client._semaphore is not None:
+        if (
+            hasattr(self.llm_client, "_semaphore")
+            and self.llm_client._semaphore is not None
+        ):
             async with self.llm_client._semaphore:
                 return await func(*args, **kwargs)
         return await func(*args, **kwargs)
-        
+
     async def _generate_alternatives_async(
         self, question: str, current_answer: str
     ) -> List[str]:
         """Asynchronously generate alternative answers to the question.
 
-        This method creates multiple alternative answers to the given question based on 
+        This method creates multiple alternative answers to the given question based on
         the current best answer. When parallel_alternatives is enabled, it uses asyncio.gather
         to generate alternatives concurrently, potentially providing significant performance
         improvements.
@@ -372,26 +402,32 @@ class ThinkThreadSession:
         GLOBAL_MONITOR.start("generate_alternatives_async")
         try:
             generation_temperature = 0.9
-            if hasattr(self.config, "use_adaptive_temperature") and self.config.use_adaptive_temperature:
+            if (
+                hasattr(self.config, "use_adaptive_temperature")
+                and self.config.use_adaptive_temperature
+            ):
                 base_temp = getattr(self.config, "generation_temperature", 0.9)
                 min_temp = getattr(self.config, "min_generation_temperature", 0.5)
                 decay_rate = getattr(self.config, "temperature_decay_rate", 0.8)
                 round_num = len(self._round_similarities) + 1
-                
+
                 # Exponential decay formula: temp = base_temp * (decay_rate^round_num)
                 generation_temperature = max(
-                    min_temp, 
-                    base_temp * (decay_rate ** round_num)
+                    min_temp, base_temp * (decay_rate**round_num)
                 )
-                
+
                 if self._round_similarities:
-                    avg_similarity = sum(self._round_similarities) / len(self._round_similarities)
+                    avg_similarity = sum(self._round_similarities) / len(
+                        self._round_similarities
+                    )
                     if avg_similarity > 0.8:
                         generation_temperature *= 0.9  # Reduce by 10%
                     # If similarity is low (diverging), increase temperature
                     elif avg_similarity < 0.4:
-                        generation_temperature = min(base_temp, generation_temperature * 1.1)  # Increase by 10%
-            
+                        generation_temperature = min(
+                            base_temp, generation_temperature * 1.1
+                        )  # Increase by 10%
+
             if not self.config.parallel_alternatives:
                 # Original sequential implementation
                 alternatives = []
@@ -401,12 +437,18 @@ class ThinkThreadSession:
                         "alternative_prompt.j2",
                         {"question": question, "current_answer": current_answer},
                     )
-                    alternative = await self.llm_client.acomplete(prompt, temperature=generation_temperature)
+                    alternative = await self.llm_client.acomplete(
+                        prompt, temperature=generation_temperature
+                    )
                     alternatives.append(alternative)
                     GLOBAL_MONITOR.end(f"alternative_generation_async_{i}")
                 return alternatives
-            
-            if hasattr(self.config, "use_batched_requests") and self.config.use_batched_requests and hasattr(self.llm_client, "acomplete_batch"):
+
+            if (
+                hasattr(self.config, "use_batched_requests")
+                and self.config.use_batched_requests
+                and hasattr(self.llm_client, "acomplete_batch")
+            ):
                 prompts = []
                 for i in range(self.alternatives):
                     GLOBAL_MONITOR.start(f"alternative_generation_async_{i}")
@@ -415,16 +457,18 @@ class ThinkThreadSession:
                         {"question": question, "current_answer": current_answer},
                     )
                     prompts.append(prompt)
-                
+
                 results = await self._run_with_semaphore(
-                    self.llm_client.acomplete_batch, prompts, temperature=generation_temperature
+                    self.llm_client.acomplete_batch,
+                    prompts,
+                    temperature=generation_temperature,
                 )
-                
+
                 for i in range(self.alternatives):
                     GLOBAL_MONITOR.end(f"alternative_generation_async_{i}")
-                
+
                 return results
-            
+
             # Original parallel implementation
             async def generate_alternative(i):
                 GLOBAL_MONITOR.start(f"alternative_generation_async_{i}")
@@ -434,11 +478,13 @@ class ThinkThreadSession:
                         {"question": question, "current_answer": current_answer},
                     )
                     return await self._run_with_semaphore(
-                        self.llm_client.acomplete, prompt, temperature=generation_temperature
+                        self.llm_client.acomplete,
+                        prompt,
+                        temperature=generation_temperature,
                     )
                 finally:
                     GLOBAL_MONITOR.end(f"alternative_generation_async_{i}")
-            
+
             tasks = [generate_alternative(i) for i in range(self.alternatives)]
             alternatives = await asyncio.gather(*tasks)
             return alternatives
@@ -527,36 +573,39 @@ class ThinkThreadSession:
             )
         finally:
             GLOBAL_MONITOR.end("evaluate_all_async")
-        
+
     def _calculate_similarity(self, str1: str, str2: str) -> float:
         """Calculate the similarity between two strings.
-        
+
         Args:
             str1: First string
             str2: Second string
-            
+
         Returns:
             A similarity score between 0.0 and 1.0
         """
-        if hasattr(self.config, "use_fast_similarity") and self.config.use_fast_similarity:
+        if (
+            hasattr(self.config, "use_fast_similarity")
+            and self.config.use_fast_similarity
+        ):
             return self._calculate_fast_similarity(str1, str2)
-        
+
         return difflib.SequenceMatcher(None, str1, str2).ratio()
-        
+
     def _calculate_fast_similarity(self, str1: str, str2: str) -> float:
         """Calculate similarity using a faster algorithm optimized for large texts.
-        
+
         This method implements a faster similarity algorithm based on word overlap
         and character n-grams, which is more efficient for long strings than
         difflib.SequenceMatcher. The algorithm uses a combination of:
-        
+
         1. Jaccard similarity of word sets (primary measure)
         2. Length ratio penalty to account for significant size differences
-        
+
         Args:
             str1: First string
             str2: Second string
-            
+
         Returns:
             A similarity score between 0.0 and 1.0
         """
@@ -564,21 +613,21 @@ class ThinkThreadSession:
             return 1.0
         if not str1 or not str2:
             return 0.0
-            
+
         words1 = set(str1.lower().split())
         words2 = set(str2.lower().split())
-        
+
         if not words1 or not words2:
             return 0.0
-            
+
         intersection = len(words1.intersection(words2))
         union = len(words1.union(words2))
-        
+
         jaccard = intersection / union
-        
+
         len1, len2 = len(str1), len(str2)
         length_ratio = min(len1, len2) / max(len1, len2) if max(len1, len2) > 0 else 0
-        
+
         similarity = (0.8 * jaccard) + (0.2 * length_ratio)
-        
+
         return similarity

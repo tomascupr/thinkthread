@@ -35,13 +35,13 @@ class ThinkThreadConfig(BaseModel):
     use_self_evaluation: bool = False
 
     parallel_alternatives: bool = False
-    parallel_evaluation: bool = False 
+    parallel_evaluation: bool = False
     use_caching: bool = False
     early_termination: bool = False
     early_termination_threshold: float = 0.95
     concurrency_limit: int = 5
     enable_monitoring: bool = False
-    
+
     use_batched_requests: bool = False
     use_fast_similarity: bool = False
     use_adaptive_temperature: bool = True

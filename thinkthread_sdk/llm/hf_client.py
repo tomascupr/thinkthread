@@ -96,7 +96,7 @@ class HuggingFaceClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
             return error_message
-            
+
     def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text using Hugging Face's text generation inference API.
 

@@ -91,7 +91,7 @@ class OpenAIClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling OpenAI API: {str(e)}"
             return error_message
-            
+
     def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text using OpenAI's Chat Completion API.
 

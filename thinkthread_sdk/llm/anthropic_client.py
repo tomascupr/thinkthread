@@ -117,7 +117,7 @@ class AnthropicClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
-            
+
     def generate(self, prompt: str, **kwargs: Any) -> str:
         """Generate text using Anthropic's API through the official SDK.
 

@@ -7,6 +7,7 @@ import os
 from thinkthread_sdk.cort_session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
+
 def main():
     """Run an advanced test of the ThinkThread SDK with OpenAI."""
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -24,6 +25,7 @@ def main():
     answer = session.run(question)
     print(f"Answer: {answer}")
     print("\nAdvanced OpenAI test completed successfully!")
+
 
 if __name__ == "__main__":
     main()

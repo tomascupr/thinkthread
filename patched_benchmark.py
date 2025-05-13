@@ -7,7 +7,7 @@ optimization configurations using the OpenAI API.
 import os
 import time
 import asyncio
-from typing import Dict, Any, List, AsyncIterator, Optional
+from typing import Dict, Any, AsyncIterator
 
 from thinkthread_sdk.config import ThinkThreadConfig
 from thinkthread_sdk.session import ThinkThreadSession
@@ -17,17 +17,17 @@ from thinkthread_sdk.monitoring import GLOBAL_MONITOR
 
 class PatchedOpenAIClient(OpenAIClient):
     """Patched OpenAI client that implements the _generate_uncached method."""
-    
+
     def _generate_uncached(self, prompt: str, **kwargs: Any) -> str:
         """Generate text without using the cache.
-        
+
         This method implements the abstract method from LLMClient.
         It simply calls the original generate method implementation.
-        
+
         Args:
             prompt: The input text to send to the model
             **kwargs: Additional parameters
-            
+
         Returns:
             The generated text response from the model
         """
@@ -55,16 +55,16 @@ class PatchedOpenAIClient(OpenAIClient):
         except Exception as e:
             error_message = f"Error when calling OpenAI API: {str(e)}"
             return error_message
-    
+
     async def astream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
         """Asynchronously stream text generation from the language model.
-        
+
         This is a minimal implementation to satisfy the abstract method.
-        
+
         Args:
             prompt: The input text to send to the model
             **kwargs: Additional parameters
-            
+
         Yields:
             Chunks of the generated text response
         """
@@ -72,50 +72,54 @@ class PatchedOpenAIClient(OpenAIClient):
         yield response
 
 
-async def run_benchmark(config_name: str, config: ThinkThreadConfig, question: str) -> Dict[str, Any]:
+async def run_benchmark(
+    config_name: str, config: ThinkThreadConfig, question: str
+) -> Dict[str, Any]:
     """Run a benchmark with the given configuration.
-    
+
     Args:
         config_name: Name of the configuration for reporting
         config: The configuration to use
         question: The question to ask
-        
+
     Returns:
         A dictionary with benchmark results
     """
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         return {"error": "OPENAI_API_KEY environment variable not set"}
-    
+
     client = PatchedOpenAIClient(api_key=api_key, model_name="gpt-3.5-turbo")
     client.enable_cache(config.use_caching)
-    
+
     if config.concurrency_limit > 0:
         client.set_concurrency_limit(config.concurrency_limit)
-    
+
     GLOBAL_MONITOR.reset()
     GLOBAL_MONITOR.enable(True)
-    
+
     session = ThinkThreadSession(
         llm_client=client,
         alternatives=config.alternatives,
         max_rounds=config.max_rounds,
         config=config,
     )
-    
+
     print(f"\nRunning benchmark: {config_name}")
     start_time = time.time()
-    
+
     try:
         result = await session.run_async(question)
         elapsed = time.time() - start_time
-        
+
         stats = GLOBAL_MONITOR.get_stats()
-        
+
         print(f"  Elapsed time: {elapsed:.2f}s")
         for operation, op_stats in stats.items():
-            print(f"  {operation}: avg={op_stats['avg']:.2f}s, total={op_stats['total']:.2f}s, count={op_stats['count']}")
-        
+            print(
+                f"  {operation}: avg={op_stats['avg']:.2f}s, total={op_stats['total']:.2f}s, count={op_stats['count']}"
+            )
+
         return {
             "name": config_name,
             "elapsed": elapsed,
@@ -136,11 +140,11 @@ async def main():
     if not api_key:
         print("Error: OPENAI_API_KEY environment variable not set")
         return
-    
+
     print(f"Using OpenAI API key: {api_key[:10]}...")
-    
+
     question = "What are three key benefits of exercise?"
-    
+
     configs = [
         {
             "name": "Baseline (no optimizations)",
@@ -181,9 +185,9 @@ async def main():
             ),
         },
     ]
-    
+
     results = []
-    
+
     for config_info in configs:
         try:
             result = await run_benchmark(
@@ -195,13 +199,15 @@ async def main():
                 results.append(result)
         except Exception as e:
             print(f"Error running benchmark {config_info['name']}: {str(e)}")
-    
+
     if len(results) > 1:
         print("\nSummary:")
         baseline = results[0]["elapsed"]
         for result in results:
             speedup = baseline / result["elapsed"] if result["elapsed"] > 0 else 0
-            print(f"{result['name']}: {result['elapsed']:.2f}s ({speedup:.2f}x speedup)")
+            print(
+                f"{result['name']}: {result['elapsed']:.2f}s ({speedup:.2f}x speedup)"
+            )
 
 
 if __name__ == "__main__":
