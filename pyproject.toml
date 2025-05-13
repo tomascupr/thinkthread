@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "thinkthread"
-version = "0.5.1"
+version = "0.6.0"
 description = "ThinkThread SDK for enhanced LLM responses using Chain-of-Recursive-Thoughts technique"
 authors = ["Tomas Cupr <work@tomcupr.com>"]
 license = "MIT"
