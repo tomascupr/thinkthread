@@ -17,18 +17,6 @@ Imagine if your AI could:
 
 That's exactly what ThinkThread delivers – in just a few lines of code.
 
-## Real-World Applications
-
-ThinkThread is powering next-generation AI applications across industries:
-
-| Industry | Use Case | ThinkThread Advantage |
-|----------|----------|----------------------|
-| **Customer Support** | AI agents that solve complex customer issues | Reduces escalations by 40% through better reasoning |
-| **Content Creation** | Article and report generation | Produces more nuanced, balanced, and factually accurate content |
-| **Education** | Personalized tutoring systems | Explains concepts from multiple angles until students understand |
-| **Research** | Literature analysis and hypothesis generation | Considers contradictory evidence and alternative explanations |
-| **Decision Support** | Strategic planning assistants | Evaluates multiple scenarios before making recommendations |
-
 ## Why ThinkThread?
 
 Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing the Chain-of-Recursive-Thoughts technique – a breakthrough approach that mimics how humans refine their thinking:
@@ -42,6 +30,18 @@ Traditional LLM applications suffer from common problems: hallucinations, shallo
 | "Take it or leave it" answers | Progressively refined insights |
 
 Developers report **30-70% improvement in response quality** when using ThinkThread in production applications.
+
+## Potential Applications
+
+ThinkThread is designed for next-generation AI applications across industries:
+
+| Industry | Use Case | ThinkThread Advantage |
+|----------|----------|----------------------|
+| **Customer Support** | AI agents that solve complex customer issues | Potential to reduce escalations through better reasoning |
+| **Content Creation** | Article and report generation | Produces more nuanced, balanced, and factually accurate content |
+| **Education** | Personalized tutoring systems | Explains concepts from multiple angles until students understand |
+| **Research** | Literature analysis and hypothesis generation | Considers contradictory evidence and alternative explanations |
+| **Decision Support** | Strategic planning assistants | Evaluates multiple scenarios before making recommendations |
 
 ## How It Works: Chain-of-Recursive-Thoughts
 
