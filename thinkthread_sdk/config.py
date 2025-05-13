@@ -44,7 +44,7 @@ class ThinkThreadConfig(BaseModel):
     
     use_batched_requests: bool = False
     use_fast_similarity: bool = False
-    use_adaptive_temperature: bool = False
+    use_adaptive_temperature: bool = True
     initial_temperature: float = 0.7
     generation_temperature: float = 0.9
     min_generation_temperature: float = 0.5
