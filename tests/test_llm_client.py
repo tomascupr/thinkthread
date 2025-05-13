@@ -12,7 +12,7 @@ def test_llm_client_is_abstract():
 class MockLLMClient(LLMClient):
     """Mock implementation of LLMClient for testing."""
 
-    def generate(self, prompt: str, **kwargs) -> str:
+    def _generate_uncached(self, prompt: str, **kwargs) -> str:
         """Mock implementation that returns a fixed response."""
         return f"Mock response to: {prompt}"
 

@@ -39,8 +39,8 @@ class HuggingFaceClient(LLMClient):
             "Content-Type": "application/json",
         }
 
-    def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Generate text using Hugging Face's text generation inference API.
+    def _generate_uncached(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text using Hugging Face's text generation inference API without using cache.
 
         Args:
             prompt: The input text to send to the model
@@ -96,6 +96,24 @@ class HuggingFaceClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Hugging Face API: {str(e)}"
             return error_message
+            
+    def generate(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text using Hugging Face's text generation inference API.
+
+        Uses the base class implementation which handles caching.
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional parameters to override the default options
+
+        Returns:
+            The generated text response from the model
+
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings.
+            See _generate_uncached for details on specific error types.
+        """
+        return super().generate(prompt, **kwargs)
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text using Hugging Face's text generation inference API.

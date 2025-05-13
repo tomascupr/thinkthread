@@ -46,8 +46,8 @@ class AnthropicClient(LLMClient):
 
         self._last_call_time: float = 0.0
 
-    def generate(self, prompt: str, **kwargs: Any) -> str:
-        """Generate text using Anthropic's API through the official SDK.
+    def _generate_uncached(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text using Anthropic's API without using cache.
 
         Args:
             prompt: The input text to send to the model
@@ -117,6 +117,24 @@ class AnthropicClient(LLMClient):
         except Exception as e:
             error_message = f"Unexpected error when calling Anthropic API: {str(e)}"
             return error_message
+            
+    def generate(self, prompt: str, **kwargs: Any) -> str:
+        """Generate text using Anthropic's API through the official SDK.
+
+        Uses the base class implementation which handles caching.
+
+        Args:
+            prompt: The input text to send to the model
+            **kwargs: Additional parameters to override the default options
+
+        Returns:
+            The generated text response from the model
+
+        Error Handling:
+            Instead of raising exceptions, this method returns error messages as strings.
+            See _generate_uncached for details on specific error types.
+        """
+        return super().generate(prompt, **kwargs)
 
     async def acomplete(self, prompt: str, **kwargs: Any) -> str:
         """Asynchronously generate text using Anthropic's API.
