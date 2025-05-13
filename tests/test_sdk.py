@@ -3,8 +3,10 @@ from thinkthread_sdk.cort_session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
 # Set API key
-api_key = "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"
-os.environ["OPENAI_API_KEY"] = api_key
+api_key = os.environ.get("OPENAI_API_KEY")
+if not api_key:
+    print("Error: OPENAI_API_KEY environment variable not set")
+    exit(1)
 
 # Initialize client
 client = OpenAIClient(api_key=api_key, model_name="gpt-3.5-turbo")

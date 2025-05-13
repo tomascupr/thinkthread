@@ -9,8 +9,10 @@ from thinkthread_sdk.llm import AnthropicClient
 
 def main():
     """Run an advanced test of the ThinkThread SDK with Anthropic."""
-    api_key = "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"
-    os.environ["ANTHROPIC_API_KEY"] = api_key
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("Error: ANTHROPIC_API_KEY environment variable not set")
+        return
 
     client = AnthropicClient(api_key=api_key)
 
