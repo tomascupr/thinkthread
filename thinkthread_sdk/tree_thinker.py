@@ -121,15 +121,17 @@ class TreeThinker:
             self.current_layer.append(node_id)
 
         if max_iterations > 0:
-            expansion_results = self.expand_threads()
+            expansion_results = self.expand_threads(beam_width=beam_width)
 
             return {
                 "status": "expanded",
-                "message": f"Created {beam_width} parallel thought threads and expanded them",
+                "message": f"Created {beam_width} parallel thought threads and expanded them with beam search (width={beam_width})",
                 "thread_count": len(self.threads),
                 "root_threads": self.current_layer[:beam_width],
                 "expanded_threads": expansion_results["new_nodes"],
                 "expansion_count": expansion_results["count"],
+                "pruned_count": expansion_results.get("pruned_count", 0),
+                "pruned_out_count": expansion_results.get("pruned_out_count", 0),
             }
 
         return {
@@ -140,16 +142,20 @@ class TreeThinker:
         }
 
     def expand_threads(
-        self, nodes_to_expand: Optional[List[str]] = None
+        self,
+        nodes_to_expand: Optional[List[str]] = None,
+        beam_width: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Expand the specified thought threads by generating the next thought for each.
 
         This method takes the current active thought threads and expands each one
         by generating alternative continuations. Each new continuation becomes a
-        child node in the thinking tree.
+        child node in the thinking tree. After expansion, only the top N branches
+        (where N is the beam width) are kept for further expansion.
 
         Args:
             nodes_to_expand: List of node IDs to expand. If None, expands all nodes in the current layer.
+            beam_width: Number of top branches to keep after expansion. If None, uses the branching_factor.
 
         Returns:
             Dictionary containing information about the expansion results
@@ -157,8 +163,12 @@ class TreeThinker:
         if nodes_to_expand is None:
             nodes_to_expand = self.current_layer.copy()
 
+        if beam_width is None:
+            beam_width = self.branching_factor
+
         new_layer = []
         new_nodes = []
+        all_expanded_nodes = []
 
         for node_id in nodes_to_expand:
             if node_id not in self.threads:
@@ -212,18 +222,42 @@ class TreeThinker:
                 parent_node.children.append(child_id)
 
                 self.threads[child_id] = child_node
-                new_layer.append(child_id)
+                all_expanded_nodes.append(child_id)
                 new_nodes.append(child_id)
 
-        self.current_layer = new_layer
+        if all_expanded_nodes:
+            sorted_nodes = sorted(
+                all_expanded_nodes,
+                key=lambda node_id: self.threads[node_id].score,
+                reverse=True,
+            )
 
-        scores = {node_id: self.threads[node_id].score for node_id in new_nodes}
+            pruned_nodes = sorted_nodes[:beam_width]
+            pruned_out = sorted_nodes[beam_width:]
+
+            self.current_layer = pruned_nodes
+            new_layer = pruned_nodes
+
+            pruned_scores = {
+                node_id: self.threads[node_id].score for node_id in pruned_nodes
+            }
+            pruned_out_scores = {
+                node_id: self.threads[node_id].score for node_id in pruned_out
+            }
+        else:
+            self.current_layer = []
+            new_layer = []
+            pruned_scores = {}
+            pruned_out_scores = {}
 
         return {
             "count": len(new_nodes),
             "new_nodes": new_nodes,
             "new_layer": new_layer,
-            "scores": scores,
+            "pruned_count": len(new_layer),
+            "pruned_out_count": len(pruned_out) if "pruned_out" in locals() else 0,
+            "scores": pruned_scores,
+            "pruned_out_scores": pruned_out_scores,
         }
 
     def _score_node(self, problem: str, node: ThinkThreadNode) -> float:
