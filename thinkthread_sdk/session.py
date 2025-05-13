@@ -6,6 +6,8 @@ questioning and refinement process using LLMs.
 
 from typing import List, Optional
 import asyncio
+import difflib
+import time
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
@@ -16,6 +18,7 @@ from thinkthread_sdk.evaluation import (
     Evaluator,
     ModelEvaluator,
 )
+from thinkthread_sdk.monitoring import GLOBAL_MONITOR, timed, timed_async
 
 
 class ThinkThreadSession:
@@ -66,6 +69,7 @@ class ThinkThreadSession:
         self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
         self.use_self_evaluation = self.config.use_self_evaluation
 
+    @timed("run")
     def run(self, question: str) -> str:
         """Execute the ThinkThread process on a question.
 
@@ -94,15 +98,34 @@ class ThinkThreadSession:
             The final best answer after all refinement rounds
 
         """
+        if hasattr(self.config, "enable_monitoring"):
+            GLOBAL_MONITOR.enable(self.config.enable_monitoring)
+        
+        if hasattr(self.config, "use_caching") and hasattr(self.llm_client, "enable_cache"):
+            self.llm_client.enable_cache(self.config.use_caching)
+        
+        if hasattr(self.config, "concurrency_limit") and hasattr(self.llm_client, "set_concurrency_limit"):
+            self.llm_client.set_concurrency_limit(self.config.concurrency_limit)
+        
+        GLOBAL_MONITOR.start("initial_generation")
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
         )
         current_answer = self.llm_client.generate(initial_prompt, temperature=0.7)
+        GLOBAL_MONITOR.end("initial_generation")
 
         if self.max_rounds <= 0:
             return current_answer
-
+            
+        previous_answer = ""
+        
         for round_num in range(1, self.max_rounds + 1):
+            if (round_num > 1 and self.config.early_termination and 
+                self._calculate_similarity(current_answer, previous_answer) >= 
+                self.config.early_termination_threshold):
+                break
+                
+            previous_answer = current_answer
             alternatives = self._generate_alternatives(question, current_answer)
 
             if self.use_self_evaluation:
@@ -144,6 +167,7 @@ class ThinkThreadSession:
 
         return current_answer
 
+    @timed("generate_alternatives")
     def _generate_alternatives(self, question: str, current_answer: str) -> List[str]:
         """Generate alternative answers to the question.
 
@@ -158,6 +182,7 @@ class ThinkThreadSession:
         alternatives = []
 
         for i in range(self.alternatives):
+            GLOBAL_MONITOR.start(f"alternative_generation_{i}")
             prompt = self.template_manager.render_template(
                 "alternative_prompt.j2",
                 {"question": question, "current_answer": current_answer},
@@ -165,9 +190,11 @@ class ThinkThreadSession:
 
             alternative = self.llm_client.generate(prompt, temperature=0.9)
             alternatives.append(alternative)
+            GLOBAL_MONITOR.end(f"alternative_generation_{i}")
 
         return alternatives
 
+    @timed("run_async")
     async def run_async(self, question: str) -> str:
         """Execute the ThinkThread process asynchronously on a question.
 
@@ -199,31 +226,67 @@ class ThinkThreadSession:
             the state is maintained within the method's execution context.
 
         """
+        if hasattr(self.config, "enable_monitoring"):
+            GLOBAL_MONITOR.enable(self.config.enable_monitoring)
+        
+        if hasattr(self.config, "use_caching") and hasattr(self.llm_client, "enable_cache"):
+            self.llm_client.enable_cache(self.config.use_caching)
+        
+        if hasattr(self.config, "concurrency_limit") and hasattr(self.llm_client, "set_concurrency_limit"):
+            self.llm_client.set_concurrency_limit(self.config.concurrency_limit)
+        
+        GLOBAL_MONITOR.start("initial_generation_async")
         initial_prompt = self.template_manager.render_template(
             "initial_prompt.j2", {"question": question}
         )
         current_answer = await self.llm_client.acomplete(
             initial_prompt, temperature=0.7
         )
+        GLOBAL_MONITOR.end("initial_generation_async")
 
         if self.max_rounds <= 0:
             return current_answer
-
+            
+        previous_answer = ""
+        
         for round_num in range(1, self.max_rounds + 1):
+            if (round_num > 1 and self.config.early_termination and 
+                self._calculate_similarity(current_answer, previous_answer) >= 
+                self.config.early_termination_threshold):
+                break
+                
+            previous_answer = current_answer
             alternatives = await self._generate_alternatives_async(
                 question, current_answer
             )
 
             if self.use_self_evaluation or self.use_pairwise_evaluation:
                 best_answer = current_answer
-
-                for alternative in alternatives:
-                    is_better = await self._evaluate_async(
-                        question, best_answer, alternative
-                    )
-                    if is_better:
-                        best_answer = alternative
-
+                
+                if not self.config.parallel_evaluation:
+                    # Sequential evaluation
+                    for alternative in alternatives:
+                        is_better = await self._evaluate_async(
+                            question, best_answer, alternative
+                        )
+                        if is_better:
+                            best_answer = alternative
+                else:
+                    # Parallel evaluation
+                    async def evaluate_alternative(alt):
+                        is_better = await self._run_with_semaphore(
+                            self._evaluate_async, question, best_answer, alt
+                        )
+                        return (alt, is_better)
+                    
+                    results = await asyncio.gather(*[
+                        evaluate_alternative(alt) for alt in alternatives
+                    ])
+                    
+                    for alt, is_better in results:
+                        if is_better:
+                            best_answer = alt
+                
                 current_answer = best_answer
             else:
                 all_answers = [current_answer] + alternatives
@@ -234,25 +297,31 @@ class ThinkThreadSession:
 
         return current_answer
 
+    async def _run_with_semaphore(self, func, *args, **kwargs):
+        """Run a function with a semaphore for rate limiting.
+        
+        Args:
+            func: The function to run
+            *args: Arguments for the function
+            **kwargs: Keyword arguments for the function
+            
+        Returns:
+            The result of the function
+        """
+        if hasattr(self.llm_client, "_semaphore") and self.llm_client._semaphore is not None:
+            async with self.llm_client._semaphore:
+                return await func(*args, **kwargs)
+        return await func(*args, **kwargs)
+        
     async def _generate_alternatives_async(
         self, question: str, current_answer: str
     ) -> List[str]:
         """Asynchronously generate alternative answers to the question.
 
-        This method is the async counterpart to _generate_alternatives and creates
-        multiple alternative answers to the given question based on the current
-        best answer. It uses async LLM calls to generate these alternatives without
-        blocking the event loop.
-
-        While the synchronous version would block during each LLM call, this
-        implementation allows other tasks to run while waiting for each alternative
-        to be generated. This is particularly beneficial when generating multiple
-        alternatives, as it allows for better resource utilization.
-
-        Note that this implementation still generates alternatives sequentially
-        rather than in parallel. This is intentional to avoid overwhelming the
-        LLM service with concurrent requests, which could lead to rate limiting
-        or degraded performance.
+        This method creates multiple alternative answers to the given question based on 
+        the current best answer. When parallel_alternatives is enabled, it uses asyncio.gather
+        to generate alternatives concurrently, potentially providing significant performance
+        improvements.
 
         Args:
             question: The original question
@@ -260,20 +329,41 @@ class ThinkThreadSession:
 
         Returns:
             List of alternative answers
-
         """
-        alternatives = []
-
-        for i in range(self.alternatives):
-            prompt = self.template_manager.render_template(
-                "alternative_prompt.j2",
-                {"question": question, "current_answer": current_answer},
-            )
-
-            alternative = await self.llm_client.acomplete(prompt, temperature=0.9)
-            alternatives.append(alternative)
-
-        return alternatives
+        GLOBAL_MONITOR.start("generate_alternatives_async")
+        try:
+            if not self.config.parallel_alternatives:
+                # Original sequential implementation
+                alternatives = []
+                for i in range(self.alternatives):
+                    GLOBAL_MONITOR.start(f"alternative_generation_async_{i}")
+                    prompt = self.template_manager.render_template(
+                        "alternative_prompt.j2",
+                        {"question": question, "current_answer": current_answer},
+                    )
+                    alternative = await self.llm_client.acomplete(prompt, temperature=0.9)
+                    alternatives.append(alternative)
+                    GLOBAL_MONITOR.end(f"alternative_generation_async_{i}")
+                return alternatives
+            
+            async def generate_alternative(i):
+                GLOBAL_MONITOR.start(f"alternative_generation_async_{i}")
+                try:
+                    prompt = self.template_manager.render_template(
+                        "alternative_prompt.j2",
+                        {"question": question, "current_answer": current_answer},
+                    )
+                    return await self._run_with_semaphore(
+                        self.llm_client.acomplete, prompt, temperature=0.9
+                    )
+                finally:
+                    GLOBAL_MONITOR.end(f"alternative_generation_async_{i}")
+            
+            tasks = [generate_alternative(i) for i in range(self.alternatives)]
+            alternatives = await asyncio.gather(*tasks)
+            return alternatives
+        finally:
+            GLOBAL_MONITOR.end("generate_alternatives_async")
 
     async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
         """Asynchronously evaluate whether answer2 is better than answer1.
@@ -304,14 +394,18 @@ class ThinkThreadSession:
             multiple tasks.
 
         """
-        return await asyncio.to_thread(
-            self.evaluator.evaluate,
-            question,
-            answer1,
-            answer2,
-            self.llm_client,
-            self.template_manager,
-        )
+        GLOBAL_MONITOR.start("evaluate_async")
+        try:
+            return await asyncio.to_thread(
+                self.evaluator.evaluate,
+                question,
+                answer1,
+                answer2,
+                self.llm_client,
+                self.template_manager,
+            )
+        finally:
+            GLOBAL_MONITOR.end("evaluate_async")
 
     async def _evaluate_all_async(self, question: str, answers: List[str]) -> int:
         """Asynchronously evaluate all answers and return the index of the best one.
@@ -342,10 +436,26 @@ class ThinkThreadSession:
             multiple tasks.
 
         """
-        return await asyncio.to_thread(
-            self.evaluation_strategy.evaluate,
-            question,
-            answers,
-            self.llm_client,
-            self.template_manager,
-        )
+        GLOBAL_MONITOR.start("evaluate_all_async")
+        try:
+            return await asyncio.to_thread(
+                self.evaluation_strategy.evaluate,
+                question,
+                answers,
+                self.llm_client,
+                self.template_manager,
+            )
+        finally:
+            GLOBAL_MONITOR.end("evaluate_all_async")
+        
+    def _calculate_similarity(self, str1: str, str2: str) -> float:
+        """Calculate the similarity between two strings.
+        
+        Args:
+            str1: First string
+            str2: Second string
+            
+        Returns:
+            A similarity score between 0.0 and 1.0
+        """
+        return difflib.SequenceMatcher(None, str1, str2).ratio()
