@@ -17,7 +17,11 @@ from thinkthread_sdk.evaluation import (
     ModelEvaluator,
 )
 from thinkthread_sdk.base_reasoner import BaseReasoner
-from thinkthread_sdk.reasoning_utils import generate_alternatives, generate_alternatives_async, calculate_similarity
+from thinkthread_sdk.reasoning_utils import (
+    generate_alternatives,
+    generate_alternatives_async,
+    calculate_similarity,
+)
 
 
 class ThinkThreadSession(BaseReasoner):
@@ -158,9 +162,8 @@ class ThinkThreadSession(BaseReasoner):
             self.llm_client,
             self.template_manager,
             count=self.alternatives,
-            temperature=0.9
+            temperature=0.9,
         )
-
 
     async def run_async(self, question: str) -> str:
         """Execute the ThinkThread process asynchronously on a question.
@@ -193,7 +196,9 @@ class ThinkThreadSession(BaseReasoner):
             the state is maintained within the method's execution context.
 
         """
-        current_answer = await self.generate_initial_answer_async(question, temperature=0.7)
+        current_answer = await self.generate_initial_answer_async(
+            question, temperature=0.7
+        )
 
         if self.max_rounds <= 0:
             return current_answer
@@ -253,7 +258,10 @@ class ThinkThreadSession(BaseReasoner):
             List of alternative answers
 
         """
-        parallel = hasattr(self.config, "parallel_alternatives") and self.config.parallel_alternatives
+        parallel = (
+            hasattr(self.config, "parallel_alternatives")
+            and self.config.parallel_alternatives
+        )
         return await generate_alternatives_async(
             question,
             current_answer,
@@ -261,7 +269,7 @@ class ThinkThreadSession(BaseReasoner):
             self.template_manager,
             count=self.alternatives,
             temperature=0.9,
-            parallel=parallel
+            parallel=parallel,
         )
 
     async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
@@ -338,7 +346,7 @@ class ThinkThreadSession(BaseReasoner):
             self.llm_client,
             self.template_manager,
         )
-        
+
     def _calculate_similarity(self, str1: str, str2: str) -> float:
         """Calculate the similarity between two strings.
 
@@ -349,5 +357,8 @@ class ThinkThreadSession(BaseReasoner):
         Returns:
             A similarity score between 0.0 and 1.0
         """
-        use_fast = hasattr(self.config, "use_fast_similarity") and self.config.use_fast_similarity
+        use_fast = (
+            hasattr(self.config, "use_fast_similarity")
+            and self.config.use_fast_similarity
+        )
         return calculate_similarity(str1, str2, fast=use_fast)

@@ -81,9 +81,7 @@ def create_llm_client(
 @app.command()
 def think(
     question: str = typer.Argument(..., help="The question to answer"),
-    approach: str = typer.Option(
-        "cort", help="Reasoning approach to use (cort, tot)"
-    ),
+    approach: str = typer.Option("cort", help="Reasoning approach to use (cort, tot)"),
     provider: str = typer.Option(
         "openai", help="LLM provider to use (openai, anthropic, hf, dummy)"
     ),
@@ -92,11 +90,19 @@ def think(
     ),
     alternatives: int = typer.Option(3, help="Number of alternative answers per round"),
     rounds: int = typer.Option(2, help="Number of refinement rounds"),
-    beam_width: int = typer.Option(3, help="Number of parallel thought threads (ToT only)"),
-    max_depth: int = typer.Option(3, help="Maximum depth of the thinking tree (ToT only)"),
-    branching_factor: int = typer.Option(3, help="Number of branches per node (ToT only)"),
+    beam_width: int = typer.Option(
+        3, help="Number of parallel thought threads (ToT only)"
+    ),
+    max_depth: int = typer.Option(
+        3, help="Maximum depth of the thinking tree (ToT only)"
+    ),
+    branching_factor: int = typer.Option(
+        3, help="Number of branches per node (ToT only)"
+    ),
     stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
-    visualize: bool = typer.Option(True, help="Visualize the tree of thoughts (ToT only)"),
+    visualize: bool = typer.Option(
+        True, help="Visualize the tree of thoughts (ToT only)"
+    ),
     verbose: bool = typer.Option(False, help="Enable debug logging"),
     self_evaluation: bool = typer.Option(False, help="Toggle self-evaluation on/off"),
 ) -> None:
@@ -124,13 +130,13 @@ def think(
 
     Examples:
         $ thinkthread think "What is the meaning of life?"
-        
+
         $ thinkthread think "How to solve climate change?" --approach tot
-        
+
         $ thinkthread think "Explain quantum computing" --provider anthropic
-        
+
         $ thinkthread think "Pros and cons of renewable energy" --rounds 3 --alternatives 5
-        
+
         $ thinkthread think "Design a system for autonomous vehicles" --approach tot --beam-width 5
     """
     if verbose:
@@ -144,7 +150,7 @@ def think(
         logging.debug(f"Provider: {provider}")
 
     config = create_config()
-    
+
     if self_evaluation:
         config.use_self_evaluation = True
         if verbose:
@@ -158,23 +164,24 @@ def think(
 
     if approach.lower() == "cort":
         if verbose:
-            logging.debug(f"Using CoRT with rounds={rounds}, alternatives={alternatives}")
-        
+            logging.debug(
+                f"Using CoRT with rounds={rounds}, alternatives={alternatives}"
+            )
+
         reasoner = ThinkThreadSession(
-            llm_client=client, 
-            alternatives=alternatives, 
-            rounds=rounds, 
-            config=config
+            llm_client=client, alternatives=alternatives, rounds=rounds, config=config
         )
-        
+
         asyncio.run(run_cort(reasoner, question, stream, verbose))
-    
+
     elif approach.lower() == "tot":
         if verbose:
-            logging.debug(f"Using ToT with beam_width={beam_width}, max_depth={max_depth}")
-        
+            logging.debug(
+                f"Using ToT with beam_width={beam_width}, max_depth={max_depth}"
+            )
+
         evaluator = ModelEvaluator()
-        
+
         reasoner = TreeThinker(
             llm_client=client,
             max_tree_depth=max_depth,
@@ -182,21 +189,16 @@ def think(
             config=config,
             evaluator=evaluator,
         )
-        
-        asyncio.run(
-            run_tot(reasoner, question, beam_width, rounds, visualize, verbose)
-        )
-    
+
+        asyncio.run(run_tot(reasoner, question, beam_width, rounds, visualize, verbose))
+
     else:
         print(f"Unknown reasoning approach: {approach}")
         print("Available approaches: cort, tot")
 
 
 async def run_cort(
-    reasoner: ThinkThreadSession, 
-    question: str, 
-    stream: bool, 
-    verbose: bool = False
+    reasoner: ThinkThreadSession, question: str, stream: bool, verbose: bool = False
 ) -> None:
     """Run the CoRT reasoning process asynchronously with optional streaming.
 

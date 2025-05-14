@@ -15,7 +15,10 @@ from thinkthread_sdk.config import ThinkThreadConfig, create_config
 from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.evaluation import Evaluator, ModelEvaluator
 from thinkthread_sdk.base_reasoner import BaseReasoner
-from thinkthread_sdk.reasoning_utils import generate_alternatives, generate_alternatives_async
+from thinkthread_sdk.reasoning_utils import (
+    generate_alternatives,
+    generate_alternatives_async,
+)
 
 
 @dataclass
@@ -405,7 +408,7 @@ class TreeThinker(BaseReasoner):
                 self.llm_client,
                 self.template_manager,
                 count=num_continuations,
-                temperature=0.9
+                temperature=0.9,
             )
         except Exception:
             # Fall back to manual generation with error handling
@@ -452,7 +455,10 @@ class TreeThinker(BaseReasoner):
         alternatives = []
 
         try:
-            parallel = hasattr(self.config, "parallel_alternatives") and self.config.parallel_alternatives
+            parallel = (
+                hasattr(self.config, "parallel_alternatives")
+                and self.config.parallel_alternatives
+            )
             alternatives = await generate_alternatives_async(
                 problem,
                 current_answer,
@@ -460,7 +466,7 @@ class TreeThinker(BaseReasoner):
                 self.template_manager,
                 count=num_continuations,
                 temperature=0.9,
-                parallel=parallel
+                parallel=parallel,
             )
             return alternatives
         except Exception:

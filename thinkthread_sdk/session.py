@@ -574,5 +574,8 @@ class ThinkThreadSession(BaseReasoner):
         Returns:
             A similarity score between 0.0 and 1.0
         """
-        use_fast = hasattr(self.config, "use_fast_similarity") and self.config.use_fast_similarity
+        use_fast = (
+            hasattr(self.config, "use_fast_similarity")
+            and self.config.use_fast_similarity
+        )
         return calculate_similarity(str1, str2, fast=use_fast)
