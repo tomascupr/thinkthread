@@ -400,11 +400,11 @@ class TreeThinker(BaseReasoner):
 
         try:
             alternatives = generate_alternatives(
-                problem, 
-                current_answer, 
-                self.llm_client, 
-                self.template_manager, 
-                count=num_continuations, 
+                problem,
+                current_answer,
+                self.llm_client,
+                self.template_manager,
+                count=num_continuations,
                 temperature=0.9
             )
         except Exception:
@@ -454,11 +454,11 @@ class TreeThinker(BaseReasoner):
         try:
             parallel = hasattr(self.config, "parallel_alternatives") and self.config.parallel_alternatives
             alternatives = await generate_alternatives_async(
-                problem, 
-                current_answer, 
-                self.llm_client, 
-                self.template_manager, 
-                count=num_continuations, 
+                problem,
+                current_answer,
+                self.llm_client,
+                self.template_manager,
+                count=num_continuations,
                 temperature=0.9,
                 parallel=parallel
             )
@@ -637,60 +637,60 @@ class TreeThinker(BaseReasoner):
 
     def run(self, question: str) -> str:
         """Execute the reasoning process on a question.
-        
+
         Args:
             question: The question to answer
-            
+
         Returns:
             The final answer after reasoning
         """
         result = self.solve(question, beam_width=3, max_iterations=3)
-        
+
         if isinstance(result, dict):
             best_node_id = None
             best_score = -1.0
-            
+
             for node_id, node in self.threads.items():
                 if node.score > best_score:
                     best_score = node.score
                     best_node_id = node_id
-                    
+
             if best_node_id:
                 best_node = self.threads[best_node_id]
                 return best_node.state.get("current_answer", "No answer found")
-            
+
             return "No answer found"
-        
+
         return result
-        
+
     async def run_async(self, question: str) -> str:
         """Execute the reasoning process asynchronously on a question.
-        
+
         Args:
             question: The question to answer
-            
+
         Returns:
             The final answer after reasoning
         """
         result = await self._solve_async(question, beam_width=3, max_iterations=3)
-        
+
         if isinstance(result, dict):
             best_node_id = None
             best_score = -1.0
-            
+
             for node_id, node in self.threads.items():
                 if node.score > best_score:
                     best_score = node.score
                     best_node_id = node_id
-                    
+
             if best_node_id:
                 best_node = self.threads[best_node_id]
                 return best_node.state.get("current_answer", "No answer found")
-            
+
             return "No answer found"
-        
+
         return result
-        
+
     async def solve_async(
         self, problem: str, beam_width: int = 1, max_iterations: int = 10, **kwargs: Any
     ) -> Union[str, Dict[str, Any]]:
