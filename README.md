@@ -129,7 +129,7 @@ poetry add thinkthread
 #### CLI Usage
 
 ```bash
-# Basic usage
+# Basic usage with Chain-of-Recursive-Thoughts
 thinkthread run "What are the implications of quantum computing on cryptography?"
 
 # With specific provider and streaming
@@ -137,6 +137,12 @@ thinkthread run "Explain relativity" --provider anthropic --stream
 
 # Advanced configuration
 thinkthread run "Compare democracy and autocracy" --rounds 3 --alternatives 4
+
+# Unified CLI with explicit reasoning approach selection
+thinkthread think "What are the implications of quantum computing on cryptography?" --approach cort
+
+# Using Tree-of-Thoughts reasoning with the unified CLI
+thinkthread think "Design a system for autonomous vehicles" --approach tot --beam-width 5
 ```
 
 #### Python API
@@ -287,10 +293,10 @@ result = await tree_thinker.solve_async(
 
 ### Command Line Interface
 
-The TreeThinker module can be used from the command line:
+The TreeThinker module can be used from the command line in two ways:
 
 ```bash
-# Basic usage
+# Using the dedicated ToT command
 thinkthread tot "What are the benefits of tree-based search for reasoning?"
 
 # With specific provider
@@ -298,6 +304,12 @@ thinkthread tot "Design a system for autonomous vehicles" --provider anthropic
 
 # Advanced configuration
 thinkthread tot "What are the ethical implications of AI?" --beam-width 5 --max-depth 4
+
+# Using the unified CLI interface
+thinkthread think "What are the benefits of tree-based search for reasoning?" --approach tot
+
+# Unified CLI with advanced configuration
+thinkthread think "What are the ethical implications of AI?" --approach tot --beam-width 5 --max-depth 4
 ```
 
 For detailed documentation on Tree-of-Thoughts reasoning, see the [Tree-of-Thoughts Guide](docs/tree_thinker.md).
