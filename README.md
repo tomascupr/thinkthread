@@ -20,7 +20,10 @@ That's exactly what ThinkThread delivers – in just a few lines of code.
 
 ## Why ThinkThread?
 
-Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing advanced reasoning techniques:
+Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing a unified reasoning framework with two complementary approaches:
+
+1. **Chain-of-Recursive-Thoughts (CoRT)**: Linear refinement process that iteratively improves answers
+2. **Tree-of-Thoughts (ToT)**: Tree-based search that explores multiple reasoning paths in parallel
 
 | Without ThinkThread | With ThinkThread |
 |---------------------|------------------|
@@ -31,10 +34,14 @@ Traditional LLM applications suffer from common problems: hallucinations, shallo
 | No pruning of weak ideas | Focus on most promising solutions |
 | Inconsistent quality | Reliably improved responses |
 | "Take it or leave it" answers | Progressively refined insights |
+| One-size-fits-all approach | Choose the right reasoning strategy for each task |
 
-The Tree-of-Thoughts approach enables **parallel exploration of multiple reasoning paths**, allowing the model to consider diverse approaches to complex problems simultaneously. By evaluating and pruning less promising branches, ThinkThread focuses computational resources on the most valuable ideas.
+The **unified reasoning framework** gives developers the flexibility to select the optimal approach for each use case:
 
-Developers report **30-70% improvement in response quality** when using ThinkThread in production applications.
+- **Chain-of-Recursive-Thoughts**: Best for content creation, technical writing, summarization, and factual QA
+- **Tree-of-Thoughts**: Best for strategic planning, creative ideation, multi-step reasoning, and research
+
+Developers report **30-70% improvement in response quality** when using ThinkThread in production applications, with the ability to tackle more complex reasoning tasks than ever before.
 
 ## Potential Applications
 
