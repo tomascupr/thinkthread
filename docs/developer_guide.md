@@ -1,20 +1,26 @@
 # ThinkThread SDK Developer Guide
 
-This guide explains the architecture of the ThinkThread SDK and how to extend it with new providers or evaluation strategies.
+This guide explains the architecture of the ThinkThread SDK and how to extend it with new providers, reasoning approaches, or evaluation strategies.
 
 ## Architecture Overview
 
 The ThinkThread SDK follows a modular architecture with these key components:
 
-1. **CoRTSession**: The main orchestrator that manages the recursive reasoning process
-2. **LLMClient**: Abstract interface for different LLM providers
-3. **TemplateManager**: Manages Jinja2 templates for prompt generation
-4. **Evaluation**: Strategies for evaluating and comparing answers
-5. **Config**: Configuration management via Pydantic
+1. **BaseReasoner**: Abstract base class for all reasoning approaches
+2. **ThinkThreadSession**: Implements Chain-of-Recursive-Thoughts (CoRT) reasoning
+3. **TreeThinker**: Implements Tree-of-Thoughts (ToT) reasoning
+4. **LLMClient**: Abstract interface for different LLM providers
+5. **TemplateManager**: Manages Jinja2 templates for prompt generation
+6. **Evaluation**: Strategies for evaluating and comparing answers
+7. **Config**: Configuration management via Pydantic
 
-### Chain-of-Recursive-Thoughts Loop
+### Reasoning Approaches
 
-The core of the SDK is the Chain-of-Recursive-Thoughts loop, implemented in `CoRTSession.run()`:
+The SDK supports two complementary reasoning approaches:
+
+#### Chain-of-Recursive-Thoughts Loop
+
+The CoRT approach is implemented in `ThinkThreadSession.run()`:
 
 1. Generate an initial answer using the configured LLM
 2. For each round:
@@ -25,7 +31,51 @@ The core of the SDK is the Chain-of-Recursive-Thoughts loop, implemented in `CoR
 
 This process enables the LLM to critically evaluate its own output and iteratively improve the quality of answers.
 
+#### Tree-of-Thoughts Search
+
+The ToT approach is implemented in `TreeThinker.solve()`:
+
+1. Generate multiple initial thoughts (diverse starting points)
+2. Expand each thought into multiple branches (parallel exploration)
+3. Evaluate all branches and prune less promising paths (beam search)
+4. Continue expanding the most promising branches
+5. Select the highest-scoring solution path
+
+This approach allows exploring multiple reasoning paths simultaneously, which is particularly effective for complex problems with multiple valid approaches.
+
 ## Component Interfaces
+
+### BaseReasoner Interface
+
+All reasoning approaches implement the `BaseReasoner` abstract base class:
+
+```python
+class BaseReasoner(ABC):
+    def __init__(
+        self,
+        llm_client: LLMClient,
+        template_manager: Optional[TemplateManager] = None,
+        config: Optional[ThinkThreadConfig] = None,
+    ):
+        """Initialize the reasoner with an LLM client and optional components."""
+        self.llm_client = llm_client
+        self.config = config or create_config()
+        self.template_manager = template_manager or TemplateManager(
+            self.config.prompt_dir
+        )
+
+    @abstractmethod
+    def run(self, question: str) -> str:
+        """Execute the reasoning process on a question."""
+        pass
+
+    @abstractmethod
+    async def run_async(self, question: str) -> str:
+        """Execute the reasoning process asynchronously on a question."""
+        pass
+```
+
+This interface ensures that all reasoning approaches provide both synchronous and asynchronous execution methods with a consistent API.
 
 ### LLM Provider Interface
 
@@ -87,6 +137,41 @@ class TemplateManager:
         """Render a template with the given context."""
         template = self.env.get_template(template_name)
         return template.render(**context)
+```
+
+## Implementing a New Reasoning Approach
+
+To implement a new reasoning approach, create a class that inherits from `BaseReasoner`:
+
+```python
+from thinkthread_sdk.base_reasoner import BaseReasoner
+from thinkthread_sdk.llm import LLMClient
+from thinkthread_sdk.prompting import TemplateManager
+from thinkthread_sdk.config import ThinkThreadConfig
+
+class NewReasoner(BaseReasoner):
+    def __init__(
+        self,
+        llm_client: LLMClient,
+        template_manager: Optional[TemplateManager] = None,
+        config: Optional[ThinkThreadConfig] = None,
+        **kwargs
+    ):
+        super().__init__(llm_client, template_manager, config)
+        # Initialize any approach-specific attributes
+        
+    def run(self, question: str) -> str:
+        """Execute the reasoning process on a question."""
+        # Implement your reasoning approach
+        # 1. Process the question
+        # 2. Generate initial thoughts/answers
+        # 3. Apply your reasoning algorithm
+        # 4. Return the final answer
+        
+    async def run_async(self, question: str) -> str:
+        """Execute the reasoning process asynchronously on a question."""
+        # Implement the async version of your reasoning approach
+        # You can use the shared utilities in reasoning_utils.py
 ```
 
 ## Adding a New LLM Provider
@@ -192,16 +277,54 @@ class NewEvaluationStrategy(EvaluationStrategy):
         return best_index
 ```
 
-2. Use your strategy when creating a CoRTSession:
+2. Use your strategy with any reasoner:
 
 ```python
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.tree_thinker import TreeThinker
 from your_module import NewEvaluationStrategy
 
-session = CoRTSession(
+# With Chain-of-Recursive-Thoughts
+cort_session = ThinkThreadSession(
     llm_client=client,
     evaluation_strategy=NewEvaluationStrategy(),
 )
+
+# With Tree-of-Thoughts
+tot_session = TreeThinker(
+    llm_client=client,
+    evaluator=NewEvaluationStrategy(),
+)
+```
+
+## Shared Utilities
+
+The SDK provides shared utilities in `reasoning_utils.py` for common operations used by different reasoning approaches:
+
+```python
+# Generate alternatives for a question and current answer
+alternatives = generate_alternatives(
+    question, 
+    current_answer, 
+    llm_client, 
+    template_manager, 
+    count=3, 
+    temperature=0.9
+)
+
+# Generate alternatives asynchronously
+alternatives = await generate_alternatives_async(
+    question, 
+    current_answer, 
+    llm_client, 
+    template_manager, 
+    count=3, 
+    temperature=0.9,
+    parallel=True  # Use parallel processing
+)
+
+# Calculate similarity between two strings
+similarity = calculate_similarity(str1, str2)
 ```
 
 ## Customising Prompt Templates
@@ -214,10 +337,22 @@ The SDK uses Jinja2 templates for all prompts. The default templates are in `thi
 
 ```python
 from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.tree_thinker import TreeThinker
 
 template_manager = TemplateManager(template_dir="/path/to/your/templates")
-session = CoRTSession(llm_client=client, template_manager=template_manager)
+
+# Use with Chain-of-Recursive-Thoughts
+cort_session = ThinkThreadSession(
+    llm_client=client, 
+    template_manager=template_manager
+)
+
+# Use with Tree-of-Thoughts
+tot_session = TreeThinker(
+    llm_client=client, 
+    template_manager=template_manager
+)
 ```
 
 Or set the path in configuration:
@@ -235,17 +370,20 @@ Core templates that need to be implemented:
 - `evaluation_prompt.j2`: Evaluates multiple answers
 - `pairwise_prompt.j2`: Compares two answers
 - `final_answer.j2`: Formats the final answer
+- `tot_expansion_prompt.j2`: Generates continuations for tree nodes (ToT only)
+- `tot_evaluation_prompt.j2`: Evaluates tree branches (ToT only)
 
 ## Advanced Configuration
 
-For advanced configuration, create a custom `CoRTConfig` instance:
+For advanced configuration, create a custom `ThinkThreadConfig` instance:
 
 ```python
-from thinkthread_sdk.config import CoRTConfig
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.config import ThinkThreadConfig
+from thinkthread_sdk.session import ThinkThreadSession
+from thinkthread_sdk.tree_thinker import TreeThinker
 
 # Create custom configuration
-config = CoRTConfig(
+config = ThinkThreadConfig(
     openai_api_key="your-api-key",
     provider="openai",
     openai_model="gpt-4",
@@ -253,8 +391,20 @@ config = CoRTConfig(
     rounds=3,
     use_pairwise_evaluation=True,
     use_self_evaluation=False,
+    parallel_alternatives=True,  # Enable parallel processing
 )
 
-# Create session with custom config
-session = CoRTSession(llm_client=client, config=config)
+# Use with Chain-of-Recursive-Thoughts
+cort_session = ThinkThreadSession(
+    llm_client=client, 
+    config=config
+)
+
+# Use with Tree-of-Thoughts
+tot_session = TreeThinker(
+    llm_client=client,
+    max_tree_depth=3,
+    branching_factor=3,
+    config=config
+)
 ```
