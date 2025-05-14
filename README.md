@@ -20,7 +20,10 @@ That's exactly what ThinkThread delivers – in just a few lines of code.
 
 ## Why ThinkThread?
 
-Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing advanced reasoning techniques:
+Traditional LLM applications suffer from common problems: hallucinations, shallow reasoning, and inconsistent quality. ThinkThread solves these challenges by implementing a unified reasoning framework with two complementary approaches:
+
+1. **Chain-of-Recursive-Thoughts (CoRT)**: Linear refinement process that iteratively improves answers
+2. **Tree-of-Thoughts (ToT)**: Tree-based search that explores multiple reasoning paths in parallel
 
 | Without ThinkThread | With ThinkThread |
 |---------------------|------------------|
@@ -31,10 +34,14 @@ Traditional LLM applications suffer from common problems: hallucinations, shallo
 | No pruning of weak ideas | Focus on most promising solutions |
 | Inconsistent quality | Reliably improved responses |
 | "Take it or leave it" answers | Progressively refined insights |
+| One-size-fits-all approach | Choose the right reasoning strategy for each task |
 
-The Tree-of-Thoughts approach enables **parallel exploration of multiple reasoning paths**, allowing the model to consider diverse approaches to complex problems simultaneously. By evaluating and pruning less promising branches, ThinkThread focuses computational resources on the most valuable ideas.
+The **unified reasoning framework** gives developers the flexibility to select the optimal approach for each use case:
 
-Developers report **30-70% improvement in response quality** when using ThinkThread in production applications.
+- **Chain-of-Recursive-Thoughts**: Best for content creation, technical writing, summarization, and factual QA
+- **Tree-of-Thoughts**: Best for strategic planning, creative ideation, multi-step reasoning, and research
+
+Developers report **30-70% improvement in response quality** when using ThinkThread in production applications, with the ability to tackle more complex reasoning tasks than ever before.
 
 ## Potential Applications
 
@@ -129,7 +136,7 @@ poetry add thinkthread
 #### CLI Usage
 
 ```bash
-# Basic usage
+# Basic usage with Chain-of-Recursive-Thoughts
 thinkthread run "What are the implications of quantum computing on cryptography?"
 
 # With specific provider and streaming
@@ -137,6 +144,12 @@ thinkthread run "Explain relativity" --provider anthropic --stream
 
 # Advanced configuration
 thinkthread run "Compare democracy and autocracy" --rounds 3 --alternatives 4
+
+# Unified CLI with explicit reasoning approach selection
+thinkthread think "What are the implications of quantum computing on cryptography?" --approach cort
+
+# Using Tree-of-Thoughts reasoning with the unified CLI
+thinkthread think "Design a system for autonomous vehicles" --approach tot --beam-width 5
 ```
 
 #### Python API
@@ -287,10 +300,10 @@ result = await tree_thinker.solve_async(
 
 ### Command Line Interface
 
-The TreeThinker module can be used from the command line:
+The TreeThinker module can be used from the command line in two ways:
 
 ```bash
-# Basic usage
+# Using the dedicated ToT command
 thinkthread tot "What are the benefits of tree-based search for reasoning?"
 
 # With specific provider
@@ -298,6 +311,12 @@ thinkthread tot "Design a system for autonomous vehicles" --provider anthropic
 
 # Advanced configuration
 thinkthread tot "What are the ethical implications of AI?" --beam-width 5 --max-depth 4
+
+# Using the unified CLI interface
+thinkthread think "What are the benefits of tree-based search for reasoning?" --approach tot
+
+# Unified CLI with advanced configuration
+thinkthread think "What are the ethical implications of AI?" --approach tot --beam-width 5 --max-depth 4
 ```
 
 For detailed documentation on Tree-of-Thoughts reasoning, see the [Tree-of-Thoughts Guide](docs/tree_thinker.md).

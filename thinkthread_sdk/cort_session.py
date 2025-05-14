@@ -16,9 +16,15 @@ from thinkthread_sdk.evaluation import (
     Evaluator,
     ModelEvaluator,
 )
+from thinkthread_sdk.base_reasoner import BaseReasoner
+from thinkthread_sdk.reasoning_utils import (
+    generate_alternatives,
+    generate_alternatives_async,
+    calculate_similarity,
+)
 
 
-class ThinkThreadSession:
+class ThinkThreadSession(BaseReasoner):
     """ThinkThread session.
 
     This class orchestrates a multi-round questioning and refinement process
@@ -49,16 +55,9 @@ class ThinkThreadSession:
             config: Optional configuration object
 
         """
-        self.llm_client = llm_client
+        super().__init__(llm_client, template_manager, config)
         self.alternatives = alternatives
         self.rounds = rounds
-
-        # Initialize configuration and template manager
-        self.config = config or create_config()
-        self.template_manager = template_manager or TemplateManager(
-            self.config.prompt_dir
-        )
-
         self.max_rounds = max_rounds if max_rounds is not None else self.rounds
 
         # Initialize evaluation strategy
@@ -97,10 +96,7 @@ class ThinkThreadSession:
             The final best answer after all refinement rounds
 
         """
-        initial_prompt = self.template_manager.render_template(
-            "initial_prompt.j2", {"question": question}
-        )
-        current_answer = self.llm_client.generate(initial_prompt, temperature=0.7)
+        current_answer = self.generate_initial_answer(question, temperature=0.7)
 
         if self.max_rounds <= 0:
             return current_answer
@@ -160,20 +156,14 @@ class ThinkThreadSession:
             List of alternative answers
 
         """
-        alternatives = []
-
-        for i in range(self.alternatives):
-            prompt = self.template_manager.render_template(
-                "alternative_prompt.j2",
-                {"question": question, "current_answer": current_answer},
-            )
-
-            alternative = self.llm_client.generate(prompt, temperature=0.9)
-            alternatives.append(alternative)
-
-        return alternatives
-
-    # They are now implemented in DefaultEvaluationStrategy
+        return generate_alternatives(
+            question,
+            current_answer,
+            self.llm_client,
+            self.template_manager,
+            count=self.alternatives,
+            temperature=0.9,
+        )
 
     async def run_async(self, question: str) -> str:
         """Execute the ThinkThread process asynchronously on a question.
@@ -206,11 +196,8 @@ class ThinkThreadSession:
             the state is maintained within the method's execution context.
 
         """
-        initial_prompt = self.template_manager.render_template(
-            "initial_prompt.j2", {"question": question}
-        )
-        current_answer = await self.llm_client.acomplete(
-            initial_prompt, temperature=0.7
+        current_answer = await self.generate_initial_answer_async(
+            question, temperature=0.7
         )
 
         if self.max_rounds <= 0:
@@ -271,18 +258,19 @@ class ThinkThreadSession:
             List of alternative answers
 
         """
-        alternatives = []
-
-        for i in range(self.alternatives):
-            prompt = self.template_manager.render_template(
-                "alternative_prompt.j2",
-                {"question": question, "current_answer": current_answer},
-            )
-
-            alternative = await self.llm_client.acomplete(prompt, temperature=0.9)
-            alternatives.append(alternative)
-
-        return alternatives
+        parallel = (
+            hasattr(self.config, "parallel_alternatives")
+            and self.config.parallel_alternatives
+        )
+        return await generate_alternatives_async(
+            question,
+            current_answer,
+            self.llm_client,
+            self.template_manager,
+            count=self.alternatives,
+            temperature=0.9,
+            parallel=parallel,
+        )
 
     async def _evaluate_async(self, question: str, answer1: str, answer2: str) -> bool:
         """Asynchronously evaluate whether answer2 is better than answer1.
@@ -358,3 +346,19 @@ class ThinkThreadSession:
             self.llm_client,
             self.template_manager,
         )
+
+    def _calculate_similarity(self, str1: str, str2: str) -> float:
+        """Calculate the similarity between two strings.
+
+        Args:
+            str1: First string
+            str2: Second string
+
+        Returns:
+            A similarity score between 0.0 and 1.0
+        """
+        use_fast = (
+            hasattr(self.config, "use_fast_similarity")
+            and self.config.use_fast_similarity
+        )
+        return calculate_similarity(str1, str2, fast=use_fast)

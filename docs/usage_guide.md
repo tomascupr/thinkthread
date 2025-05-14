@@ -4,9 +4,9 @@ This guide provides detailed instructions on how to use the ThinkThread SDK for 
 
 ## Basic Usage with CLI
 
-The ThinkThread SDK provides a command-line interface for quick access to its functionality.
+The ThinkThread SDK provides a command-line interface for quick access to its functionality, supporting both Chain-of-Recursive-Thoughts (CoRT) and Tree-of-Thoughts (ToT) reasoning approaches.
 
-### Running a Simple Query
+### Running a Simple Query with CoRT
 
 ```bash
 thinkthread run "What is the significance of the Fibonacci sequence in nature?"
@@ -19,22 +19,50 @@ This will:
 4. Repeat for the configured number of rounds
 5. Return the final answer
 
+### Running a Simple Query with ToT
+
+```bash
+thinkthread tot "How would you solve the Tower of Hanoi puzzle with 3 disks?"
+```
+
+This will:
+1. Generate multiple initial thoughts
+2. Expand each thought into multiple branches
+3. Evaluate all branches and prune less promising paths
+4. Continue expanding the most promising branches
+5. Select the highest-scoring solution path
+
+### Using the Unified Interface
+
+The SDK provides a unified `think` command that supports both reasoning approaches:
+
+```bash
+# Using CoRT approach (default)
+thinkthread think "What is the significance of the Fibonacci sequence in nature?"
+
+# Using ToT approach
+thinkthread think "How would you solve the Tower of Hanoi puzzle with 3 disks?" --approach tot
+```
+
 ### Customising Parameters
 
 You can customise the behaviour with various options:
 
 ```bash
 # Use a different LLM provider
-thinkthread run "Explain quantum entanglement" --provider anthropic
+thinkthread think "Explain quantum entanglement" --provider anthropic
 
-# Increase the number of alternatives and rounds
+# CoRT-specific options
 thinkthread run "What are the ethical implications of AI?" --alternatives 5 --rounds 3
 
+# ToT-specific options
+thinkthread tot "Design an algorithm for the traveling salesman problem" --beam-width 4 --max-tree-depth 3
+
 # Enable streaming output
-thinkthread run "Describe the formation of black holes" --stream
+thinkthread think "Describe the formation of black holes" --stream
 
 # Enable verbose logging
-thinkthread run "Explain blockchain technology" --verbose
+thinkthread think "Explain blockchain technology" --verbose
 ```
 
 ### Getting Help
@@ -44,23 +72,25 @@ To see all available commands and options:
 ```bash
 thinkthread --help
 thinkthread run --help
+thinkthread tot --help
+thinkthread think --help
 ```
 
 ## Using the Python API
 
 For more control or to integrate with your applications, use the Python API.
 
-### Basic Example
+### Chain-of-Recursive-Thoughts (CoRT) Example
 
 ```python
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
 # Initialize an LLM client
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
 
-# Create a CoRT session
-session = CoRTSession(llm_client=client, alternatives=3, rounds=2)
+# Create a ThinkThread session (CoRT approach)
+session = ThinkThreadSession(llm_client=client, alternatives=3, rounds=2)
 
 # Run recursive reasoning on a question
 question = "What are the implications of quantum computing on cryptography?"
@@ -70,19 +100,45 @@ print(f"Question: {question}")
 print(f"Answer: {answer}")
 ```
 
+### Tree-of-Thoughts (ToT) Example
+
+```python
+from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread_sdk.llm import OpenAIClient
+
+# Initialize an LLM client
+client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+
+# Create a TreeThinker session
+tree_thinker = TreeThinker(
+    llm_client=client,
+    max_tree_depth=3,
+    branching_factor=3
+)
+
+# Run tree-based reasoning on a problem
+problem = "How would you solve the Tower of Hanoi puzzle with 3 disks?"
+solution = tree_thinker.solve(problem, beam_width=3)
+
+print(f"Problem: {problem}")
+print(f"Solution: {solution}")
+```
+
 ### Using Asynchronous API
 
 For non-blocking operation in async applications:
 
+#### Asynchronous CoRT Example
+
 ```python
 import asyncio
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
-async def main():
+async def cort_async_example():
     # Initialize client and session
     client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
-    session = CoRTSession(llm_client=client, alternatives=3, rounds=2)
+    session = ThinkThreadSession(llm_client=client, alternatives=3, rounds=2)
     
     # Run recursively with async API
     question = "Explain the impact of climate change on biodiversity"
@@ -102,7 +158,34 @@ async def main():
     print()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(cort_async_example())
+```
+
+#### Asynchronous ToT Example
+
+```python
+import asyncio
+from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread_sdk.llm import OpenAIClient
+
+async def tot_async_example():
+    # Initialize client and tree thinker
+    client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+    tree_thinker = TreeThinker(
+        llm_client=client,
+        max_tree_depth=3,
+        branching_factor=3
+    )
+    
+    # Run tree-based reasoning with async API
+    problem = "Design an algorithm for the traveling salesman problem"
+    solution = await tree_thinker.solve_async(problem, beam_width=3)
+    
+    print(f"Problem: {problem}")
+    print(f"Solution: {solution}")
+
+if __name__ == "__main__":
+    asyncio.run(tot_async_example())
 ```
 
 ### Using Different LLM Providers
@@ -132,9 +215,9 @@ hf_client = HuggingFaceClient(
 )
 ```
 
-## Example: Solving a Problem with and without CoRT
+## Comparing Reasoning Approaches
 
-### Without CoRT (Direct LLM Response)
+### Direct LLM Response (No Reasoning)
 
 ```python
 from thinkthread_sdk.llm import OpenAIClient
@@ -148,14 +231,14 @@ direct_answer = client.generate(
 print(f"Direct Answer: {direct_answer}")
 ```
 
-### With CoRT (Recursive Refinement)
+### Chain-of-Recursive-Thoughts (CoRT)
 
 ```python
-from thinkthread_sdk.cort_session import CoRTSession
+from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.llm import OpenAIClient
 
 client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
-session = CoRTSession(llm_client=client, alternatives=3, rounds=2)
+session = ThinkThreadSession(llm_client=client, alternatives=3, rounds=2)
 
 question = "What is the best strategy for addressing climate change?"
 cort_answer = session.run(question)
@@ -163,11 +246,45 @@ cort_answer = session.run(question)
 print(f"CoRT Answer: {cort_answer}")
 ```
 
-The CoRT answer will typically:
-- Be more comprehensive
+### Tree-of-Thoughts (ToT)
+
+```python
+from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread_sdk.llm import OpenAIClient
+
+client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+tree_thinker = TreeThinker(llm_client=client, max_tree_depth=3, branching_factor=3)
+
+question = "What is the best strategy for addressing climate change?"
+tot_answer = tree_thinker.solve(question, beam_width=3)
+
+print(f"ToT Answer: {tot_answer}")
+```
+
+## Benefits of Advanced Reasoning
+
+### Benefits of CoRT
+
+The CoRT approach typically produces answers that:
+- Are more comprehensive
 - Consider multiple perspectives
 - Address counterarguments
 - Provide more nuanced analysis
 - Have fewer factual errors
 
 This improvement comes from the recursive process of generating alternatives, evaluating them, and selecting the best answer over multiple iterations.
+
+### Benefits of ToT
+
+The ToT approach is particularly effective for:
+- Complex problem-solving tasks
+- Strategic planning
+- Creative ideation
+- Multi-step reasoning
+- Research questions
+
+This effectiveness comes from exploring multiple reasoning paths simultaneously and selecting the most promising solution path.
+
+## Choosing the Right Approach
+
+For detailed guidance on when to use each approach, see the [Comparison Guide](comparison.md).

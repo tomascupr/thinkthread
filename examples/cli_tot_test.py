@@ -15,7 +15,6 @@ repo_root = Path(__file__).parent.parent.absolute()
 sys.path.insert(0, str(repo_root))
 
 
-
 def run_cli_command(command):
     """Run a CLI command and print the output."""
     print(f"\n=== Running command: {command} ===\n")

@@ -6,7 +6,6 @@ questioning and refinement process using LLMs.
 
 from typing import List, Optional
 import asyncio
-import difflib
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.prompting import TemplateManager
@@ -18,9 +17,11 @@ from thinkthread_sdk.evaluation import (
     ModelEvaluator,
 )
 from thinkthread_sdk.monitoring import GLOBAL_MONITOR, timed
+from thinkthread_sdk.base_reasoner import BaseReasoner
+from thinkthread_sdk.reasoning_utils import calculate_similarity
 
 
-class ThinkThreadSession:
+class ThinkThreadSession(BaseReasoner):
     """ThinkThread session.
 
     This class orchestrates a multi-round questioning and refinement process
@@ -51,23 +52,14 @@ class ThinkThreadSession:
             config: Optional configuration object
 
         """
-        self.llm_client = llm_client
+        super().__init__(llm_client, template_manager, config)
         self.alternatives = alternatives
         self.rounds = rounds
-
-        self.config = config or create_config()
-        self.template_manager = template_manager or TemplateManager(
-            self.config.prompt_dir
-        )
-
         self.max_rounds = max_rounds if max_rounds is not None else self.rounds
-
         self.evaluation_strategy = evaluation_strategy or DefaultEvaluationStrategy()
-
         self.evaluator = evaluator or ModelEvaluator()
         self.use_pairwise_evaluation = self.config.use_pairwise_evaluation
         self.use_self_evaluation = self.config.use_self_evaluation
-
         self._round_similarities = []
 
     @timed("run")
@@ -201,8 +193,6 @@ class ThinkThreadSession:
             List of alternative answers
 
         """
-        alternatives = []
-
         generation_temperature = 0.9
         if (
             hasattr(self.config, "use_adaptive_temperature")
@@ -226,6 +216,7 @@ class ThinkThreadSession:
                         base_temp, generation_temperature * 1.1
                     )  # Increase by 10%
 
+        alternatives = []
         for i in range(self.alternatives):
             GLOBAL_MONITOR.start(f"alternative_generation_{i}")
             prompt = self.template_manager.render_template(
@@ -343,11 +334,10 @@ class ThinkThreadSession:
                         is_better = await self._run_with_semaphore(
                             self._evaluate_async, question, best_answer, alt
                         )
-                        return (alt, is_better)
+                        return alt, is_better
 
-                    results = await asyncio.gather(
-                        *[evaluate_alternative(alt) for alt in alternatives]
-                    )
+                    tasks = [evaluate_alternative(alt) for alt in alternatives]
+                    results = await asyncio.gather(*tasks)
 
                     for alt, is_better in results:
                         if is_better:
@@ -584,50 +574,8 @@ class ThinkThreadSession:
         Returns:
             A similarity score between 0.0 and 1.0
         """
-        if (
+        use_fast = (
             hasattr(self.config, "use_fast_similarity")
             and self.config.use_fast_similarity
-        ):
-            return self._calculate_fast_similarity(str1, str2)
-
-        return difflib.SequenceMatcher(None, str1, str2).ratio()
-
-    def _calculate_fast_similarity(self, str1: str, str2: str) -> float:
-        """Calculate similarity using a faster algorithm optimized for large texts.
-
-        This method implements a faster similarity algorithm based on word overlap
-        and character n-grams, which is more efficient for long strings than
-        difflib.SequenceMatcher. The algorithm uses a combination of:
-
-        1. Jaccard similarity of word sets (primary measure)
-        2. Length ratio penalty to account for significant size differences
-
-        Args:
-            str1: First string
-            str2: Second string
-
-        Returns:
-            A similarity score between 0.0 and 1.0
-        """
-        if not str1 and not str2:
-            return 1.0
-        if not str1 or not str2:
-            return 0.0
-
-        words1 = set(str1.lower().split())
-        words2 = set(str2.lower().split())
-
-        if not words1 or not words2:
-            return 0.0
-
-        intersection = len(words1.intersection(words2))
-        union = len(words1.union(words2))
-
-        jaccard = intersection / union
-
-        len1, len2 = len(str1), len(str2)
-        length_ratio = min(len1, len2) / max(len1, len2) if max(len1, len2) > 0 else 0
-
-        similarity = (0.8 * jaccard) + (0.2 * length_ratio)
-
-        return similarity
+        )
+        return calculate_similarity(str1, str2, fast=use_fast)

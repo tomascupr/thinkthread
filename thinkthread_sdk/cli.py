@@ -19,9 +19,11 @@ from thinkthread_sdk.llm import (
     LLMClient,
 )
 from thinkthread_sdk.cli_tot import tot
+from thinkthread_sdk.unified_cli import think
 
 app = typer.Typer()
 app.command()(tot)
+app.command()(think)
 
 
 @app.callback()
