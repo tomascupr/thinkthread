@@ -107,7 +107,7 @@ This mirrors how experts approach complex problems – starting with initial ide
 
 ## Installation
 
-### Using pip (once published)
+### Using pip
 
 ```bash
 pip install thinkthread
