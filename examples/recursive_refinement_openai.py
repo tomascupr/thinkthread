@@ -21,7 +21,7 @@ def run_with_fallback(question, timeout=150):
     """Run recursive refinement with tiered fallbacks.
 
     This function demonstrates a pattern for recursive refinement with fallbacks:
-    1. Start with GPT-4 for high-quality results
+    1. Start with GPT-4o for high-quality results
     2. Fall back to GPT-3.5-Turbo if approaching the time limit
     3. Fall back to DummyLLMClient as a last resort
 
@@ -42,7 +42,7 @@ def run_with_fallback(question, timeout=150):
     try:
         api_key = os.environ.get("OPENAI_API_KEY", "")
 
-        client_gpt4 = OpenAIClient(api_key=api_key, model_name="gpt-4")
+        client_gpt4 = OpenAIClient(api_key=api_key, model_name="gpt-4o")
 
         session = ThinkThreadSession(
             llm_client=client_gpt4, alternatives=3, rounds=2, config=config
