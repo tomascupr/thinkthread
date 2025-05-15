@@ -23,8 +23,8 @@ async def solve_creative_problem(problem, timeout=150):
     """Solve a creative problem using Tree-of-Thoughts with tiered fallbacks.
 
     This function demonstrates a pattern for creative ideation with fallbacks:
-    1. Start with Claude-2 for high-quality results
-    2. Fall back to Claude-instant-1 if approaching the time limit
+    1. Start with Claude-3-Haiku for high-quality results
+    2. Fall back to Claude-3-Sonnet if approaching the time limit
     3. Fall back to DummyLLMClient as a last resort
 
     Args:
@@ -45,7 +45,7 @@ async def solve_creative_problem(problem, timeout=150):
     try:
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
 
-        client = AnthropicClient(api_key=api_key, model="claude-2")
+        client = AnthropicClient(api_key=api_key, model="claude-3-haiku-20240307")
 
         tree_thinker = TreeThinker(
             llm_client=client,
@@ -56,9 +56,9 @@ async def solve_creative_problem(problem, timeout=150):
         )
 
         if time.time() - start_time > timeout / 3:
-            print("Approaching time limit, switching to Claude-instant-1")
+            print("Approaching time limit, switching to Claude-3-Sonnet")
             client = AnthropicClient(
-                api_key=api_key, model="claude-instant-1"  # Faster model
+                api_key=api_key, model="claude-3-sonnet-20240229"  # Faster model
             )
             tree_thinker = TreeThinker(
                 llm_client=client,
