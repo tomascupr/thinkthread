@@ -107,6 +107,21 @@ This mirrors how experts approach complex problems – starting with initial ide
 
 ## Installation
 
+### 90-Second Installation Guide
+
+```bash
+# Install package
+pip install thinkthread
+
+# Set environment variables
+export OPENAI_API_KEY=your-api-key
+
+# Basic usage
+thinkthread run "Your question here"
+```
+
+For more detailed installation options, see the [Getting Started](#getting-started) section.
+
 ### Using pip
 
 ```bash
@@ -210,6 +225,17 @@ config = create_config(
 | **Customizable Prompts** | Jinja2 templates for all prompting needs |
 | **Performance Optimizations** | Parallel processing, caching, and early termination |
 | **Extensible Architecture** | Easy to add new providers or evaluation strategies |
+
+## Feature Parity Matrix
+
+| Feature | OpenAI | Anthropic | HuggingFace |
+|---------|--------|-----------|-------------|
+| Streaming | ✅ | ✅ | ✅ (simulated) |
+| Async API | ✅ | ✅ | ✅ |
+| Batch Processing | ✅ | ❌ | ❌ |
+| Embeddings | ✅ | ❌ | ❌ |
+| Error Handling | ✅ | ✅ | ✅ |
+| Caching | ✅ | ✅ | ✅ |
 
 ## Performance Optimizations
 

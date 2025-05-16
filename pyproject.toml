@@ -29,6 +29,11 @@ rich = "^14.0.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 pytest-asyncio = {version = "^0.21.0", python = ">=3.9"}
+pytest-cov = "^6.1.1"
+mkdocs = "^1.4.3"
+mkdocs-material = "^9.1.18"
+mkdocstrings = "^0.22.0"
+mkdocstrings-python = "1.1.2"
 aiohttp = "^3.11.18"
 ruff = "^0.11.9"
 black = "^25.1.0"
