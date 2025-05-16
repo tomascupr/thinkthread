@@ -22,9 +22,21 @@ markdown_extensions:
   - pymdownx.critic
   - admonition
 
+plugins:
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            members_order: source
+
 nav:
   - Home: index.md
   - Usage Guide: usage_guide.md
   - Developer Guide: developer_guide.md
   - Configuration Reference: configuration_reference.md
   - CLI Reference: cli_reference.md
+  - API Reference:
+    - Configuration: api/config.md
