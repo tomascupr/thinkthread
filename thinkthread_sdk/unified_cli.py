@@ -17,6 +17,7 @@ from thinkthread_sdk.config import create_config
 from thinkthread_sdk.session import ThinkThreadSession
 from thinkthread_sdk.tree_thinker import TreeThinker
 from thinkthread_sdk.base_reasoner import BaseReasoner
+from thinkthread_sdk.utils import ThinkThreadUtils
 from thinkthread_sdk.llm import (
     OpenAIClient,
     DummyLLMClient,
@@ -364,6 +365,212 @@ def visualize_tree(tree_thinker: TreeThinker) -> None:
     print(f"Total nodes: {total_nodes}")
     print(f"Leaf nodes: {leaf_nodes}")
     print(f"Internal nodes: {total_nodes - leaf_nodes}")
+
+
+@app.command()
+def refine(
+    question: str = typer.Argument(..., help="The question to answer"),
+    initial_answer: str = typer.Argument(..., help="The initial answer to refine"),
+    provider: str = typer.Option(
+        "openai", help="LLM provider to use (openai, anthropic, hf, dummy)"
+    ),
+    model: Optional[str] = typer.Option(
+        None, help="Model name to use (provider-specific)"
+    ),
+    rounds: int = typer.Option(2, help="Number of refinement rounds"),
+    alternatives: int = typer.Option(3, help="Number of alternative answers per round"),
+    stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
+    verbose: bool = typer.Option(False, help="Enable debug logging"),
+) -> None:
+    """Refine an answer through multiple rounds of critique and revision.
+
+    This command implements a generate → critique → revise loop that iteratively
+    improves an initial answer through self-refinement. It leverages the
+    Chain-of-Recursive-Thoughts (CoRT) technique.
+
+    Examples:
+        $ thinkthread refine "What is quantum computing?" "Quantum computing uses qubits."
+
+        $ thinkthread refine "Explain climate change" "Climate change refers to significant changes in global temperature, precipitation, wind patterns, and other measures of climate that occur over several decades or longer." --rounds 3
+
+        $ thinkthread refine "Compare democracy and autocracy" "Democracy is rule by the people while autocracy is rule by one person." --provider anthropic
+    """
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
+        logging.debug("Verbose logging enabled")
+        logging.debug(f"Question: {question}")
+        logging.debug(f"Initial answer: {initial_answer}")
+        logging.debug(f"Provider: {provider}")
+
+    config = create_config()
+
+    try:
+        client = create_llm_client(provider, model, config)
+    except ValueError as e:
+        print(str(e))
+        return
+
+    utils = ThinkThreadUtils(llm_client=client, config=config)
+
+    asyncio.run(
+        run_refine(
+            utils, question, initial_answer, rounds, alternatives, stream, verbose
+        )
+    )
+
+
+@app.command()
+def brainstorm(
+    question: str = typer.Argument(..., help="The question to answer"),
+    provider: str = typer.Option(
+        "openai", help="LLM provider to use (openai, anthropic, hf, dummy)"
+    ),
+    model: Optional[str] = typer.Option(
+        None, help="Model name to use (provider-specific)"
+    ),
+    candidates: int = typer.Option(5, help="Number of candidate answers to generate"),
+    max_depth: int = typer.Option(1, help="Maximum depth of the thinking tree"),
+    stream: bool = typer.Option(True, help="Stream the final answer as it's generated"),
+    verbose: bool = typer.Option(False, help="Enable debug logging"),
+) -> None:
+    """Generate multiple answers and select the best one.
+
+    This command implements a shallow Tree-of-Thoughts approach that generates
+    multiple answers in parallel and evaluates them to select the best one.
+
+    Examples:
+        $ thinkthread brainstorm "Ideas for reducing plastic waste"
+
+        $ thinkthread brainstorm "Creative uses for old smartphones" --candidates 10
+
+        $ thinkthread brainstorm "Solutions to urban traffic congestion" --provider anthropic
+    """
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
+        logging.debug("Verbose logging enabled")
+        logging.debug(f"Question: {question}")
+        logging.debug(f"Provider: {provider}")
+        logging.debug(f"Candidates: {candidates}")
+
+    config = create_config()
+
+    try:
+        client = create_llm_client(provider, model, config)
+    except ValueError as e:
+        print(str(e))
+        return
+
+    utils = ThinkThreadUtils(llm_client=client, config=config)
+
+    asyncio.run(run_brainstorm(utils, question, candidates, max_depth, stream, verbose))
+
+
+async def run_refine(
+    utils: ThinkThreadUtils,
+    question: str,
+    initial_answer: str,
+    rounds: int,
+    alternatives: int,
+    stream: bool,
+    verbose: bool = False,
+) -> None:
+    """Run the refinement process asynchronously with optional streaming.
+
+    Args:
+        utils: ThinkThreadUtils instance
+        question: The question to answer
+        initial_answer: The initial answer to refine
+        rounds: Number of refinement rounds
+        alternatives: Number of alternatives per round
+        stream: Whether to stream the final answer
+        verbose: Enable verbose logging
+    """
+    if verbose:
+        logging.debug("Starting run_refine")
+
+    if stream:
+        print(f"Question: {question}")
+        print(f"Initial answer: {initial_answer}")
+        print("Refining...", end="", flush=True)
+
+        refined_answer = await utils.self_refine_async(
+            question, initial_answer, rounds=rounds, alternatives=alternatives
+        )
+
+        print("\r" + " " * 20 + "\r", end="", flush=True)
+        print("Refined answer:")
+
+        prompt = utils.template_manager.render_template(
+            "final_answer.j2", {"question": question, "answer": refined_answer}
+        )
+
+        async for token in utils.llm_client.astream(prompt):
+            print(token, end="", flush=True)
+        print()
+    else:
+        print(f"Question: {question}")
+        print(f"Initial answer: {initial_answer}")
+        print("Refining...", flush=True)
+
+        refined_answer = await utils.self_refine_async(
+            question, initial_answer, rounds=rounds, alternatives=alternatives
+        )
+
+        print("Refined answer:")
+        print(refined_answer)
+
+
+async def run_brainstorm(
+    utils: ThinkThreadUtils,
+    question: str,
+    candidates: int,
+    max_depth: int,
+    stream: bool,
+    verbose: bool = False,
+) -> None:
+    """Run the brainstorming process asynchronously with optional streaming.
+
+    Args:
+        utils: ThinkThreadUtils instance
+        question: The question to answer
+        candidates: Number of candidate answers to generate
+        max_depth: Maximum depth of the thinking tree
+        stream: Whether to stream the final answer
+        verbose: Enable verbose logging
+    """
+    if verbose:
+        logging.debug("Starting run_brainstorm")
+
+    print(f"Question: {question}")
+    print(f"Generating {candidates} answers...", flush=True)
+
+    best_answer = await utils.n_best_brainstorm_async(
+        question, n=candidates, max_depth=max_depth, return_metadata=True
+    )
+
+    if isinstance(best_answer, dict):
+        print(f"\nBest answer (score: {best_answer['best_score']:.2f}):")
+
+        if stream:
+            prompt = utils.template_manager.render_template(
+                "final_answer.j2",
+                {"question": question, "answer": best_answer["best_answer"]},
+            )
+
+            async for token in utils.llm_client.astream(prompt):
+                print(token, end="", flush=True)
+            print()
+        else:
+            print(best_answer["best_answer"])
+    else:
+        print("\nBest answer:")
+        print(best_answer)
 
 
 if __name__ == "__main__":

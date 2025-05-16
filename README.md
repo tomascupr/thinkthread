@@ -168,6 +168,46 @@ answer = session.run(question)
 print(f"Answer: {answer}")
 ```
 
+### Higher-level Abstractions
+
+For common reasoning patterns, ThinkThread SDK provides simplified one-liner methods:
+
+```python
+from thinkthread_sdk.utils import ThinkThreadUtils
+from thinkthread_sdk.llm import OpenAIClient
+
+# Setup
+client = OpenAIClient(api_key="your-api-key", model_name="gpt-4")
+utils = ThinkThreadUtils(llm_client=client)
+
+# Self-refinement: Refine an existing answer
+question = "What are the challenges in sustainable energy adoption?"
+initial_answer = "Cost and infrastructure are challenges."
+refined_answer = utils.self_refine(question, initial_answer, rounds=2)
+print(f"Refined answer: {refined_answer}")
+
+# N-best brainstorming: Generate multiple answers and select the best
+question = "What are creative solutions to reduce plastic waste?"
+best_answer = utils.n_best_brainstorm(question, n=5)
+print(f"Best answer: {best_answer}")
+
+# Async APIs are also available
+import asyncio
+
+refined_answer = await utils.self_refine_async(question, initial_answer, rounds=2)
+best_answer = await utils.n_best_brainstorm_async(question, n=5)
+```
+
+These utilities can also be accessed through the CLI:
+
+```bash
+# Self-refinement
+thinkthread refine "What are the challenges in sustainable energy adoption?" "Cost and infrastructure are challenges."
+
+# N-best brainstorming
+thinkthread brainstorm "What are creative solutions to reduce plastic waste?" --candidates 5
+```
+
 ## Configuration
 
 Configure the SDK using environment variables, a `.env` file, or programmatically:
