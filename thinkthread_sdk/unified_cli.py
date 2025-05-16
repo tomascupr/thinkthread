@@ -33,7 +33,7 @@ console = Console()
 
 def setup_logging(verbose: bool, **log_data: Any) -> None:
     """Set up logging with consistent format.
-    
+
     Args:
         verbose: Whether to enable verbose logging
         **log_data: Additional data to log as key-value pairs
@@ -157,12 +157,7 @@ def think(
 
         $ thinkthread think "Design a system for autonomous vehicles" --approach tot --beam-width 5
     """
-    setup_logging(
-        verbose,
-        question=question,
-        approach=approach,
-        provider=provider
-    )
+    setup_logging(verbose, question=question, approach=approach, provider=provider)
 
     config = create_config()
 
@@ -410,10 +405,7 @@ def refine(
         $ thinkthread refine "Compare democracy and autocracy" "Democracy is rule by the people while autocracy is rule by one person." --provider anthropic
     """
     setup_logging(
-        verbose,
-        question=question,
-        initial_answer=initial_answer,
-        provider=provider
+        verbose, question=question, initial_answer=initial_answer, provider=provider
     )
 
     config = create_config()
@@ -459,12 +451,7 @@ def brainstorm(
 
         $ thinkthread brainstorm "Solutions to urban traffic congestion" --provider anthropic
     """
-    setup_logging(
-        verbose,
-        question=question,
-        provider=provider,
-        candidates=candidates
-    )
+    setup_logging(verbose, question=question, provider=provider, candidates=candidates)
 
     config = create_config()
 

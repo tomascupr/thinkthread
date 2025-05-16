@@ -35,15 +35,19 @@ class TestThinkThreadUtils:
         """Test self_refine method."""
         question = "What is the meaning of life?"
         initial_answer = "42"
-        
+
         mock_session = MagicMock()
         mock_session._generate_alternatives.return_value = ["43", "44"]
         mock_session.evaluation_strategy = MagicMock(spec=DefaultEvaluationStrategy)
-        mock_session.evaluation_strategy.evaluate.return_value = 0  # Index of the best answer
-        
-        with patch("thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session):
+        mock_session.evaluation_strategy.evaluate.return_value = (
+            0  # Index of the best answer
+        )
+
+        with patch(
+            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+        ):
             result = utils.self_refine(question, initial_answer, rounds=1)
-            
+
             assert result == initial_answer
             mock_session._generate_alternatives.assert_called_once()
             mock_session.evaluation_strategy.evaluate.assert_called_once()
@@ -52,15 +56,21 @@ class TestThinkThreadUtils:
         """Test self_refine method with metadata."""
         question = "What is the meaning of life?"
         initial_answer = "42"
-        
+
         mock_session = MagicMock()
         mock_session._generate_alternatives.return_value = ["43", "44"]
         mock_session.evaluation_strategy = MagicMock(spec=DefaultEvaluationStrategy)
-        mock_session.evaluation_strategy.evaluate.return_value = 0  # Index of the best answer
-        
-        with patch("thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session):
-            result = utils.self_refine(question, initial_answer, rounds=1, return_metadata=True)
-            
+        mock_session.evaluation_strategy.evaluate.return_value = (
+            0  # Index of the best answer
+        )
+
+        with patch(
+            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+        ):
+            result = utils.self_refine(
+                question, initial_answer, rounds=1, return_metadata=True
+            )
+
             assert isinstance(result, dict)
             assert result["question"] == question
             assert result["initial_answer"] == initial_answer
@@ -75,14 +85,18 @@ class TestThinkThreadUtils:
         """Test self_refine_async method."""
         question = "What is the meaning of life?"
         initial_answer = "42"
-        
+
         mock_session = MagicMock()
         mock_session._generate_alternatives_async = AsyncMock(return_value=["43", "44"])
-        mock_session._evaluate_all_async = AsyncMock(return_value=0)  # Index of the best answer
-        
-        with patch("thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session):
+        mock_session._evaluate_all_async = AsyncMock(
+            return_value=0
+        )  # Index of the best answer
+
+        with patch(
+            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+        ):
             result = await utils.self_refine_async(question, initial_answer, rounds=1)
-            
+
             assert result == initial_answer
             mock_session._generate_alternatives_async.assert_called_once()
             mock_session._evaluate_all_async.assert_called_once()
@@ -90,25 +104,22 @@ class TestThinkThreadUtils:
     def test_n_best_brainstorm(self, utils):
         """Test n_best_brainstorm method."""
         question = "What is the meaning of life?"
-        
+
         node1 = MagicMock()
         node1.score = 0.8
         node1.state = {"current_answer": "42"}
-        
+
         node2 = MagicMock()
         node2.score = 0.9
         node2.state = {"current_answer": "The meaning of life is to be happy"}
-        
+
         mock_tree_thinker = MagicMock()
-        mock_tree_thinker.threads = {
-            "node1": node1,
-            "node2": node2
-        }
+        mock_tree_thinker.threads = {"node1": node1, "node2": node2}
         mock_tree_thinker.solve.return_value = None
-        
+
         with patch("thinkthread_sdk.utils.TreeThinker", return_value=mock_tree_thinker):
             result = utils.n_best_brainstorm(question, n=2)
-            
+
             assert result == "The meaning of life is to be happy"
             mock_tree_thinker.solve.assert_called_once()
 
@@ -116,24 +127,21 @@ class TestThinkThreadUtils:
     async def test_n_best_brainstorm_async(self, utils):
         """Test n_best_brainstorm_async method."""
         question = "What is the meaning of life?"
-        
+
         node1 = MagicMock()
         node1.score = 0.8
         node1.state = {"current_answer": "42"}
-        
+
         node2 = MagicMock()
         node2.score = 0.9
         node2.state = {"current_answer": "The meaning of life is to be happy"}
-        
+
         mock_tree_thinker = MagicMock()
-        mock_tree_thinker.threads = {
-            "node1": node1,
-            "node2": node2
-        }
+        mock_tree_thinker.threads = {"node1": node1, "node2": node2}
         mock_tree_thinker.solve_async = AsyncMock(return_value=None)
-        
+
         with patch("thinkthread_sdk.utils.TreeThinker", return_value=mock_tree_thinker):
             result = await utils.n_best_brainstorm_async(question, n=2)
-            
+
             assert result == "The meaning of life is to be happy"
             mock_tree_thinker.solve_async.assert_called_once()

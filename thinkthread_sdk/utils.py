@@ -149,27 +149,27 @@ class ThinkThreadUtils:
         self, tree_thinker: TreeThinker
     ) -> Tuple[str, Optional[str], float]:
         """Find the best answer from a tree thinker's threads.
-        
+
         Args:
             tree_thinker: TreeThinker instance with populated threads
-            
+
         Returns:
             Tuple containing (best_answer, best_node_id, best_score)
         """
         best_node_id = None
         best_score = -1.0
-        
+
         for node_id, node in tree_thinker.threads.items():
             if node.score > best_score:
                 best_score = node.score
                 best_node_id = node_id
-                
+
         if not best_node_id:
             return "No answer found", None, -1.0
-            
+
         best_node = tree_thinker.threads[best_node_id]
         best_answer = best_node.state.get("current_answer", "No answer found")
-        
+
         return best_answer, best_node_id, best_score
 
     def n_best_brainstorm(
@@ -203,7 +203,7 @@ class ThinkThreadUtils:
         )
 
         result = tree_thinker.solve(question, beam_width=n, max_iterations=max_depth)
-        
+
         best_answer, best_node_id, best_score = self._find_best_answer(tree_thinker)
 
         if return_metadata and best_node_id:
@@ -249,7 +249,7 @@ class ThinkThreadUtils:
         result = await tree_thinker.solve_async(
             question, beam_width=n, max_iterations=max_depth
         )
-        
+
         best_answer, best_node_id, best_score = self._find_best_answer(tree_thinker)
 
         if return_metadata and best_node_id:
