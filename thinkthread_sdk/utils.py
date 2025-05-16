@@ -5,7 +5,7 @@ making it easier to use the powerful reasoning capabilities of ThinkThread SDK
 with minimal code.
 """
 
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any, Union, Tuple
 
 from thinkthread_sdk.llm import LLMClient
 from thinkthread_sdk.session import ThinkThreadSession
@@ -66,10 +66,6 @@ class ThinkThreadUtils:
             rounds=rounds,
             template_manager=self.template_manager,
             config=self.config,
-        )
-
-        initial_prompt = self.template_manager.render_template(
-            "initial_prompt.j2", {"question": question}
         )
 
         current_answer = initial_answer
@@ -149,6 +145,33 @@ class ThinkThreadUtils:
 
         return current_answer
 
+    def _find_best_answer(
+        self, tree_thinker: TreeThinker
+    ) -> Tuple[str, Optional[str], float]:
+        """Find the best answer from a tree thinker's threads.
+        
+        Args:
+            tree_thinker: TreeThinker instance with populated threads
+            
+        Returns:
+            Tuple containing (best_answer, best_node_id, best_score)
+        """
+        best_node_id = None
+        best_score = -1.0
+        
+        for node_id, node in tree_thinker.threads.items():
+            if node.score > best_score:
+                best_score = node.score
+                best_node_id = node_id
+                
+        if not best_node_id:
+            return "No answer found", None, -1.0
+            
+        best_node = tree_thinker.threads[best_node_id]
+        best_answer = best_node.state.get("current_answer", "No answer found")
+        
+        return best_answer, best_node_id, best_score
+
     def n_best_brainstorm(
         self,
         question: str,
@@ -180,33 +203,21 @@ class ThinkThreadUtils:
         )
 
         result = tree_thinker.solve(question, beam_width=n, max_iterations=max_depth)
+        
+        best_answer, best_node_id, best_score = self._find_best_answer(tree_thinker)
 
-        best_node_id = None
-        best_score = -1.0
+        if return_metadata and best_node_id:
+            return {
+                "question": question,
+                "best_answer": best_answer,
+                "best_score": best_score,
+                "best_node_id": best_node_id,
+                "n": n,
+                "max_depth": max_depth,
+                "all_node_ids": list(tree_thinker.threads.keys()),
+            }
 
-        for node_id, node in tree_thinker.threads.items():
-            if node.score > best_score:
-                best_score = node.score
-                best_node_id = node_id
-
-        if best_node_id:
-            best_node = tree_thinker.threads[best_node_id]
-            best_answer = best_node.state.get("current_answer", "No answer found")
-
-            if return_metadata:
-                return {
-                    "question": question,
-                    "best_answer": best_answer,
-                    "best_score": best_score,
-                    "best_node_id": best_node_id,
-                    "n": n,
-                    "max_depth": max_depth,
-                    "all_node_ids": list(tree_thinker.threads.keys()),
-                }
-
-            return best_answer
-
-        return "No answer found"
+        return best_answer
 
     async def n_best_brainstorm_async(
         self,
@@ -238,30 +249,18 @@ class ThinkThreadUtils:
         result = await tree_thinker.solve_async(
             question, beam_width=n, max_iterations=max_depth
         )
+        
+        best_answer, best_node_id, best_score = self._find_best_answer(tree_thinker)
 
-        best_node_id = None
-        best_score = -1.0
+        if return_metadata and best_node_id:
+            return {
+                "question": question,
+                "best_answer": best_answer,
+                "best_score": best_score,
+                "best_node_id": best_node_id,
+                "n": n,
+                "max_depth": max_depth,
+                "all_node_ids": list(tree_thinker.threads.keys()),
+            }
 
-        for node_id, node in tree_thinker.threads.items():
-            if node.score > best_score:
-                best_score = node.score
-                best_node_id = node_id
-
-        if best_node_id:
-            best_node = tree_thinker.threads[best_node_id]
-            best_answer = best_node.state.get("current_answer", "No answer found")
-
-            if return_metadata:
-                return {
-                    "question": question,
-                    "best_answer": best_answer,
-                    "best_score": best_score,
-                    "best_node_id": best_node_id,
-                    "n": n,
-                    "max_depth": max_depth,
-                    "all_node_ids": list(tree_thinker.threads.keys()),
-                }
-
-            return best_answer
-
-        return "No answer found"
+        return best_answer

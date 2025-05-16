@@ -172,6 +172,9 @@ print(f"Answer: {answer}")
 
 For common reasoning patterns, ThinkThread SDK provides simplified one-liner methods:
 
+- **Self-refinement**: Ideal for improving an existing answer through iterative critique and revision. Perfect for content editing, fact-checking, and enhancing the quality of drafted responses.
+- **N-best brainstorming**: Excellent for generating multiple diverse solutions and selecting the best one. Great for creative tasks, problem-solving, and exploring different approaches to a question.
+
 ```python
 from thinkthread_sdk.utils import ThinkThreadUtils
 from thinkthread_sdk.llm import OpenAIClient
@@ -186,10 +189,20 @@ initial_answer = "Cost and infrastructure are challenges."
 refined_answer = utils.self_refine(question, initial_answer, rounds=2)
 print(f"Refined answer: {refined_answer}")
 
+# Get detailed metadata about the reasoning process
+result = utils.self_refine(question, initial_answer, return_metadata=True)
+print(f"Final answer: {result['final_answer']}")
+print(f"Improvement after {result['rounds']} rounds with {result['alternatives_per_round']} alternatives per round")
+
 # N-best brainstorming: Generate multiple answers and select the best
 question = "What are creative solutions to reduce plastic waste?"
 best_answer = utils.n_best_brainstorm(question, n=5)
 print(f"Best answer: {best_answer}")
+
+# Get metadata about the brainstorming process
+result = utils.n_best_brainstorm(question, n=5, return_metadata=True)
+print(f"Best answer (score: {result['best_score']:.2f}): {result['best_answer']}")
+print(f"Generated {len(result['all_node_ids'])} candidate solutions")
 
 # Async APIs are also available
 import asyncio
