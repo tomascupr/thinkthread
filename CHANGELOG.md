@@ -2,6 +2,19 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Added high-level API abstractions through new `ThinkThreadUtils` class with simplified one-liner methods:
+  - `self_refine`: Refine an answer through multiple rounds of critique and revision
+  - `self_refine_async`: Async version of self_refine
+  - `n_best_brainstorm`: Generate multiple answers and select the best one
+  - `n_best_brainstorm_async`: Async version of n_best_brainstorm
+- Added CLI commands to expose the new functionality:
+  - `thinkthread refine`: Refine an initial answer
+  - `thinkthread brainstorm`: Generate multiple answers and select the best
+- Updated README with examples of the new utilities, including metadata return options
+
 ## [0.7.0] - 2025-05-13
 
 ### Added
