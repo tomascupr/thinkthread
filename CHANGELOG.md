@@ -2,7 +2,12 @@
 
 All notable changes to the ThinkThread SDK will be documented in this file.
 
-## [Unreleased]
+## [0.7.1] - 2025-05-31
+
+### Fixed
+- Fixed CLI structure to properly register `tot` and `think` commands
+- Resolved "No such command" errors for unified CLI commands
+- Fixed command registration conflicts between imported modules
 
 ### Added
 - Added high-level API abstractions through new `ThinkThreadUtils` class with simplified one-liner methods:
