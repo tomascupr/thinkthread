@@ -19,11 +19,15 @@ from thinkthread_sdk.llm import (
     LLMClient,
 )
 from thinkthread_sdk.cli_tot import tot
-from thinkthread_sdk.unified_cli import think
+from thinkthread_sdk.unified_cli import think, refine, brainstorm
 
 app = typer.Typer()
-app.command()(tot)
-app.command()(think)
+
+# Register imported commands
+app.command(name="tot", help="Run Tree-of-Thoughts reasoning")(tot)
+app.command(name="think", help="Think about a question using recursive or tree-based reasoning")(think)
+app.command(name="refine", help="Refine an existing answer using self-refinement")(refine)
+app.command(name="brainstorm", help="Generate multiple answers and select the best one")(brainstorm)
 
 
 @app.callback()

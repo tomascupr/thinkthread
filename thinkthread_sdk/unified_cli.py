@@ -27,7 +27,6 @@ from thinkthread_sdk.llm import (
 )
 from thinkthread_sdk.evaluation import ModelEvaluator
 
-app = typer.Typer()
 console = Console()
 
 
@@ -48,15 +47,7 @@ def setup_logging(verbose: bool, **log_data: Any) -> None:
             logging.debug(f"{key}: {value}")
 
 
-@app.callback()
-def callback() -> None:
-    """ThinkThread SDK - Unified Command Line Interface."""
-
-
-@app.command()
-def version() -> None:
-    """Show the current version of ThinkThread SDK."""
-    print(f"ThinkThread SDK version: {__version__}")
+# Removed app decorators - these functions are imported by cli.py
 
 
 def create_llm_client(
@@ -96,7 +87,6 @@ def create_llm_client(
         raise ValueError(f"Unknown provider: {provider}")
 
 
-@app.command()
 def think(
     question: str = typer.Argument(..., help="The question to answer"),
     approach: str = typer.Option("cort", help="Reasoning approach to use (cort, tot)"),
@@ -376,7 +366,6 @@ def visualize_tree(tree_thinker: TreeThinker) -> None:
     print(f"Internal nodes: {total_nodes - leaf_nodes}")
 
 
-@app.command()
 def refine(
     question: str = typer.Argument(..., help="The question to answer"),
     initial_answer: str = typer.Argument(..., help="The initial answer to refine"),
@@ -425,7 +414,6 @@ def refine(
     )
 
 
-@app.command()
 def brainstorm(
     question: str = typer.Argument(..., help="The question to answer"),
     provider: str = typer.Option(

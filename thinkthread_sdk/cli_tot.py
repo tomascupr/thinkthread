@@ -23,16 +23,9 @@ from thinkthread_sdk.llm import (
 )
 from thinkthread_sdk.evaluation import ModelEvaluator
 
-app = typer.Typer()
 console = Console()
 
 
-@app.callback()
-def callback() -> None:
-    """TreeThinker - Tree-of-Thoughts reasoning CLI."""
-
-
-@app.command()
 def tot(
     problem: str = typer.Argument(..., help="The problem to solve"),
     provider: str = typer.Option(
