@@ -109,7 +109,9 @@ class ReasoningEngine:
         reasoner = mode_class(
             debugger=self.debugger if kwargs.get('debug') else None,
             visualizer=self.visualizer if kwargs.get('visualize') else None,
-            profiler=self.profiler if kwargs.get('profile') else None
+            profiler=self.profiler if kwargs.get('profile') else None,
+            test_mode=kwargs.get('test_mode', False),
+            provider=kwargs.get('provider', 'auto')
         )
         
         # Execute reasoning
