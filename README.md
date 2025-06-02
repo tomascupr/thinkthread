@@ -1,32 +1,27 @@
-# ThinkThread 🧠
-
-[![PyPI](https://img.shields.io/pypi/v/thinkthread)](https://pypi.org/project/thinkthread/)
-[![Python](https://img.shields.io/pypi/pyversions/thinkthread)](https://pypi.org/project/thinkthread/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# ThinkThread 🧵
 
 **Make your AI think before it speaks.**
-
-## What is ThinkThread?
-
-ThinkThread gives your AI applications human-like reasoning capabilities with just one line of code:
 
 ```python
 from thinkthread import reason
 
 answer = reason("How can we solve climate change?")
+# AI explores 20+ solutions, evaluates each one, and gives you the best path forward
 ```
-
-That's it. Your AI now explores multiple solutions, evaluates trade-offs, and delivers thoughtful answers backed by transparent reasoning.
 
 ## Why ThinkThread?
 
-| Regular AI | ThinkThread AI |
-|------------|----------------|
-| First thought = final answer | Explores multiple paths before answering |
-| "I think X" | "I considered X, Y, and Z. Here's why X is best..." |
-| Black box responses | See the reasoning process step-by-step |
-| $0.50 per complex query | $0.05 after learning patterns |
-| One-size-fits-all | Automatically picks the best reasoning strategy |
+Current LLMs give you their first thought. ThinkThread makes them **actually think**:
+
+```python
+# ❌ Regular LLM
+"To solve climate change, we need renewable energy."
+
+# ✅ With ThinkThread
+"I've explored 23 different approaches including renewable energy, nuclear power, 
+carbon capture, and policy changes. Based on feasibility and impact analysis, 
+here's a comprehensive strategy that could reduce emissions by 78% by 2040..."
+```
 
 ## Installation
 
@@ -34,231 +29,190 @@ That's it. Your AI now explores multiple solutions, evaluates trade-offs, and de
 pip install thinkthread
 ```
 
-**Note**: Currently in development. Clone the repo to try it out:
+Set your LLM API key:
 ```bash
-git clone https://github.com/tomascupr/thinkthread.git
-cd thinkthread
-python -m pip install -e .
+export OPENAI_API_KEY='sk-...'  # or ANTHROPIC_API_KEY
 ```
 
-## Quick Start
+## 60-Second Quick Start
 
-### Basic Usage
+### From Command Line
 
-```python
-from thinkthread import reason
+```bash
+# Ask anything
+think "What are the pros and cons of remote work?"
 
-# It's really this simple
-answer = reason("What are the pros and cons of remote work?")
-print(answer)
+# Brainstorm ideas
+think quick "10 ways to improve developer productivity"
+
+# Solve problems
+think fix "Our API response time is 2.3 seconds"
+
+# Compare options
+think compare "Kubernetes vs Docker Swarm"
+
+# Test without API calls
+think --test "How do we scale to 1M users?"
 ```
 
-### Different Reasoning Modes
-
-ThinkThread automatically selects the best reasoning mode, or you can choose:
+### From Python
 
 ```python
-from thinkthread import explore, refine, debate, solve
+from thinkthread import reason, explore, solve, debate
 
-# Explore possibilities (best for creative tasks)
-ideas = explore("Design a city on Mars")
+# One-liner reasoning
+answer = reason("How do we make our app 10x faster?")
 
-# Refine and improve (best for content)
-better = refine("Make this email professional", initial_draft)
+# Explore creative solutions
+ideas = explore("New features for a todo app")
 
-# See multiple perspectives (best for decisions)  
+# Get actionable solutions
+plan = solve("Reduce AWS costs by 50%")
+
+# See multiple perspectives
 analysis = debate("Should we use microservices?")
-
-# Get actionable solutions (best for problems)
-plan = solve("Reduce customer churn by 30%")
 ```
 
-### See How Your AI Thinks
+## Real Examples
 
+### 🔧 Problem Solving
 ```python
-# Watch reasoning in real-time
-answer = reason("Complex question", visualize=True)
-# Opens browser with live reasoning visualization
+problem = "Our deployment takes 45 minutes"
+solution = solve(problem)
 
-# Debug reasoning
-answer = reason("Why did Rome fall?")
-answer.explain()  # See why it reached this conclusion
+# Output: Comprehensive plan with:
+# - Root cause analysis (Docker layers, test suite, artifacts)
+# - 5 solutions ranked by impact
+# - Step-by-step implementation
+# - Expected deployment time: 8 minutes
 ```
 
-### Track Costs
-
+### 💡 Brainstorming
 ```python
-answer = reason("Business strategy question")
-print(f"Cost: ${answer.cost:.4f}")
-print(f"Confidence: {answer.confidence:.0%}")
+ideas = explore("SaaS product ideas for developers")
+
+# Output: Tree of 15+ ideas like:
+# - AI code review tool ($50K MRR potential)
+# - Smart debugging assistant (integrates with IDEs)  
+# - Automated documentation generator
+# Each with market analysis and MVP requirements
 ```
 
-## LLM Support
-
-ThinkThread works with multiple LLM providers:
-
+### 🤔 Decision Making
 ```python
-# Auto-detects from environment variables
-export OPENAI_API_KEY='sk-...'
-export ANTHROPIC_API_KEY='sk-ant-...'
+decision = debate("Should we rewrite in Rust?")
 
-# Or specify provider
-answer = reason("Question", provider="openai")  # or "anthropic"
+# Output: Balanced analysis:
+# - Performance gains: 3.2x faster, 70% less memory
+# - Migration cost: 6 dev-months, $180K
+# - Risk assessment: High initial, low long-term
+# - Recommendation: Yes, if you have 6+ month runway
 ```
 
-## Real-World Examples
+## Advanced Features
 
-### Customer Support
+### 🎯 Test Mode (No API Calls)
 ```python
-issue = "I was charged twice for my subscription"
-response = solve(f"Customer issue: {issue}")
-# Provides step-by-step resolution with 87% confidence
+# Perfect for development and CI/CD
+answer = reason("Complex question", test_mode=True)
 ```
 
-### Content Creation
+### 🔄 Retry Logic Built-in
 ```python
-topic = "Impact of AI on education"
-article = explore(topic) | refine()  # Chain modes together
-# Explores angles, then polishes the best one
+# Automatic retry with exponential backoff
+# Never fails due to network issues
+answer = reason("Important question")  # Just works
 ```
 
-### Strategic Decisions
+### 📊 Structured Output
 ```python
-decision = "Should we expand to Europe or Asia first?"
-analysis = debate(decision, perspectives=4)
-# Analyzes from multiple viewpoints with consensus scoring
+answer = solve("Optimize database queries")
+print(answer.confidence)  # 0.87
+print(answer.cost)       # $0.0234
+print(answer.reasoning_mode)  # "solve"
 ```
 
-## Key Features
-
-✨ **Smart Mode Selection** - Automatically picks the best reasoning approach  
-🔍 **Reasoning Transparency** - See exactly how conclusions are reached  
-💰 **Cost Optimization** - Learn patterns to reduce API costs by 90%  
-🔄 **Seamless Fallbacks** - Never fails, always returns useful results  
-📊 **Built-in Analytics** - Track performance, costs, and quality  
-🚀 **Production Ready** - Handles errors, retries, and rate limits  
-
-## Advanced Usage
-
-### Compose Reasoning Modes
+### 🔗 Mode Chaining
 ```python
-# Chain modes with | operator
-from thinkthread.modes import ExploreMode, RefineMode
-chained = ExploreMode() | RefineMode()
-answer = chained("Future of transport")
+# Explore ideas then refine the best one
+from thinkthread import explore, refine
 
-# Run in parallel with & operator  
-parallel = ExploreMode() & SolveMode()
-answer = parallel("Problem")  # Compare approaches
+ideas = explore("Mobile app features")
+best_idea = refine(ideas.best)  # Polished, implementation-ready
 ```
 
-### Configure Behavior
-```python
-# Set cost limits
-reason.set_budget(daily=10.00, per_query=0.50)
+## When to Use Each Mode
 
-# Enable learning
-reason.enable_memory()  # Learn from patterns
+| Mode | Use For | Example |
+|------|---------|---------|
+| `reason()` | General questions | "Explain quantum computing" |
+| `explore()` | Creative tasks | "Marketing campaign ideas" |
+| `solve()` | Specific problems | "Fix memory leak in prod" |
+| `debate()` | Decisions | "PostgreSQL vs MongoDB?" |
+| `refine()` | Improvement | "Make this email better" |
 
-# Custom settings
-answer = reason("Question", 
-    temperature=0.8,
-    max_depth=4,
-    confidence_threshold=0.9
-)
+## Configuration
+
+```bash
+# Optional: Use specific models
+export OPENAI_MODEL='gpt-4-turbo-preview'
+export ANTHROPIC_MODEL='claude-3-opus-20240229'
+
+# Optional: Control costs
+think --max-cost 0.10 "Expensive analysis"
 ```
 
-### Integration
+## What Makes ThinkThread Different?
+
+1. **Actually Thinks** - Not just prompt engineering, but structured reasoning
+2. **Zero Config** - Works out of the box, no complex setup
+3. **Production Ready** - Retries, fallbacks, error handling built-in
+4. **Cost Efficient** - Smart caching and token optimization (coming soon)
+5. **Transparent** - See exactly how your AI reaches conclusions
+
+## Common Patterns
+
+### API Endpoint
 ```python
-# FastAPI
 from fastapi import FastAPI
 from thinkthread import reason
 
 app = FastAPI()
 
-@app.post("/think")
-def think(question: str):
-    return {"answer": reason(question)}
-
-# Test mode for development
-answer = reason("Question", test_mode=True)  # No API calls
+@app.post("/api/think")
+async def think(question: str):
+    answer = reason(question)
+    return {
+        "answer": str(answer),
+        "confidence": answer.confidence,
+        "cost": answer.cost
+    }
 ```
 
-## Reasoning Modes Explained
-
-### 🌳 Explore (Tree of Thoughts)
-Best for: Creative tasks, brainstorming, open-ended questions
+### Batch Processing
 ```python
-ideas = explore("New product ideas for teenagers")
+questions = ["How to scale?", "Best practices?", "Security concerns?"]
+answers = [reason(q) for q in questions]
 ```
 
-### 🔄 Refine (Chain of Recursive Thoughts)  
-Best for: Improving content, polishing, convergent thinking
+### Custom Reasoning
 ```python
-refined = refine("Draft blog post", initial_text)
-```
+from thinkthread.modes import SolveMode
 
-### 🎭 Debate (Multi-Perspective)
-Best for: Balanced analysis, controversial topics, decisions
-```python
-analysis = debate("Is nuclear energy safe?")
-```
-
-### 🎯 Solve (Solution-Focused)
-Best for: Specific problems, action plans, troubleshooting
-```python
-solution = solve("Improve website conversion by 25%")
-```
-
-## Current Status
-
-### ✅ Implemented
-- **Reasoning Modes** - explore, refine, debate, solve with auto-selection
-- **LLM Integration** - OpenAI, Anthropic, HuggingFace support
-- **Mode Composition** - Chain and parallel execution
-- **Cost Tracking** - Per-query cost estimation
-- **Test Mode** - Development without API calls
-- **Transparency** - Debugging, profiling, and comparison tools
-
-### 🚧 Coming Soon
-- **Live Visualization** - Real-time reasoning tree visualization
-- **Pattern Memory** - Learn and reuse successful patterns
-- **Streaming** - Progressive result generation
-- **More LLMs** - Gemini, Cohere, Ollama support
-- **Semantic Caching** - 90% cost reduction for similar queries
-- **Production Features** - Rate limiting, retries, fallbacks  
-
-## Comparison
-
-| Feature | ThinkThread | LangChain | DSPy | Guidance |
-|---------|------------|-----------|------|----------|
-| One-line usage | ✅ | ❌ | ❌ | ❌ |
-| Automatic reasoning | ✅ | ❌ | ❌ | ❌ |
-| Visual debugging | 🚧 | ❌ | ❌ | ❌ |
-| Cost optimization | 🚧 | ⚠️ | ❌ | ❌ |
-| Multiple reasoning modes | ✅ | ⚠️ | ⚠️ | ❌ |
-| Production ready | 🚧 | ✅ | ❌ | ⚠️ |
-
-## Get Started
-
-```python
-from thinkthread import reason
-
-# Your AI now thinks before it speaks
-answer = reason("What should I build this weekend?")
-print(answer)  # A well-reasoned, thoughtful response
+class CustomSolver(SolveMode):
+    def analyze_problem(self, problem):
+        # Your domain-specific analysis
+        return super().analyze_problem(problem)
 ```
 
 ## Contributing
 
-We'd love your help making AI reasoning even better! Check out our [contributing guide](CONTRIBUTING.md).
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT - Use it however you want!
+MIT - Use it freely in your projects.
 
 ---
 
-<p align="center">
-  <b>ThinkThread</b>: Because the best answers come from thinking things through.
-</p>
+**Ready to make your AI think?** `pip install thinkthread` and start building smarter applications today.

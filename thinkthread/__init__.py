@@ -30,24 +30,3 @@ __all__ = [
     'ReasoningProfiler',
 ]
 
-# Auto-configuration on import
-def _auto_configure():
-    """Automatically configure ThinkThread on import"""
-    import os
-    
-    # Check for API keys in environment
-    api_keys_found = []
-    if os.environ.get('OPENAI_API_KEY'):
-        api_keys_found.append('OpenAI')
-    if os.environ.get('ANTHROPIC_API_KEY'):
-        api_keys_found.append('Anthropic')
-    if os.environ.get('HF_API_TOKEN'):
-        api_keys_found.append('HuggingFace')
-        
-    if api_keys_found:
-        print(f"ThinkThread: Auto-detected API keys for: {', '.join(api_keys_found)}")
-    else:
-        print("ThinkThread: No API keys detected. Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or HF_API_TOKEN")
-
-# Run auto-configuration
-_auto_configure()
