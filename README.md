@@ -34,6 +34,13 @@ That's it. Your AI now explores multiple solutions, evaluates trade-offs, and de
 pip install thinkthread
 ```
 
+**Note**: Currently in development. Clone the repo to try it out:
+```bash
+git clone https://github.com/tomascupr/thinkthread.git
+cd thinkthread
+python -m pip install -e .
+```
+
 ## Quick Start
 
 ### Basic Usage
@@ -86,6 +93,19 @@ print(f"Cost: ${answer.cost:.4f}")
 print(f"Confidence: {answer.confidence:.0%}")
 ```
 
+## LLM Support
+
+ThinkThread works with multiple LLM providers:
+
+```python
+# Auto-detects from environment variables
+export OPENAI_API_KEY='sk-...'
+export ANTHROPIC_API_KEY='sk-ant-...'
+
+# Or specify provider
+answer = reason("Question", provider="openai")  # or "anthropic"
+```
+
 ## Real-World Examples
 
 ### Customer Support
@@ -123,10 +143,13 @@ analysis = debate(decision, perspectives=4)
 ### Compose Reasoning Modes
 ```python
 # Chain modes with | operator
-answer = explore("Future of transport") | refine() | debate()
+from thinkthread.modes import ExploreMode, RefineMode
+chained = ExploreMode() | RefineMode()
+answer = chained("Future of transport")
 
 # Run in parallel with & operator  
-answer = explore("Problem") & solve("Problem")  # Compare approaches
+parallel = ExploreMode() & SolveMode()
+answer = parallel("Problem")  # Compare approaches
 ```
 
 ### Configure Behavior
@@ -157,12 +180,8 @@ app = FastAPI()
 def think(question: str):
     return {"answer": reason(question)}
 
-# Enhance existing functions
-from thinkthread import enhance
-
-@enhance
-def analyze_data(data):
-    return basic_analysis(data)  # Now with reasoning!
+# Test mode for development
+answer = reason("Question", test_mode=True)  # No API calls
 ```
 
 ## Reasoning Modes Explained
@@ -191,12 +210,23 @@ Best for: Specific problems, action plans, troubleshooting
 solution = solve("Improve website conversion by 25%")
 ```
 
-## Coming Soon
+## Current Status
 
-🎨 **Live Visualization** - Watch AI reasoning in real-time  
-💾 **Pattern Memory** - Learn and reuse successful reasoning patterns  
-🌊 **Streaming** - Get results as they're generated  
-🔗 **More LLMs** - Gemini, Cohere, Ollama support  
+### ✅ Implemented
+- **Reasoning Modes** - explore, refine, debate, solve with auto-selection
+- **LLM Integration** - OpenAI, Anthropic, HuggingFace support
+- **Mode Composition** - Chain and parallel execution
+- **Cost Tracking** - Per-query cost estimation
+- **Test Mode** - Development without API calls
+- **Transparency** - Debugging, profiling, and comparison tools
+
+### 🚧 Coming Soon
+- **Live Visualization** - Real-time reasoning tree visualization
+- **Pattern Memory** - Learn and reuse successful patterns
+- **Streaming** - Progressive result generation
+- **More LLMs** - Gemini, Cohere, Ollama support
+- **Semantic Caching** - 90% cost reduction for similar queries
+- **Production Features** - Rate limiting, retries, fallbacks  
 
 ## Comparison
 
@@ -204,10 +234,10 @@ solution = solve("Improve website conversion by 25%")
 |---------|------------|-----------|------|----------|
 | One-line usage | ✅ | ❌ | ❌ | ❌ |
 | Automatic reasoning | ✅ | ❌ | ❌ | ❌ |
-| Visual debugging | ✅ | ❌ | ❌ | ❌ |
-| Cost optimization | ✅ | ⚠️ | ❌ | ❌ |
+| Visual debugging | 🚧 | ❌ | ❌ | ❌ |
+| Cost optimization | 🚧 | ⚠️ | ❌ | ❌ |
 | Multiple reasoning modes | ✅ | ⚠️ | ⚠️ | ❌ |
-| Production ready | ✅ | ✅ | ❌ | ⚠️ |
+| Production ready | 🚧 | ✅ | ❌ | ⚠️ |
 
 ## Get Started
 
