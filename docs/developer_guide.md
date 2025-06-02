@@ -1,410 +1,392 @@
-# ThinkThread SDK Developer Guide
+# ThinkThread Developer Guide
 
-This guide explains the architecture of the ThinkThread SDK and how to extend it with new providers, reasoning approaches, or evaluation strategies.
+This guide explains the architecture of ThinkThread and how to extend it with new providers, reasoning approaches, or evaluation strategies.
 
 ## Architecture Overview
 
-The ThinkThread SDK follows a modular architecture with these key components:
+ThinkThread uses a hybrid architecture that combines a beautiful, simple API with the battle-tested robustness of the Chain-of-Recursive-Thoughts (CoRT) SDK.
 
-1. **BaseReasoner**: Abstract base class for all reasoning approaches
-2. **ThinkThreadSession**: Implements Chain-of-Recursive-Thoughts (CoRT) reasoning
-3. **TreeThinker**: Implements Tree-of-Thoughts (ToT) reasoning
-4. **LLMClient**: Abstract interface for different LLM providers
-5. **TemplateManager**: Manages Jinja2 templates for prompt generation
-6. **Evaluation**: Strategies for evaluating and comparing answers
-7. **Config**: Configuration management via Pydantic
+### Key Components
 
-### Reasoning Approaches
+1. **New API Layer** (`thinkthread/`)
+   - **reason.py**: Main entry point with functions like `reason()`, `explore()`, `solve()`
+   - **modes/**: Reasoning mode interfaces (currently placeholders)
+   - **cli.py**: New simplified CLI with commands like `think`, `quick`, `fix`
 
-The SDK supports two complementary reasoning approaches:
+2. **Adapter Layer** (`thinkthread/core/adapter.py`)
+   - Bridges the new API to the old SDK
+   - Translates simple function calls to complex SDK operations
+   - Maintains all production features (retry, caching, monitoring)
 
-#### Chain-of-Recursive-Thoughts Loop
+3. **Core SDK** (`thinkthread/core/`)
+   - **session.py**: Chain-of-Recursive-Thoughts implementation
+   - **tree_thinker.py**: Tree-of-Thoughts implementation
+   - **evaluation.py**: Answer evaluation strategies
+   - **monitoring.py**: Performance tracking
+   - **config.py**: Configuration management
 
-The CoRT approach is implemented in `ThinkThreadSession.run()`:
+4. **LLM Clients** (`thinkthread/llm/`)
+   - **base.py**: Abstract LLM interface with caching
+   - **openai_client.py**: OpenAI integration
+   - **anthropic_client.py**: Anthropic integration
+   - **dummy.py**: Test mode implementation
 
-1. Generate an initial answer using the configured LLM
-2. For each round:
-   - Generate multiple alternative answers
-   - Evaluate all answers (current best and alternatives)
-   - Select the best answer for the next round
-3. Return the final answer after all rounds
+### How It Works
 
-This process enables the LLM to critically evaluate its own output and iteratively improve the quality of answers.
+```
+User Code
+    ↓
+reason("How to scale?")
+    ↓
+ReasoningEngine (new API)
+    ↓
+SDKAdapter (translator)
+    ↓
+ThinkThreadSession/TreeThinker (proven SDK)
+    ↓
+LLMClient (with retry/cache)
+    ↓
+OpenAI/Anthropic API
+```
 
-#### Tree-of-Thoughts Search
+## The Integration Architecture
 
-The ToT approach is implemented in `TreeThinker.solve()`:
+### Why Hybrid?
 
-1. Generate multiple initial thoughts (diverse starting points)
-2. Expand each thought into multiple branches (parallel exploration)
-3. Evaluate all branches and prune less promising paths (beam search)
-4. Continue expanding the most promising branches
-5. Select the highest-scoring solution path
+During development, we discovered that:
+- The new API had better developer experience
+- The old SDK had better production features (retry logic, caching, monitoring)
+- Best solution: Keep both! New API powered by old engine
 
-This approach allows exploring multiple reasoning paths simultaneously, which is particularly effective for complex problems with multiple valid approaches.
+### Key Integration Points
 
-## Component Interfaces
+1. **Test Mode Switching**
+   ```python
+   # In reason.py - reinitializes LLM client when test_mode changes
+   if kwargs.get('test_mode', False) != self.adapter.config.test_mode:
+       self.adapter.config.test_mode = kwargs.get('test_mode', False)
+       self.adapter._llm_client = self.adapter._initialize_llm_client()
+   ```
 
-### BaseReasoner Interface
+2. **Mode Detection**
+   ```python
+   # In adapter.py - auto-detects reasoning mode from prompt
+   def _detect_mode(self, prompt: str) -> str:
+       if "explore" in prompt or "brainstorm" in prompt:
+           return "explore"
+       elif "debate" in prompt or "pros and cons" in prompt:
+           return "debate"
+       # ... etc
+   ```
 
-All reasoning approaches implement the `BaseReasoner` abstract base class:
+3. **Result Conversion**
+   ```python
+   # Converts old SDK results to new structured format
+   def _convert_result(self, old_result, mode, metadata=None):
+       return {
+           "answer": str(old_result),
+           "mode": mode,
+           "cost": extract_cost(old_result),
+           "confidence": extract_confidence(old_result),
+           "metadata": metadata
+       }
+   ```
 
+## Extending ThinkThread
+
+### Adding a New Reasoning Mode
+
+1. Create mode class in `thinkthread/modes/`:
 ```python
-class BaseReasoner(ABC):
-    def __init__(
-        self,
-        llm_client: LLMClient,
-        template_manager: Optional[TemplateManager] = None,
-        config: Optional[ThinkThreadConfig] = None,
-    ):
-        """Initialize the reasoner with an LLM client and optional components."""
-        self.llm_client = llm_client
-        self.config = config or create_config()
-        self.template_manager = template_manager or TemplateManager(
-            self.config.prompt_dir
-        )
+# thinkthread/modes/analyze.py
+from .base import ReasoningMode
 
-    @abstractmethod
-    def run(self, question: str) -> str:
-        """Execute the reasoning process on a question."""
-        pass
-
-    @abstractmethod
-    async def run_async(self, question: str) -> str:
-        """Execute the reasoning process asynchronously on a question."""
+class AnalyzeMode(ReasoningMode):
+    def process(self, question: str, **kwargs):
+        # Your custom reasoning logic
         pass
 ```
 
-This interface ensures that all reasoning approaches provide both synchronous and asynchronous execution methods with a consistent API.
+2. Add to adapter in `thinkthread/core/adapter.py`:
+```python
+def analyze(self, prompt: str, **kwargs) -> Dict[str, Any]:
+    # Custom logic using SDK components
+    session = self.create_session(alternatives=4, rounds=3)
+    result = session.run(f"Analyze in detail: {prompt}")
+    return self._convert_result(result, mode="analyze")
+```
 
-### LLM Provider Interface
+3. Expose in API in `thinkthread/reason.py`:
+```python
+def analyze(question: str, **kwargs) -> ReasoningResult:
+    """Deep analysis of a topic"""
+    return _engine.analyze(question, **kwargs)
 
-All LLM providers implement the `LLMClient` abstract base class:
+# Attach to reason function
+reason.analyze = analyze
+```
+
+### Adding a New LLM Provider
+
+1. Create client in `thinkthread/llm/`:
+```python
+# thinkthread/llm/gemini_client.py
+from .base import LLMClient
+
+class GeminiClient(LLMClient):
+    def _generate_uncached(self, prompt: str, **kwargs) -> str:
+        # Call Gemini API
+        response = gemini.generate(prompt, **kwargs)
+        return response.text
+        
+    async def astream(self, prompt: str, **kwargs):
+        # Streaming implementation
+        async for chunk in gemini.stream(prompt, **kwargs):
+            yield chunk
+```
+
+2. Update adapter initialization:
+```python
+# In adapter.py _initialize_llm_client()
+elif self.config.provider == "gemini":
+    return GeminiClient(
+        api_key=os.environ.get("GEMINI_API_KEY"),
+        model_name=self.config.model or "gemini-pro"
+    )
+```
+
+### Adding Retry Logic
+
+The SDK already includes retry logic in `thinkthread/llm_integration.py`:
 
 ```python
-class LLMClient(ABC):
-    @abstractmethod
+class RetryableLLMClient:
     def generate(self, prompt: str, **kwargs) -> str:
-        """Generate text from the language model."""
-        pass
-        
-    @abstractmethod
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """Asynchronously stream text generation from the language model."""
-        pass
+        for attempt in range(self.max_retries):
+            try:
+                return self.client.generate(prompt, **kwargs)
+            except Exception as e:
+                if attempt < self.max_retries - 1:
+                    delay = self.base_delay * (2 ** attempt)
+                    time.sleep(delay)
+                else:
+                    raise
 ```
 
-The interface includes both synchronous and asynchronous methods for text generation.
+To customize retry behavior, modify the `RetryableLLMClient` class.
 
-### Evaluation Interface
+### Custom Evaluation Strategies
 
-Evaluation strategies implement either the `EvaluationStrategy` interface (for comparing multiple answers) or the `Evaluator` interface (for pairwise comparison):
-
+1. Create new strategy:
 ```python
-class EvaluationStrategy(ABC):
-    @abstractmethod
-    def evaluate(
-        self,
-        question: str,
-        answers: List[str],
-        llm_client: LLMClient,
-        template_manager: TemplateManager,
-    ) -> int:
-        """Evaluate answers and return the index of the best one."""
-        pass
+# thinkthread/core/custom_evaluation.py
+from .evaluation import EvaluationStrategy
 
-class Evaluator(ABC):
-    @abstractmethod
-    def evaluate(
-        self,
-        question: str,
-        prev_answer: str,
-        new_answer: str,
-        llm_client: LLMClient,
-        template_manager: TemplateManager,
-    ) -> bool:
-        """Evaluate whether the new answer is better than the previous."""
-        pass
-```
-
-### Template Management
-
-The `TemplateManager` class handles loading and rendering Jinja2 templates:
-
-```python
-class TemplateManager:
-    def render_template(self, template_name: str, context: Dict[str, Any]) -> str:
-        """Render a template with the given context."""
-        template = self.env.get_template(template_name)
-        return template.render(**context)
-```
-
-## Implementing a New Reasoning Approach
-
-To implement a new reasoning approach, create a class that inherits from `BaseReasoner`:
-
-```python
-from thinkthread_sdk.base_reasoner import BaseReasoner
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import ThinkThreadConfig
-
-class NewReasoner(BaseReasoner):
-    def __init__(
-        self,
-        llm_client: LLMClient,
-        template_manager: Optional[TemplateManager] = None,
-        config: Optional[ThinkThreadConfig] = None,
-        **kwargs
-    ):
-        super().__init__(llm_client, template_manager, config)
-        # Initialize any approach-specific attributes
-        
-    def run(self, question: str) -> str:
-        """Execute the reasoning process on a question."""
-        # Implement your reasoning approach
-        # 1. Process the question
-        # 2. Generate initial thoughts/answers
-        # 3. Apply your reasoning algorithm
-        # 4. Return the final answer
-        
-    async def run_async(self, question: str) -> str:
-        """Execute the reasoning process asynchronously on a question."""
-        # Implement the async version of your reasoning approach
-        # You can use the shared utilities in reasoning_utils.py
-```
-
-## Adding a New LLM Provider
-
-To add a new LLM provider, create a new class that implements the `LLMClient` interface:
-
-1. Create a new file in the `thinkthread_sdk/llm/` directory, e.g., `new_provider_client.py`
-2. Implement the required methods:
-
-```python
-from typing import AsyncIterator
-from thinkthread_sdk.llm.base import LLMClient
-
-class NewProviderClient(LLMClient):
-    def __init__(self, api_key: str, model_name: str = "default-model"):
-        super().__init__(model_name=model_name)
-        self.api_key = api_key
-        # Initialize any provider-specific clients or configurations
-        
-    def generate(self, prompt: str, **kwargs) -> str:
-        """Generate text using the new provider's API."""
-        temperature = kwargs.get("temperature", 0.7)
-        
-        # Implement provider-specific API call
-        # Example:
-        # response = new_provider_api.generate(
-        #     prompt=prompt,
-        #     temperature=temperature,
-        #     api_key=self.api_key,
-        #     model=self.model_name,
-        # )
-        # return response.text
-        
-    async def astream(self, prompt: str, **kwargs) -> AsyncIterator[str]:
-        """Asynchronously stream text from the new provider's API."""
-        temperature = kwargs.get("temperature", 0.7)
-        
-        # Implement provider-specific streaming API call
-        # Example:
-        # async for chunk in new_provider_api.stream(
-        #     prompt=prompt,
-        #     temperature=temperature,
-        #     api_key=self.api_key,
-        #     model=self.model_name,
-        # ):
-        #     yield chunk.text
-        
-    async def acomplete(self, prompt: str, **kwargs) -> str:
-        """Asynchronously generate text using the new provider's API."""
-        # Implement native async completion or use the default implementation
-        # which calls generate() in a thread
-        return await super().acomplete(prompt, **kwargs)
-        
-    async def aclose(self) -> None:
-        """Clean up any resources used by the client."""
-        # Close any open connections, sessions, etc.
-        pass
-```
-
-3. Add the new client to `thinkthread_sdk/llm/__init__.py`:
-
-```python
-from .new_provider_client import NewProviderClient
-
-__all__ = [
-    # ... existing exports
-    "NewProviderClient",
-]
-```
-
-4. Update the CLI to support the new provider in `thinkthread_sdk/cli.py`.
-
-## Adding a New Evaluation Strategy
-
-To add a new evaluation strategy:
-
-1. Create a class that implements the `EvaluationStrategy` interface:
-
-```python
-from typing import List
-from thinkthread_sdk.evaluation import EvaluationStrategy
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-
-class NewEvaluationStrategy(EvaluationStrategy):
-    def evaluate(
-        self,
-        question: str,
-        answers: List[str],
-        llm_client: LLMClient,
-        template_manager: TemplateManager,
-    ) -> int:
-        """Evaluate answers using a new strategy."""
-        # Implement your evaluation logic
-        # Example:
-        # 1. Create a prompt for evaluation
-        # 2. Send it to the LLM
-        # 3. Parse the response
-        # 4. Return the index of the best answer
-        
-        # ...
-        
+class CustomEvaluationStrategy(EvaluationStrategy):
+    def evaluate(self, question, answers, llm_client, template_manager):
+        # Your evaluation logic
+        # Return index of best answer
         return best_index
 ```
 
-2. Use your strategy with any reasoner:
+2. Use in session creation:
+```python
+# In adapter.py
+session = ThinkThreadSession(
+    llm_client=self._llm_client,
+    evaluation_strategy=CustomEvaluationStrategy(),
+    config=config
+)
+```
+
+## Testing and Development
+
+### Test Mode
+
+Test mode uses `DummyLLMClient` to avoid API calls:
 
 ```python
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.tree_thinker import TreeThinker
-from your_module import NewEvaluationStrategy
+# Python
+from thinkthread import reason
+result = reason("test question", test_mode=True)
 
-# With Chain-of-Recursive-Thoughts
-cort_session = ThinkThreadSession(
-    llm_client=client,
-    evaluation_strategy=NewEvaluationStrategy(),
-)
-
-# With Tree-of-Thoughts
-tot_session = TreeThinker(
-    llm_client=client,
-    evaluator=NewEvaluationStrategy(),
-)
+# CLI
+think --test "test question"
 ```
 
-## Shared Utilities
+### Running Tests
 
-The SDK provides shared utilities in `reasoning_utils.py` for common operations used by different reasoning approaches:
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_dummy_llm.py
+
+# Run with coverage
+pytest --cov=thinkthread
+```
+
+### Debugging Integration Issues
+
+1. Check LLM client initialization:
+```python
+# Add debug prints in adapter._initialize_llm_client()
+print(f"Test mode: {self.config.test_mode}")
+print(f"Provider: {self.config.provider}")
+```
+
+2. Monitor mode detection:
+```python
+# In adapter.reason()
+print(f"Detected mode: {mode}")
+```
+
+3. Verify result conversion:
+```python
+# In adapter._convert_result()
+print(f"Converting result: {old_result}")
+```
+
+## Performance Optimization
+
+### Caching
+
+The LLM base client includes built-in caching:
 
 ```python
-# Generate alternatives for a question and current answer
-alternatives = generate_alternatives(
-    question, 
-    current_answer, 
-    llm_client, 
-    template_manager, 
-    count=3, 
-    temperature=0.9
-)
+# Enable caching
+client.enable_cache(True)
 
-# Generate alternatives asynchronously
-alternatives = await generate_alternatives_async(
-    question, 
-    current_answer, 
-    llm_client, 
-    template_manager, 
-    count=3, 
-    temperature=0.9,
-    parallel=True  # Use parallel processing
-)
-
-# Calculate similarity between two strings
-similarity = calculate_similarity(str1, str2)
+# Enable semantic caching (finds similar prompts)
+client.enable_semantic_cache(True, similarity_threshold=0.95)
 ```
 
-## Customising Prompt Templates
+### Concurrency
 
-The SDK uses Jinja2 templates for all prompts. The default templates are in `thinkthread_sdk/prompts/`, but you can provide your own:
-
-1. Create a directory for your templates
-2. Create template files with the `.j2` extension
-3. Pass the directory path when creating a TemplateManager:
+Set concurrency limits to avoid rate limiting:
 
 ```python
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.tree_thinker import TreeThinker
-
-template_manager = TemplateManager(template_dir="/path/to/your/templates")
-
-# Use with Chain-of-Recursive-Thoughts
-cort_session = ThinkThreadSession(
-    llm_client=client, 
-    template_manager=template_manager
-)
-
-# Use with Tree-of-Thoughts
-tot_session = TreeThinker(
-    llm_client=client, 
-    template_manager=template_manager
-)
+# Limit concurrent API calls
+client.set_concurrency_limit(5)
 ```
 
-Or set the path in configuration:
+### Monitoring
 
-```
-PROMPT_DIR=/path/to/your/templates
-```
-
-### Template Structure
-
-Core templates that need to be implemented:
-
-- `initial_prompt.j2`: Generates the initial answer
-- `alternative_prompt.j2`: Generates alternative answers
-- `evaluation_prompt.j2`: Evaluates multiple answers
-- `pairwise_prompt.j2`: Compares two answers
-- `final_answer.j2`: Formats the final answer
-- `tot_expansion_prompt.j2`: Generates continuations for tree nodes (ToT only)
-- `tot_evaluation_prompt.j2`: Evaluates tree branches (ToT only)
-
-## Advanced Configuration
-
-For advanced configuration, create a custom `ThinkThreadConfig` instance:
+Access performance metrics:
 
 ```python
-from thinkthread_sdk.config import ThinkThreadConfig
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.tree_thinker import TreeThinker
+from thinkthread.core.monitoring import GLOBAL_MONITOR
 
-# Create custom configuration
-config = ThinkThreadConfig(
-    openai_api_key="your-api-key",
-    provider="openai",
-    openai_model="gpt-4",
+# Get metrics
+metrics = GLOBAL_MONITOR.get_summary()
+print(f"Total time: {metrics['total_time']}")
+print(f"LLM calls: {metrics['llm_calls']}")
+```
+
+## Configuration
+
+### Environment Variables
+
+```bash
+# API Keys
+export OPENAI_API_KEY='sk-...'
+export ANTHROPIC_API_KEY='...'
+
+# Model Selection
+export OPENAI_MODEL='gpt-4-turbo-preview'
+export ANTHROPIC_MODEL='claude-3-opus-20240229'
+
+# Custom Settings
+export THINKTHREAD_MAX_RETRIES=5
+export THINKTHREAD_CACHE_TTL=3600
+```
+
+### Programmatic Configuration
+
+```python
+from thinkthread import reason
+
+# Configure globally
+reason.set_budget(daily=10.00, per_query=0.50)
+reason.enable_memory()
+
+# Per-call configuration
+answer = reason(
+    "Question",
+    provider="anthropic",
+    model="claude-3-opus",
+    max_cost=0.10,
     alternatives=5,
-    rounds=3,
-    use_pairwise_evaluation=True,
-    use_self_evaluation=False,
-    parallel_alternatives=True,  # Enable parallel processing
-)
-
-# Use with Chain-of-Recursive-Thoughts
-cort_session = ThinkThreadSession(
-    llm_client=client, 
-    config=config
-)
-
-# Use with Tree-of-Thoughts
-tot_session = TreeThinker(
-    llm_client=client,
-    max_tree_depth=3,
-    branching_factor=3,
-    config=config
+    rounds=3
 )
 ```
+
+## Contributing
+
+### Code Style
+
+- Use Black for formatting: `black .`
+- Use isort for imports: `isort .`
+- Type hints required for public APIs
+- Docstrings for all public functions
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Make changes and test
+4. Update documentation
+5. Submit PR with clear description
+
+### Adding Examples
+
+Add examples to `examples/` directory:
+
+```python
+# examples/custom_mode_example.py
+"""Example of using custom reasoning mode"""
+
+from thinkthread import reason
+
+# Your example code
+result = reason.analyze("Complex topic")
+print(result)
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Import Errors**
+   - Ensure package is installed: `pip install -e .`
+   - Check Python path includes project root
+
+2. **API Key Errors**
+   - Verify environment variables are set
+   - Check key permissions and quotas
+
+3. **Test Mode Not Working**
+   - Ensure test_mode=True is passed
+   - Check adapter is reinitializing LLM client
+
+4. **Performance Issues**
+   - Enable caching to reduce API calls
+   - Use test mode during development
+   - Monitor costs with result.cost
+
+### Getting Help
+
+- Check [examples/](../examples/) for working code
+- Read test files for usage patterns
+- Open an issue on GitHub
+- Join our Discord community
+
+## Future Enhancements
+
+Planned improvements:
+- Streaming support in new API
+- Websocket live view for reasoning process
+- Plugin system for custom modes
+- Better cost prediction
+- Reasoning explanation UI

@@ -8,9 +8,9 @@ calculating similarity between answers.
 import difflib
 from typing import List, Dict, Any, Optional, Union, Callable
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import ThinkThreadConfig
+from ..llm.base import LLMClient
+from .prompting import TemplateManager
+from .config import ThinkThreadConfig
 
 
 def generate_alternatives(

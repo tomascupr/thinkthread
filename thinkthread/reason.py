@@ -3,6 +3,8 @@ ThinkThread Reasoning Engine - Core implementation
 
 This module provides the main reasoning interface that automatically selects
 the best reasoning approach based on the question type.
+
+Now powered by the robust old SDK implementation through the adapter layer.
 """
 
 from typing import Optional, Dict, Any, Union, List
@@ -12,13 +14,12 @@ from dataclasses import dataclass
 import asyncio
 
 from .modes.base import ReasoningMode, ReasoningResult
-from .modes.explore import ExploreMode
-from .modes.refine import RefineMode
-from .modes.debate import DebateMode
-from .modes.solve import SolveMode
 from .transparency.debugger import ReasoningDebugger
 from .transparency.live_view import LiveReasoningView
 from .transparency.profiler import ReasoningProfiler
+
+# Import the adapter that bridges to old SDK
+from .core.adapter import SDKAdapter, AdapterConfig
 
 
 @dataclass
@@ -35,6 +36,9 @@ class ReasoningConfig:
 class ReasoningEngine:
     """
     Main reasoning engine that provides a unified interface to all reasoning modes.
+    
+    Now powered by the battle-tested SDK implementation while maintaining
+    the beautiful new API.
     
     Usage:
         from thinkthread import reason
@@ -53,21 +57,15 @@ class ReasoningEngine:
         self.visualizer = LiveReasoningView() if self.config.enable_visualization else None
         self.profiler = ReasoningProfiler()
         
-        # Initialize reasoning modes
-        self.modes = {
-            'explore': ExploreMode,
-            'refine': RefineMode,
-            'debate': DebateMode,
-            'solve': SolveMode,
-        }
-        
-        # Mode detection keywords
-        self.mode_patterns = {
-            'explore': ['design', 'create', 'brainstorm', 'possibilities', 'what if'],
-            'refine': ['improve', 'enhance', 'polish', 'revise', 'better'],
-            'debate': ['argue', 'perspective', 'pros and cons', 'versus', 'compare'],
-            'solve': ['solution', 'fix', 'resolve', 'problem', 'how to'],
-        }
+        # Initialize SDK adapter
+        adapter_config = AdapterConfig(
+            enable_visualization=self.config.enable_visualization,
+            enable_debugging=False,
+            enable_profiling=False,
+            enable_monitoring=True,
+            enable_caching=self.config.enable_memory,
+        )
+        self.adapter = SDKAdapter(adapter_config)
         
         # Last result for debugging
         self._last_result = None
@@ -86,11 +84,12 @@ class ReasoningEngine:
         """
         start_time = time.time()
         
-        # Auto-detect mode if needed
-        if mode == 'auto':
-            mode, confidence = self._detect_reasoning_mode(question)
-            if kwargs.get('verbose'):
-                print(f"Auto-selected mode: {mode} (confidence: {confidence:.2%})")
+        # Update adapter config based on kwargs
+        if kwargs.get('test_mode', False) != self.adapter.config.test_mode:
+            # Need to reinitialize the LLM client if test mode changed
+            self.adapter.config.test_mode = kwargs.get('test_mode', False)
+            self.adapter._llm_client = self.adapter._initialize_llm_client()
+        self.adapter.config.provider = kwargs.get('provider', 'auto')
         
         # Initialize visualizer if requested
         if kwargs.get('visualize', False):
@@ -98,111 +97,137 @@ class ReasoningEngine:
                 self.visualizer = LiveReasoningView()
             self.visualizer.start_session(question)
             if self.config.auto_open_visualizer:
+                # TODO: Make port configurable
                 webbrowser.open("http://localhost:8080/reasoning-live")
         
-        # Get reasoning mode class
-        mode_class = self.modes.get(mode)
-        if not mode_class:
+        # Execute reasoning through adapter
+        if mode == 'auto':
+            adapter_result = self.adapter.reason(question, **kwargs)
+        elif mode == 'explore':
+            adapter_result = self.adapter.explore(question, **kwargs)
+        elif mode == 'refine':
+            initial_text = kwargs.pop('initial_text', '')
+            adapter_result = self.adapter.refine(question, initial_text, **kwargs)
+        elif mode == 'debate':
+            perspectives = kwargs.pop('perspectives', 3)
+            adapter_result = self.adapter.debate(question, perspectives, **kwargs)
+        elif mode == 'solve':
+            adapter_result = self.adapter.solve(question, **kwargs)
+        else:
             raise ValueError(f"Unknown reasoning mode: {mode}")
         
-        # Create mode instance
-        reasoner = mode_class(
-            debugger=self.debugger if kwargs.get('debug') else None,
-            visualizer=self.visualizer if kwargs.get('visualize') else None,
-            profiler=self.profiler if kwargs.get('profile') else None,
-            test_mode=kwargs.get('test_mode', False),
-            provider=kwargs.get('provider', 'auto')
+        # Convert adapter result to ReasoningResult
+        result = ReasoningResult(
+            answer=adapter_result['answer'],
+            confidence=adapter_result.get('confidence', 1.0),
+            reasoning_tree=adapter_result.get('metadata', {}).get('reasoning_tree', {}),
+            mode=adapter_result.get('mode', mode),
+            cost=adapter_result.get('cost', 0.0),
+            time_elapsed=time.time() - start_time,
+            metadata={
+                'mode_used': adapter_result.get('mode', mode),
+                'auto_selected': mode == 'auto',
+                **adapter_result.get('metadata', {})
+            },
+            alternatives=adapter_result.get('metadata', {}).get('alternatives', [])
         )
         
-        # Execute reasoning
-        result = reasoner.execute(question, **kwargs)
+        # Add transparency data if enabled
+        if kwargs.get('debug') and self.debugger:
+            result.metadata['debug_trace'] = self.debugger.get_trace()
         
-        # Add metadata
-        result.metadata['total_time'] = time.time() - start_time
-        result.metadata['mode_used'] = mode
-        result.metadata['auto_selected'] = mode == 'auto'
+        if kwargs.get('profile') and self.profiler:
+            result.metadata['profile'] = self.profiler.get_results()
         
         # Store last result
         self._last_result = result
         
         return result
     
-    def _detect_reasoning_mode(self, question: str) -> tuple[str, float]:
-        """Detect the best reasoning mode based on question analysis"""
-        question_lower = question.lower()
-        
-        # Check for mode-specific keywords
-        mode_scores = {}
-        for mode, keywords in self.mode_patterns.items():
-            score = sum(1 for keyword in keywords if keyword in question_lower)
-            mode_scores[mode] = score
-        
-        # Get best mode
-        if max(mode_scores.values()) == 0:
-            # Default to explore for open-ended questions
-            return 'explore', 0.6
-        
-        best_mode = max(mode_scores.items(), key=lambda x: x[1])
-        confidence = min(best_mode[1] / 3.0, 1.0)  # Normalize confidence
-        
-        return best_mode[0], confidence
-    
-    # Convenience methods for specific modes
     def explore(self, question: str, **kwargs) -> ReasoningResult:
-        """Use exploratory reasoning (Tree of Thoughts)"""
-        return self(question, mode='explore', **kwargs)
+        """Explore possibilities using Tree of Thoughts"""
+        kwargs['mode'] = 'explore'
+        return self.__call__(question, **kwargs)
     
-    def refine(self, question: str, initial_answer: str = None, **kwargs) -> ReasoningResult:
-        """Use refinement reasoning (Chain of Recursive Thoughts)"""
-        if initial_answer:
-            kwargs['initial_answer'] = initial_answer
-        return self(question, mode='refine', **kwargs)
+    def refine(self, question: str, initial_text: str = "", **kwargs) -> ReasoningResult:
+        """Refine and improve a response"""
+        kwargs['mode'] = 'refine'
+        kwargs['initial_text'] = initial_text
+        return self.__call__(question, **kwargs)
     
-    def debate(self, question: str, **kwargs) -> ReasoningResult:
-        """Use debate-style multi-perspective reasoning"""
-        return self(question, mode='debate', **kwargs)
+    def debate(self, question: str, perspectives: int = 3, **kwargs) -> ReasoningResult:
+        """Generate multiple perspectives on a topic"""
+        kwargs['mode'] = 'debate'
+        kwargs['perspectives'] = perspectives
+        return self.__call__(question, **kwargs)
     
     def solve(self, question: str, **kwargs) -> ReasoningResult:
-        """Use solution-focused reasoning"""
-        return self(question, mode='solve', **kwargs)
+        """Focus on solving a specific problem"""
+        kwargs['mode'] = 'solve'
+        return self.__call__(question, **kwargs)
     
-    # Transparency methods
-    @property
-    def last(self) -> Optional[ReasoningResult]:
-        """Get the last reasoning result"""
-        return self._last_result
-    
-    def debug_last(self):
-        """Open debugging interface for last reasoning operation"""
+    def explain(self) -> Optional[str]:
+        """Explain the last reasoning process"""
         if not self._last_result:
-            print("No reasoning session to debug.")
-            return
+            return None
         
-        self.debugger.inspect(self._last_result)
+        explanation = f"""
+Reasoning Mode: {self._last_result.metadata.get('mode_used', 'unknown')}
+Confidence: {self._last_result.confidence:.2%}
+Time: {self._last_result.metadata.get('total_time', 0):.2f}s
+Cost: ${self._last_result.metadata.get('cost', 0):.4f}
+
+Answer: {self._last_result.answer[:200]}...
+"""
+        return explanation
     
-    def profile(self, reasoning_func):
-        """Profile a reasoning operation"""
-        return self.profiler.profile(reasoning_func)
+    def set_budget(self, daily: float = None, per_query: float = None):
+        """Set cost limits (placeholder for future implementation)"""
+        if daily:
+            self.config.max_cost = daily
+        # TODO: Implement budget tracking in adapter
     
-    def compare(self, result1: ReasoningResult, result2: ReasoningResult):
-        """Compare two reasoning results"""
-        from .transparency.diff import ReasoningDiff
-        diff = ReasoningDiff()
-        return diff.compare(result1, result2)
-    
-    # Async support
-    async def async_(self, question: str, mode: str = 'auto', **kwargs) -> ReasoningResult:
-        """Async version of reasoning"""
-        # Run in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self, question, mode, **kwargs)
+    def enable_memory(self):
+        """Enable pattern learning and caching"""
+        self.config.enable_memory = True
+        self.adapter.config.enable_caching = True
 
 
-# Create global instance
-reason = ReasoningEngine()
+# Create singleton instance
+_engine = ReasoningEngine()
 
-# Export convenience functions
-explore = reason.explore
-refine = reason.refine
-debate = reason.debate
-solve = reason.solve
+
+# Public API functions
+def reason(question: str, **kwargs) -> ReasoningResult:
+    """Main reasoning function with automatic mode selection"""
+    return _engine(question, **kwargs)
+
+
+def explore(question: str, **kwargs) -> ReasoningResult:
+    """Explore possibilities using Tree of Thoughts"""
+    return _engine.explore(question, **kwargs)
+
+
+def refine(question: str, initial_text: str = "", **kwargs) -> ReasoningResult:
+    """Refine and improve a response"""
+    return _engine.refine(question, initial_text, **kwargs)
+
+
+def debate(question: str, perspectives: int = 3, **kwargs) -> ReasoningResult:
+    """Generate multiple perspectives on a topic"""
+    return _engine.debate(question, perspectives, **kwargs)
+
+
+def solve(question: str, **kwargs) -> ReasoningResult:
+    """Focus on solving a specific problem"""
+    return _engine.solve(question, **kwargs)
+
+
+# Attach methods to reason function for convenience
+reason.explore = explore
+reason.refine = refine
+reason.debate = debate
+reason.solve = solve
+reason.explain = _engine.explain
+reason.set_budget = _engine.set_budget
+reason.enable_memory = _engine.enable_memory

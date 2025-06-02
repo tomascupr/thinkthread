@@ -9,13 +9,13 @@ from dataclasses import dataclass
 import re
 import asyncio
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import ThinkThreadConfig, create_config
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.evaluation import Evaluator, ModelEvaluator
-from thinkthread_sdk.base_reasoner import BaseReasoner
-from thinkthread_sdk.reasoning_utils import (
+from ..llm.base import LLMClient
+from .prompting import TemplateManager
+from .config import ThinkThreadConfig, create_config
+from .session import ThinkThreadSession
+from .evaluation import Evaluator, ModelEvaluator
+from .base_reasoner import BaseReasoner
+from .reasoning_utils import (
     generate_alternatives,
     generate_alternatives_async,
 )

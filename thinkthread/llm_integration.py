@@ -10,9 +10,9 @@ import json
 import time
 from abc import ABC, abstractmethod
 
-# Import existing LLM clients from thinkthread_sdk
-from thinkthread_sdk.llm import OpenAIClient, AnthropicClient, HuggingFaceClient
-from thinkthread_sdk.llm.base import LLMClient
+# Import LLM clients from new internal location
+from .llm import OpenAIClient, AnthropicClient, HuggingFaceClient, DummyLLMClient
+from .llm.base import LLMClient
 
 
 class RetryableLLMClient:
@@ -86,7 +86,6 @@ class LLMIntegration:
                 )
             else:
                 # Fallback to dummy for testing
-                from thinkthread_sdk.llm.dummy import DummyLLMClient
                 base_client = DummyLLMClient()
         
         # Specific provider requested
@@ -101,7 +100,6 @@ class LLMIntegration:
                 model_name=os.environ.get("ANTHROPIC_MODEL", "claude-3-opus-20240229")
             )
         else:
-            from thinkthread_sdk.llm.dummy import DummyLLMClient
             base_client = DummyLLMClient()
         
         # Wrap with retry logic if enabled
@@ -310,3 +308,8 @@ Format as JSON."""
     def generate_stream(self, prompt: str, **kwargs):
         """Stream generation with retry logic"""
         yield from self.client.generate_stream(prompt, **kwargs)
+    
+    def get_cost_estimate(self) -> float:
+        """Estimate cost of operations performed"""
+        # Simple estimation - can be enhanced with actual token counting
+        return 0.001  # Default small cost per operation

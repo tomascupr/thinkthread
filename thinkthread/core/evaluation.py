@@ -8,8 +8,8 @@ from typing import List
 from abc import ABC, abstractmethod
 import re
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
+from ..llm.base import LLMClient
+from .prompting import TemplateManager
 
 
 class EvaluationStrategy(ABC):

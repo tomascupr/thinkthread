@@ -1,38 +1,72 @@
-# ThinkThread SDK Documentation
+# ThinkThread Documentation 🧵
 
-Welcome to the documentation for the Chain-of-Recursive-Thoughts (CoRT) SDK.
+**Make your AI think before it speaks.**
 
-## What is CoRT?
+Welcome to ThinkThread - a production-ready reasoning engine that combines a beautiful, simple API with battle-tested robustness from the Chain-of-Recursive-Thoughts (CoRT) SDK.
 
-Chain-of-Recursive-Thoughts is a technique that improves the quality of answers from large language models through a recursive self-refinement process:
+## What is ThinkThread?
 
-1. Generate an initial answer to a question
-2. For each refinement round:
-   - Generate alternative answers
-   - Evaluate all answers (current and alternatives)
-   - Select the best answer for the next round
-3. Return the final selected answer
+ThinkThread makes your AI actually think through problems instead of giving you its first response. It uses the proven Chain-of-Recursive-Thoughts (CoRT) technique under the hood, wrapped in a developer-friendly API.
 
-This process enables the model to critically examine its own responses, consider alternative perspectives, and ultimately produce higher-quality answers.
+### How It Works
+
+1. **Initial Reasoning**: Generates a thoughtful initial answer
+2. **Exploration**: Creates multiple alternative approaches
+3. **Evaluation**: Compares all answers using sophisticated strategies
+4. **Refinement**: Iteratively improves the best answer
+5. **Delivery**: Returns a well-reasoned, high-confidence response
+
+### Architecture
+
+ThinkThread uses a hybrid architecture that combines:
+- **Beautiful API**: Simple functions like `reason()`, `explore()`, `debate()`
+- **Robust Engine**: Battle-tested CoRT SDK with retry logic, caching, and monitoring
+- **Smart Adapter**: Seamlessly bridges the new API to the proven SDK implementation
 
 ## Key Features
 
-- **Multiple LLM Providers**: Support for OpenAI, Anthropic, and HuggingFace models
-- **Prompt Templating**: Customisable Jinja2 templates for all prompting needs
-- **Recursive Reasoning**: Multi-round refinement process for improved answers
-- **Self-Evaluation**: Ability to evaluate answer quality without external criteria
-- **Pairwise Evaluation**: Compare answers head-to-head for better selection
-- **Asynchronous Support**: Non-blocking API for integration with async applications
-- **Streaming Responses**: Real-time token-by-token output for better user experience
-- **Extensible Architecture**: Easily add new providers or evaluation strategies
+### Simple API
+- **Zero Config**: Works out of the box with just `reason("your question")`
+- **Multiple Modes**: `explore()`, `solve()`, `debate()`, `refine()` for different thinking styles
+- **Test Mode**: Development without API calls using `test_mode=True`
 
-## Getting Started
+### Production Ready
+- **Automatic Retry**: Exponential backoff for transient failures
+- **Smart Caching**: Reduces costs by reusing previous results
+- **Performance Monitoring**: Built-in metrics and profiling
+- **Error Handling**: Never crashes, always returns usable results
 
-- [Installation and Quickstart](../README.md)
-- [Usage Guide](usage_guide.md): Detailed instructions for using the SDK
-- [Developer Guide](developer_guide.md): Architecture and extension information
-- [Configuration Reference](configuration_reference.md): All configuration options
-- [CLI Reference](cli_reference.md): Command-line interface documentation
+### Advanced Capabilities
+- **Multiple LLM Providers**: OpenAI, Anthropic, HuggingFace, and more
+- **Async Support**: Non-blocking operations for web applications
+- **Streaming**: Real-time token-by-token output
+- **Custom Templates**: Jinja2-based prompt customization
+- **Evaluation Strategies**: Self-evaluation, pairwise comparison, and more
+
+## Quick Start
+
+```python
+from thinkthread import reason
+
+# That's it! AI now thinks before answering
+answer = reason("How can we reduce technical debt?")
+print(answer)
+```
+
+## Documentation
+
+- [Usage Guide](usage_guide.md): Examples and best practices
+- [CLI Reference](cli_reference.md): Command-line interface
+- [Developer Guide](developer_guide.md): Architecture and customization
+- [Configuration Reference](configuration_reference.md): All settings explained
+- [Performance Guide](performance_optimization.md): Speed and cost optimization
+
+## Common Use Cases
+
+1. **Problem Solving**: `solve("Our API is slow")`
+2. **Brainstorming**: `explore("New product features")`
+3. **Decision Making**: `debate("Microservices vs monolith?")`
+4. **Content Improvement**: `refine("Make this email better", initial_text)`
 
 ## Contributing
 
