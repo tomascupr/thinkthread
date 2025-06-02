@@ -128,17 +128,23 @@ decision = debate("Should we rewrite in Rust?")
 # - Recommendation: Yes, if you have 6+ month runway
 ```
 
-## Advanced Usage
+## Documentation
 
-### Direct SDK Access
+### 📚 Simple API
+For most users, our simple API is all you need. See examples above.
 
-For more control, access the underlying SDK:
+### 🛠️ Advanced SDK Usage
+For advanced users who need fine-grained control:
 
+- **[SDK Guide](SDK_GUIDE.md)** - Comprehensive guide to using the ThinkThread SDK
+- **[API Reference](API_REFERENCE.md)** - Detailed documentation of all parameters and methods
+- **[Examples](EXAMPLES.md)** - Practical examples and production patterns
+
+Quick SDK example:
 ```python
-from thinkthread import ThinkThreadSession, TreeThinker
+from thinkthread import ThinkThreadSession
 from thinkthread.llm import OpenAIClient
 
-# Custom configuration
 client = OpenAIClient(api_key="...", model_name="gpt-4-turbo")
 session = ThinkThreadSession(
     llm_client=client,
@@ -146,39 +152,7 @@ session = ThinkThreadSession(
     rounds=3,        # Refine for 3 rounds
 )
 
-# Run with full control
 answer = session.run("Complex question requiring deep thought")
-```
-
-### Async Operations
-
-```python
-import asyncio
-from thinkthread import ThinkThreadSession
-
-async def think_async():
-    session = ThinkThreadSession(llm_client=client)
-    answer = await session.run_async("Explain quantum computing")
-    return answer
-
-# Run asynchronously
-answer = asyncio.run(think_async())
-```
-
-### Custom Evaluation
-
-```python
-from thinkthread.evaluation import BaseEvaluator
-
-class CustomEvaluator(BaseEvaluator):
-    def evaluate(self, alternatives):
-        # Your custom logic
-        return best_alternative
-
-session = ThinkThreadSession(
-    llm_client=client,
-    evaluation_strategy=CustomEvaluator()
-)
 ```
 
 ## The Power Behind the Simplicity
