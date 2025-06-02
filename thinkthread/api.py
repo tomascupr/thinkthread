@@ -76,11 +76,33 @@ def explore(prompt: str, test_mode: bool = False, **kwargs) -> str:
     client = _get_client(test_mode)
     thinker = TreeThinker(
         llm_client=client,
-        max_tree_depth=kwargs.get("max_tree_depth", 3),
-        branching_factor=kwargs.get("branching_factor", 3),
+        max_tree_depth=kwargs.get("max_tree_depth", 2),  # Reduced for speed
+        branching_factor=kwargs.get("branching_factor", 2),  # Reduced for speed
     )
-    # Use the run method which extracts the best answer
-    return thinker.run(prompt)
+    # Use solve with minimal settings for faster response
+    result = thinker.solve(
+        prompt,
+        beam_width=kwargs.get("beam_width", 1),  # Single thread
+        max_iterations=kwargs.get("max_iterations", 1)  # Single iteration
+    )
+    
+    # Extract the best answer if result is a dict
+    if isinstance(result, dict):
+        best_node_id = None
+        best_score = -1.0
+        
+        for node_id, node in thinker.threads.items():
+            if node.score > best_score:
+                best_score = node.score
+                best_node_id = node_id
+        
+        if best_node_id:
+            best_node = thinker.threads[best_node_id]
+            return best_node.state.get("current_answer", "No answer found")
+        
+        return "No answer found"
+    
+    return str(result)
 
 
 # Convenience functions with better prompts
