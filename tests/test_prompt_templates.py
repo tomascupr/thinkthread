@@ -2,7 +2,7 @@ import os
 import pytest
 from tempfile import TemporaryDirectory
 
-from thinkthread_sdk.prompting import TemplateManager
+from thinkthread.prompting import TemplateManager
 
 
 @pytest.fixture

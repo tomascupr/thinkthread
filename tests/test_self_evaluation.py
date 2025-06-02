@@ -3,10 +3,10 @@
 import pytest
 from unittest.mock import MagicMock
 
-from thinkthread_sdk.cort_session import ThinkThreadSession
-from thinkthread_sdk.config import ThinkThreadConfig
-from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.prompting import TemplateManager
+from thinkthread.cort_session import ThinkThreadSession
+from thinkthread.config import ThinkThreadConfig
+from thinkthread.llm.dummy import DummyLLMClient
+from thinkthread.prompting import TemplateManager
 from tests.test_evaluator import SimpleEvaluator
 
 

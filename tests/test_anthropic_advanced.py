@@ -4,8 +4,8 @@ This script tests the ThinkThread SDK with Anthropic using multiple rounds and a
 """
 
 import os
-from thinkthread_sdk.cort_session import ThinkThreadSession
-from thinkthread_sdk.llm import AnthropicClient
+from thinkthread.cort_session import ThinkThreadSession
+from thinkthread.llm import AnthropicClient
 
 
 def main():

@@ -2,7 +2,7 @@ import os
 import pytest
 from tempfile import NamedTemporaryFile
 
-from thinkthread_sdk.config import ThinkThreadConfig, create_config
+from thinkthread.config import ThinkThreadConfig, create_config
 
 
 def test_default_values():

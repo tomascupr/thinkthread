@@ -3,9 +3,9 @@
 import os
 from tempfile import TemporaryDirectory
 
-from thinkthread_sdk.cort_session import ThinkThreadSession
-from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.prompting import TemplateManager
+from thinkthread.cort_session import ThinkThreadSession
+from thinkthread.llm.dummy import DummyLLMClient
+from thinkthread.prompting import TemplateManager
 
 
 def test_template_customization():
@@ -38,7 +38,7 @@ def test_template_customization():
 
         template_manager = TemplateManager(template_dir=temp_dir)
 
-        from thinkthread_sdk.config import ThinkThreadConfig
+        from thinkthread.config import ThinkThreadConfig
 
         config = ThinkThreadConfig()
         config.use_pairwise_evaluation = False

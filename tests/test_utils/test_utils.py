@@ -3,10 +3,10 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
-from thinkthread_sdk.utils import ThinkThreadUtils
-from thinkthread_sdk.llm import DummyLLMClient
-from thinkthread_sdk.config import create_config
-from thinkthread_sdk.evaluation import DefaultEvaluationStrategy
+from thinkthread.utils import ThinkThreadUtils
+from thinkthread.llm import DummyLLMClient
+from thinkthread.config import create_config
+from thinkthread.evaluation import DefaultEvaluationStrategy
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class TestThinkThreadUtils:
         )
 
         with patch(
-            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+            "thinkthread.utils.ThinkThreadSession", return_value=mock_session
         ):
             result = utils.self_refine(question, initial_answer, rounds=1)
 
@@ -65,7 +65,7 @@ class TestThinkThreadUtils:
         )
 
         with patch(
-            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+            "thinkthread.utils.ThinkThreadSession", return_value=mock_session
         ):
             result = utils.self_refine(
                 question, initial_answer, rounds=1, return_metadata=True
@@ -93,7 +93,7 @@ class TestThinkThreadUtils:
         )  # Index of the best answer
 
         with patch(
-            "thinkthread_sdk.utils.ThinkThreadSession", return_value=mock_session
+            "thinkthread.utils.ThinkThreadSession", return_value=mock_session
         ):
             result = await utils.self_refine_async(question, initial_answer, rounds=1)
 
@@ -117,7 +117,7 @@ class TestThinkThreadUtils:
         mock_tree_thinker.threads = {"node1": node1, "node2": node2}
         mock_tree_thinker.solve.return_value = None
 
-        with patch("thinkthread_sdk.utils.TreeThinker", return_value=mock_tree_thinker):
+        with patch("thinkthread.utils.TreeThinker", return_value=mock_tree_thinker):
             result = utils.n_best_brainstorm(question, n=2)
 
             assert result == "The meaning of life is to be happy"
@@ -140,7 +140,7 @@ class TestThinkThreadUtils:
         mock_tree_thinker.threads = {"node1": node1, "node2": node2}
         mock_tree_thinker.solve_async = AsyncMock(return_value=None)
 
-        with patch("thinkthread_sdk.utils.TreeThinker", return_value=mock_tree_thinker):
+        with patch("thinkthread.utils.TreeThinker", return_value=mock_tree_thinker):
             result = await utils.n_best_brainstorm_async(question, n=2)
 
             assert result == "The meaning of life is to be happy"

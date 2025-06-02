@@ -5,10 +5,10 @@ This script tests both CoRT and ToT reasoning approaches using the unified CLI i
 
 import os
 import asyncio
-from thinkthread_sdk.llm import OpenAIClient
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.tree_thinker import TreeThinker
-from thinkthread_sdk.config import create_config
+from thinkthread.llm import OpenAIClient
+from thinkthread.session import ThinkThreadSession
+from thinkthread.tree_thinker import TreeThinker
+from thinkthread.config import create_config
 
 api_key = os.environ.get("OPENAI_API_KEY")
 if not api_key:

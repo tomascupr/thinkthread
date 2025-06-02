@@ -5,10 +5,10 @@ import time
 import asyncio
 from typing import Dict, Any
 
-from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.config import ThinkThreadConfig
-from thinkthread_sdk.monitoring import GLOBAL_MONITOR
+from thinkthread.llm.dummy import DummyLLMClient
+from thinkthread.session import ThinkThreadSession
+from thinkthread.config import ThinkThreadConfig
+from thinkthread.monitoring import GLOBAL_MONITOR
 
 
 class DelayedDummyLLMClient(DummyLLMClient):

@@ -4,10 +4,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.evaluation import EvaluationStrategy
-from thinkthread_sdk.config import ThinkThreadConfig
+from thinkthread.session import ThinkThreadSession
+from thinkthread.llm.dummy import DummyLLMClient
+from thinkthread.evaluation import EvaluationStrategy
+from thinkthread.config import ThinkThreadConfig
 
 
 class VerboseEvaluationStrategy(EvaluationStrategy):

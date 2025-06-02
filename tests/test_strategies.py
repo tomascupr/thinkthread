@@ -2,9 +2,9 @@
 
 from typing import List
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.evaluation import EvaluationStrategy
+from thinkthread.llm import LLMClient
+from thinkthread.prompting import TemplateManager
+from thinkthread.evaluation import EvaluationStrategy
 
 
 class SimpleEvaluationStrategy(EvaluationStrategy):

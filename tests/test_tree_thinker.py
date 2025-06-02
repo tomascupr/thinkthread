@@ -8,9 +8,9 @@ import pytest
 from unittest.mock import patch
 from typing import List, Optional
 
-from thinkthread_sdk.tree_thinker import TreeThinker
-from thinkthread_sdk.llm import DummyLLMClient
-from thinkthread_sdk.config import create_config
+from thinkthread.tree_thinker import TreeThinker
+from thinkthread.llm import DummyLLMClient
+from thinkthread.config import create_config
 
 
 class MockThinkThreadSession:

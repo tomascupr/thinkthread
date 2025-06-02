@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
 
-from thinkthread_sdk.cli import app
+from thinkthread.cli import app
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def runner():
 
 def test_version_command(runner):
     """Test the version command."""
-    from thinkthread_sdk import __version__
+    from thinkthread import __version__
 
     result = runner.invoke(app, ["version"])
 
@@ -21,10 +21,10 @@ def test_version_command(runner):
     assert f"ThinkThread SDK version: {__version__}" in result.stdout
 
 
-@patch("thinkthread_sdk.cli.create_config")
-@patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.ThinkThreadSession")
-@patch("thinkthread_sdk.cli.asyncio.run")
+@patch("thinkthread.cli.create_config")
+@patch("thinkthread.cli.DummyLLMClient")
+@patch("thinkthread.cli.ThinkThreadSession")
+@patch("thinkthread.cli.asyncio.run")
 def test_ask_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):
@@ -46,10 +46,10 @@ def test_ask_command(
     mock_asyncio_run.assert_called_once()
 
 
-@patch("thinkthread_sdk.cli.create_config")
-@patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.ThinkThreadSession")
-@patch("thinkthread_sdk.cli.asyncio.run")
+@patch("thinkthread.cli.create_config")
+@patch("thinkthread.cli.DummyLLMClient")
+@patch("thinkthread.cli.ThinkThreadSession")
+@patch("thinkthread.cli.asyncio.run")
 def test_run_command(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):
@@ -83,10 +83,10 @@ def test_run_command(
     mock_asyncio_run.assert_called_once()
 
 
-@patch("thinkthread_sdk.cli.create_config")
-@patch("thinkthread_sdk.cli.OpenAIClient")
-@patch("thinkthread_sdk.cli.ThinkThreadSession")
-@patch("thinkthread_sdk.cli.asyncio.run")
+@patch("thinkthread.cli.create_config")
+@patch("thinkthread.cli.OpenAIClient")
+@patch("thinkthread.cli.ThinkThreadSession")
+@patch("thinkthread.cli.asyncio.run")
 def test_provider_selection(
     mock_asyncio_run, mock_session, mock_openai, mock_create_config, runner
 ):
@@ -122,10 +122,10 @@ def test_help_output(runner):
     assert "Ask a question and get an answer" in result_ask.stdout
 
 
-@patch("thinkthread_sdk.cli.create_config")
-@patch("thinkthread_sdk.cli.DummyLLMClient")
-@patch("thinkthread_sdk.cli.ThinkThreadSession")
-@patch("thinkthread_sdk.cli.asyncio.run")
+@patch("thinkthread.cli.create_config")
+@patch("thinkthread.cli.DummyLLMClient")
+@patch("thinkthread.cli.ThinkThreadSession")
+@patch("thinkthread.cli.asyncio.run")
 def test_cli_with_options(
     mock_asyncio_run, mock_session, mock_client, mock_create_config, runner
 ):

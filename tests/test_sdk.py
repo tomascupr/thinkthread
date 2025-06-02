@@ -1,6 +1,6 @@
 import os
-from thinkthread_sdk.cort_session import ThinkThreadSession
-from thinkthread_sdk.llm import OpenAIClient
+from thinkthread.cort_session import ThinkThreadSession
+from thinkthread.llm import OpenAIClient
 
 # Set API key
 api_key = os.environ.get("OPENAI_API_KEY")

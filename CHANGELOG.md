@@ -1,6 +1,24 @@
 # Changelog
 
-All notable changes to the ThinkThread SDK will be documented in this file.
+All notable changes to ThinkThread will be documented in this file.
+
+## [0.8.0] - 2025-06-02
+
+### Added
+- **Simple API**: Just 5 functions - `reason()`, `explore()`, `solve()`, `debate()`, `refine()`
+- **Test Mode**: Develop without API calls using `test_mode=True`
+- **Clean CLI**: Simple commands like `think "question"` instead of complex subcommands
+- **Zero Config**: Works out of the box with just an API key
+
+### Changed
+- **Package Rename**: From `thinkthread_sdk` to `thinkthread` for cleaner imports
+- **API First**: Beautiful simple functions that wrap the proven SDK
+- **Simplified CLI**: From `thinkthread run` to just `think`
+
+### Technical
+- Minimal wrapper approach - only ~150 lines of new code
+- Preserved all robustness from the SDK (retries, caching, etc.)
+- No breaking changes for SDK users - can still access `ThinkThreadSession` directly
 
 ## [0.7.1] - 2025-05-31
 

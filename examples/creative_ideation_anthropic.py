@@ -13,10 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from thinkthread_sdk.tree_thinker import TreeThinker
-from thinkthread_sdk.llm import AnthropicClient, DummyLLMClient
-from thinkthread_sdk.config import create_config
-from thinkthread_sdk.evaluation import ModelEvaluator
+from thinkthread.tree_thinker import TreeThinker
+from thinkthread.llm import AnthropicClient, DummyLLMClient
+from thinkthread.config import create_config
+from thinkthread.evaluation import ModelEvaluator
 
 
 async def solve_creative_problem(problem, timeout=150):

@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from thinkthread_sdk.llm.anthropic_client import AnthropicClient
+from thinkthread.llm.anthropic_client import AnthropicClient
 
 
 def test_anthropic_client():

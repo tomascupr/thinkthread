@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
 
-from thinkthread_sdk.llm.openai_client import OpenAIClient
+from thinkthread.llm.openai_client import OpenAIClient
 
 
 class AsyncIteratorMock:

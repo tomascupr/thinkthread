@@ -9,10 +9,10 @@ import os
 import asyncio
 from typing import Dict, Any
 
-from thinkthread_sdk.tree_thinker import TreeThinker
-from thinkthread_sdk.llm import OpenAIClient, AnthropicClient, DummyLLMClient
-from thinkthread_sdk.config import create_config
-from thinkthread_sdk.evaluation import ModelEvaluator
+from thinkthread.tree_thinker import TreeThinker
+from thinkthread.llm import OpenAIClient, AnthropicClient, DummyLLMClient
+from thinkthread.config import create_config
+from thinkthread.evaluation import ModelEvaluator
 
 
 def example_sync_usage():

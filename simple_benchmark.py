@@ -9,9 +9,9 @@ import time
 import asyncio
 from typing import Dict, Any
 
-from thinkthread_sdk.config import ThinkThreadConfig
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.llm.openai_client import OpenAIClient
+from thinkthread.config import ThinkThreadConfig
+from thinkthread.session import ThinkThreadSession
+from thinkthread.llm.openai_client import OpenAIClient
 
 
 async def run_benchmark(

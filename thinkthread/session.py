@@ -7,18 +7,18 @@ questioning and refinement process using LLMs.
 from typing import List, Optional
 import asyncio
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import ThinkThreadConfig, create_config
-from thinkthread_sdk.evaluation import (
+from thinkthread.llm import LLMClient
+from thinkthread.prompting import TemplateManager
+from thinkthread.config import ThinkThreadConfig, create_config
+from thinkthread.evaluation import (
     EvaluationStrategy,
     DefaultEvaluationStrategy,
     Evaluator,
     ModelEvaluator,
 )
-from thinkthread_sdk.monitoring import GLOBAL_MONITOR, timed
-from thinkthread_sdk.base_reasoner import BaseReasoner
-from thinkthread_sdk.reasoning_utils import calculate_similarity
+from thinkthread.monitoring import GLOBAL_MONITOR, timed
+from thinkthread.base_reasoner import BaseReasoner
+from thinkthread.reasoning_utils import calculate_similarity
 
 
 class ThinkThreadSession(BaseReasoner):

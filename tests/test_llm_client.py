@@ -1,6 +1,6 @@
 import pytest
 from typing import AsyncIterator
-from thinkthread_sdk.llm import LLMClient
+from thinkthread.llm import LLMClient
 
 
 def test_llm_client_is_abstract():

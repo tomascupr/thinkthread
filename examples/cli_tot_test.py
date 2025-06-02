@@ -42,17 +42,17 @@ def main():
     print("Testing TreeThinker CLI...")
 
     run_cli_command(
-        'python -m thinkthread_sdk tot "What are three key benefits of tree-based search for reasoning?" '
+        'python -m thinkthread tot "What are three key benefits of tree-based search for reasoning?" '
         "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
 
     run_cli_command(
-        'python -m thinkthread_sdk tot "How can we solve the climate crisis?" '
+        'python -m thinkthread tot "How can we solve the climate crisis?" '
         "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
 
     run_cli_command(
-        'python -m thinkthread_sdk tot "What is the meaning of life?" '
+        'python -m thinkthread tot "What is the meaning of life?" '
         "--provider dummy --beam-width 2 --max-depth 2 --iterations 1"
     )
 

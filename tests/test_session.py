@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock
 
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.llm.dummy import DummyLLMClient
-from thinkthread_sdk.prompting import TemplateManager
+from thinkthread.session import ThinkThreadSession
+from thinkthread.llm.dummy import DummyLLMClient
+from thinkthread.prompting import TemplateManager
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def mock_template_manager():
 @pytest.fixture
 def mock_config():
     """Provide a mock config object."""
-    from thinkthread_sdk.config import ThinkThreadConfig
+    from thinkthread.config import ThinkThreadConfig
 
     return ThinkThreadConfig()
 
@@ -165,7 +165,7 @@ def test_thinkthread_session_same_answer_selected(mock_template_manager, mock_co
 
 def test_evaluation_strategy_parse_evaluation(mock_template_manager, mock_config):
     """Test the _parse_evaluation method of DefaultEvaluationStrategy with different evaluation texts."""
-    from thinkthread_sdk.evaluation import DefaultEvaluationStrategy
+    from thinkthread.evaluation import DefaultEvaluationStrategy
 
     strategy = DefaultEvaluationStrategy()
 

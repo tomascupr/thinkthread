@@ -12,9 +12,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from thinkthread_sdk.session import ThinkThreadSession
-from thinkthread_sdk.llm import OpenAIClient, DummyLLMClient
-from thinkthread_sdk.config import create_config
+from thinkthread.session import ThinkThreadSession
+from thinkthread.llm import OpenAIClient, DummyLLMClient
+from thinkthread.config import create_config
 
 
 def run_with_fallback(question, timeout=150):

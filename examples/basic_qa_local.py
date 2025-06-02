@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from thinkthread_sdk.llm import HuggingFaceClient, DummyLLMClient
+from thinkthread.llm import HuggingFaceClient, DummyLLMClient
 
 
 def ask_question_with_fallback(question, timeout=60):

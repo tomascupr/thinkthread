@@ -1,6 +1,6 @@
 from unittest.mock import patch, MagicMock
 
-from thinkthread_sdk.llm.openai_client import OpenAIClient
+from thinkthread.llm.openai_client import OpenAIClient
 from openai import OpenAIError
 
 

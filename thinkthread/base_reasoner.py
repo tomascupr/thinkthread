@@ -7,9 +7,9 @@ for different reasoning approaches like Chain-of-Recursive-Thoughts and Tree-of-
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Union
 
-from thinkthread_sdk.llm import LLMClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import ThinkThreadConfig, create_config
+from thinkthread.llm import LLMClient
+from thinkthread.prompting import TemplateManager
+from thinkthread.config import ThinkThreadConfig, create_config
 
 
 class BaseReasoner(ABC):

@@ -7,11 +7,11 @@ with real LLM providers.
 """
 
 import asyncio
-from thinkthread_sdk.llm import DummyLLMClient, OpenAIClient
-from thinkthread_sdk.prompting import TemplateManager
-from thinkthread_sdk.config import create_config
-from thinkthread_sdk.tree_thinker import TreeThinker
-from thinkthread_sdk.evaluation import ModelEvaluator
+from thinkthread.llm import DummyLLMClient, OpenAIClient
+from thinkthread.prompting import TemplateManager
+from thinkthread.config import create_config
+from thinkthread.tree_thinker import TreeThinker
+from thinkthread.evaluation import ModelEvaluator
 
 
 def error_response_generator(prompt: str, call_count: int) -> str:
