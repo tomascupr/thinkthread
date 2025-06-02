@@ -1,6 +1,35 @@
 # Changelog
 
-All notable changes to the ThinkThread SDK will be documented in this file.
+All notable changes to ThinkThread will be documented in this file.
+
+## [0.8.0] - 2025-06-03
+
+### Added
+- **Simple API**: Just 5 functions - `reason()`, `explore()`, `solve()`, `debate()`, `refine()`
+- **Test Mode**: Develop without API calls using `test_mode=True`
+- **Clean CLI**: Simple commands like `think "question"` and subcommands like `think solve "problem"`
+- **Zero Config**: Works out of the box with just an API key
+- **Production Ready**: All functions tested with real API calls
+
+### Changed
+- **Package Rename**: From `thinkthread_sdk` to `thinkthread` for cleaner imports
+- **API First**: Beautiful simple functions that wrap the proven SDK
+- **Simplified CLI**: From `thinkthread run` to just `think` with intuitive subcommands
+- **Minimal Repo**: Removed non-essential files, keeping only core package and documentation
+
+### Fixed
+- **TreeThinker Performance**: Optimized `explore()` function with reduced defaults for faster response times
+- **CLI Function Conflicts**: Resolved import naming conflicts in CLI commands
+- **Code Quality**: Fixed all linting issues and applied consistent formatting
+- **Package Structure**: Ensured all template files (.j2) are properly included in distribution
+
+### Technical Details
+- Minimal wrapper approach - only ~150 lines of new API code
+- Preserved all SDK robustness (retries, caching, evaluation, monitoring)
+- No breaking changes for advanced users - can still access `ThinkThreadSession` directly
+- Comprehensive testing: all 5 API functions verified with real OpenAI API calls
+- Optimized TreeThinker defaults: beam_width=1, max_iterations=1, depth=2 for speed
+- Clean package structure with only essential files
 
 ## [0.7.1] - 2025-05-31
 
