@@ -6,11 +6,10 @@ calculating similarity between answers.
 """
 
 import difflib
-from typing import List, Dict, Any, Optional, Union, Callable
+from typing import List
 
 from thinkthread.llm import LLMClient
 from thinkthread.prompting import TemplateManager
-from thinkthread.config import ThinkThreadConfig
 
 
 def generate_alternatives(

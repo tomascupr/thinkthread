@@ -1,17 +1,19 @@
 """Simple CLI for ThinkThread."""
 
 import typer
-from typing import Optional
-from rich import print
 from rich.console import Console
 
-from . import reason, explore, solve, debate, refine
+from . import reason
+from . import explore as explore_fn
+from . import solve as solve_fn  
+from . import debate as debate_fn
+from . import refine as refine_fn
 from . import __version__
 
 app = typer.Typer(
     name="think",
     help="ThinkThread - Make your AI think before it speaks",
-    invoke_without_command=True
+    invoke_without_command=True,
 )
 console = Console()
 
@@ -25,7 +27,7 @@ def main(
     if version:
         console.print(f"ThinkThread v{__version__}")
         raise typer.Exit(0)
-    
+
     # If no command and no args, show help
     if ctx.invoked_subcommand is None and not ctx.args:
         console.print("[yellow]Usage: think <question>[/yellow]")
@@ -45,9 +47,11 @@ def default(
     if not ctx.args:
         console.print("[red]Error: Please provide a question[/red]")
         raise typer.Exit(1)
-    
-    question = " ".join(ctx.args)
-    
+
+    # Filter out 'default' from args if it's there
+    args = [arg for arg in ctx.args if arg != "default"]
+    question = " ".join(args)
+
     with console.status("[bold green]Thinking...", spinner="dots"):
         answer = reason(question, test_mode=test)
     console.print(answer)
@@ -60,7 +64,6 @@ def explore(
 ):
     """Explore ideas using Tree-of-Thoughts."""
     with console.status("[bold green]Exploring ideas...", spinner="dots"):
-        from . import explore as explore_fn
         answer = explore_fn(question, test_mode=test)
     console.print(answer)
 
@@ -72,7 +75,6 @@ def solve(
 ):
     """Get step-by-step solutions."""
     with console.status("[bold green]Finding solutions...", spinner="dots"):
-        from . import solve as solve_fn
         answer = solve_fn(problem, test_mode=test)
     console.print(answer)
 
@@ -84,7 +86,6 @@ def debate(
 ):
     """Analyze from multiple perspectives."""
     with console.status("[bold green]Analyzing perspectives...", spinner="dots"):
-        from . import debate as debate_fn
         answer = debate_fn(question, test_mode=test)
     console.print(answer)
 
@@ -92,20 +93,16 @@ def debate(
 @app.command()
 def refine(
     text: str = typer.Argument(..., help="Text to refine"),
-    instructions: str = typer.Option("", "--instructions", "-i", help="Specific refinement instructions"),
+    instructions: str = typer.Option(
+        "", "--instructions", "-i", help="Specific refinement instructions"
+    ),
     test: bool = typer.Option(False, "--test", "-t", help="Test mode - no API calls"),
 ):
     """Refine and improve text."""
     with console.status("[bold green]Refining...", spinner="dots"):
-        from . import refine as refine_fn
         answer = refine_fn(text, instructions, test_mode=test)
     console.print(answer)
 
 
 if __name__ == "__main__":
-    # If run directly, invoke the default command
-    import sys
-    if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
-        # Insert 'default' command
-        sys.argv.insert(1, "default")
     app()

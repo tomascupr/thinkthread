@@ -5,7 +5,7 @@ for different reasoning approaches like Chain-of-Recursive-Thoughts and Tree-of-
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Union
+from typing import Optional
 
 from thinkthread.llm import LLMClient
 from thinkthread.prompting import TemplateManager

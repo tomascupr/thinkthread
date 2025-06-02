@@ -9,7 +9,7 @@ import asyncio
 
 from thinkthread.llm import LLMClient
 from thinkthread.prompting import TemplateManager
-from thinkthread.config import ThinkThreadConfig, create_config
+from thinkthread.config import ThinkThreadConfig
 from thinkthread.evaluation import (
     EvaluationStrategy,
     DefaultEvaluationStrategy,
