@@ -1,6 +1,6 @@
-"""Command-line entry point for the ThinkThread SDK."""
+"""Command-line entry point for ThinkThread."""
 
-from thinkthread.cli import app
+from .cli import app
 
 if __name__ == "__main__":
     app()
