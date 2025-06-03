@@ -2,7 +2,7 @@
 
 All notable changes to ThinkThread will be documented in this file.
 
-## [Unreleased]
+## [0.8.1] - 2025-01-06
 
 ### Added
 - **Comprehensive SDK Documentation**: Three new documentation files for advanced users:

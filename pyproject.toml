@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "thinkthread"
-version = "0.8.0"
+version = "0.8.1"
 description = "Make your AI think before it speaks - advanced reasoning for LLMs"
 authors = ["Tomas Cupr <work@tomcupr.com>"]
 license = "MIT"

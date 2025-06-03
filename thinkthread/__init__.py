@@ -1,6 +1,6 @@
 """ThinkThread: Make your AI think before it speaks."""
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 # Simple API
 from .api import reason, explore, solve, debate, refine
