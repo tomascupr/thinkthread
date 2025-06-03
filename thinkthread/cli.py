@@ -11,9 +11,8 @@ from . import refine as refine_fn
 from . import __version__
 
 app = typer.Typer(
-    name="think",
+    name="thinkthread",
     help="ThinkThread - Make your AI think before it speaks",
-    invoke_without_command=True,
 )
 console = Console()
 
@@ -28,30 +27,13 @@ def main(
         console.print(f"ThinkThread v{__version__}")
         raise typer.Exit(0)
 
-    # If no command and no args, show help
-    if ctx.invoked_subcommand is None and not ctx.args:
-        console.print("[yellow]Usage: think <question>[/yellow]")
-        console.print("\nExamples:")
-        console.print('  think "What are the implications of quantum computing?"')
-        console.print('  think explore "Creative solutions for climate change"')
-        console.print('  think solve "Our deployment takes 45 minutes"')
-        raise typer.Exit(1)
 
-
-@app.command(context_settings={"allow_extra_args": True})
+@app.command()
 def default(
-    ctx: typer.Context,
+    question: str = typer.Argument(..., help="Question to answer"),
     test: bool = typer.Option(False, "--test", "-t", help="Test mode - no API calls"),
 ):
     """Process a question with automatic mode selection."""
-    if not ctx.args:
-        console.print("[red]Error: Please provide a question[/red]")
-        raise typer.Exit(1)
-
-    # Filter out 'default' from args if it's there
-    args = [arg for arg in ctx.args if arg != "default"]
-    question = " ".join(args)
-
     with console.status("[bold green]Thinking...", spinner="dots"):
         answer = reason(question, test_mode=test)
     console.print(answer)

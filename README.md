@@ -68,19 +68,19 @@ better = refine("We need to fix the bug", "Make it professional")
 
 ```bash
 # General reasoning
-think "What are the pros and cons of remote work?"
+thinkthread default "What are the pros and cons of remote work?"
 
 # Explore ideas
-think explore "10 ways to improve developer productivity"
+thinkthread explore "10 ways to improve developer productivity"
 
 # Solve problems
-think solve "Our API response time is 2.3 seconds"
+thinkthread solve "Our API response time is 2.3 seconds"
 
 # Analyze decisions
-think debate "Kubernetes vs Docker Swarm"
+thinkthread debate "Kubernetes vs Docker Swarm"
 
 # Test mode (no API calls)
-think --test "How do we scale to 1M users?"
+thinkthread default --test "How do we scale to 1M users?"
 ```
 
 ## Key Features

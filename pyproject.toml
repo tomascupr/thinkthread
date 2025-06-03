@@ -34,7 +34,6 @@ ruff = "^0.11.9"
 black = "^25.1.0"
 
 [tool.poetry.scripts]
-think = "thinkthread.cli:app"
 thinkthread = "thinkthread.cli:app"
 
 [build-system]
