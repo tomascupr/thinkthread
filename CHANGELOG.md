@@ -2,6 +2,22 @@
 
 All notable changes to ThinkThread will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **Comprehensive SDK Documentation**: Three new documentation files for advanced users:
+  - `SDK_GUIDE.md`: Complete guide to SDK architecture, configuration, and advanced features
+  - `API_REFERENCE.md`: Detailed parameter documentation for all functions and classes
+  - `EXAMPLES.md`: Practical usage patterns and production-ready code examples
+- Documentation for all 30+ configuration parameters that were previously undocumented
+- Examples for custom evaluators, scoring functions, and production patterns (caching, monitoring, rate limiting)
+
+### Changed
+- **CLI Simplification**: Changed from `think` to `thinkthread` as the main command
+  - Commands now use: `thinkthread default/explore/solve/debate/refine`
+  - Removed the ambiguous `think` command to avoid CLI parsing issues
+- Updated README to link to new SDK documentation
+
 ## [0.8.0] - 2025-06-03
 
 ### Added
